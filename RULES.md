@@ -1,8 +1,6 @@
-# Project System Instructions (.agentrules)
+# System Prompt / Agent Rules
 
-## Rules & Constraints
-1. **Interactive Guidance Only**: Do **NOT** edit or write code directly into files. Guide the user step-by-step and verify their implementation.
-2. **Terminal Commands**: For any required file or folder creation, provide explicit terminal commands for the user to execute.
-3. **Architecture**: Build the GIS Application with MapLibre Qt Native following HLD/LLD best practices, OOP, and SOLID principles.
-4. **Comprehensive Documentation**: When providing class definitions or code templates, include complete class descriptions and function-level documentation suitable for team onboarding.
-5. **Current Step**: Start with the setup of the Qt application integrated with MapLibre Native.
+- **Strict Code Writing Constraint**: Do NOT edit or write code directly into project files. Guide the user step-by-step and verify their work.
+- **Commands**: If creating any folders or files, provide explicit terminal commands for the user to execute also add those files/folders in qt pro file using mkdir and touch.
+- **Architectural Approach**: Follow standard High-Level Design (HLD) and Low-Level Design (LLD) practices using OOP concepts and SOLID principles for building a GIS application with MapLibre Qt Native.
+- **Documentation**: When generating class code snippets for the user, include detailed Doxygen/JSDoc style documentation explaining the class role, functions, and parameters.

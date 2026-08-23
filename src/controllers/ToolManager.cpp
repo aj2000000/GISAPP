@@ -4,12 +4,24 @@
  */
 
 #include "controllers/ToolManager.h"
+#include "../tools/PanTool.h"
+#include "../tools/MeasureTool.h"
 
 namespace GISApp::Controllers {
 
 ToolManager::ToolManager(QObject *parent)
     : QObject(parent), m_activeTool(nullptr)
 {
+}
+
+void ToolManager::registerDefaultTools(QObject *parent)
+{
+    auto panTool = std::make_shared<GISApp::Tools::PanTool>(parent);
+    auto measureTool = std::make_shared<GISApp::Tools::MeasureTool>(parent);
+    
+    registerTool(panTool);
+    registerTool(measureTool);
+    setActiveTool("PanTool");
 }
 
 void ToolManager::registerTool(std::shared_ptr<GISApp::Core::Interfaces::ITool> tool)

@@ -39,6 +39,9 @@ public:
      */
     GISApp::Core::Interfaces::ITool* activeTool() const;
 
+    // Registers default tools like Pan and Measure
+    void registerDefaultTools(QObject *parent);
+
     // --- Mouse Event Delegates ---
     void handleMousePress(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord);
     void handleMouseMove(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord);
