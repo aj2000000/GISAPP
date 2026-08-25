@@ -11,6 +11,9 @@
 #include <QSqlError>
 #include <QDateTime>
 #include <QCoreApplication>
+#include <QSvgRenderer>
+#include <QPainter>
+#include <QImage>
 #include <QDebug>
 
 namespace GISApp::Publishing {
@@ -29,12 +32,12 @@ bool VectorLayerPublisher::publish(const QString &folderPath,
 
     QFileInfo inputInfo(folderPath);
     QString targetFilePath;
+    QDir datasetDir = inputInfo.isDir() ? QDir(folderPath) : inputInfo.dir();
 
     if (inputInfo.isFile()) {
         targetFilePath = inputInfo.absoluteFilePath();
     } else if (inputInfo.isDir()) {
-        QDir dir(folderPath);
-        QFileInfoList vectorFiles = dir.entryInfoList({"*.geojson", "*.json", "*.shp"}, QDir::Files);
+        QFileInfoList vectorFiles = datasetDir.entryInfoList({"*.geojson", "*.json", "*.shp"}, QDir::Files);
         if (!vectorFiles.isEmpty()) {
             targetFilePath = vectorFiles.first().absoluteFilePath();
         }
@@ -44,6 +47,18 @@ bool VectorLayerPublisher::publish(const QString &folderPath,
         m_statusMessage = "No valid vector source file (.geojson, .json, or .shp) found.";
         return false;
     }
+
+    // --- Check for SVG, SLD, and QML Companion Files ---
+    QFileInfoList svgFiles = datasetDir.entryInfoList({"*.svg", "*.SVG"}, QDir::Files);
+    QFileInfoList sldFiles = datasetDir.entryInfoList({"*.sld", "*.SLD"}, QDir::Files);
+    QFileInfoList qmlFiles = datasetDir.entryInfoList({"*.qml", "*.QML"}, QDir::Files);
+
+    bool hasCustomSymbolStyle = (!svgFiles.isEmpty() && !sldFiles.isEmpty() && !qmlFiles.isEmpty());
+    qWarning() << "[VectorPublisher] Dataset directory:" << datasetDir.absolutePath() 
+               << "| SVG count:" << svgFiles.size() 
+               << "| SLD count:" << sldFiles.size() 
+               << "| QML count:" << qmlFiles.size() 
+               << "| Custom SVG/SLD/QML Styling Active:" << hasCustomSymbolStyle;
 
     QString sanitizedId = "vector-" + QString::number(qHash(layerName)) + "-" + QString::number(QDateTime::currentMSecsSinceEpoch());
 
@@ -150,41 +165,85 @@ bool VectorLayerPublisher::publish(const QString &folderPath,
         map->addSource(sanitizedId + "-src", sourceParams);
     }
 
-    // Register Fill Vector Layer
     QVariantMap layerParams;
-    layerParams["id"] = sanitizedId;
-    layerParams["type"] = "fill";
-    layerParams["source"] = sanitizedId + "-src";
-    layerParams["source-layer"] = vectorLayerName;
+    QVariantMap strokeParams;
 
-    QVariantMap paintMap;
-    paintMap["fill-color"] = "#10b981";
-    paintMap["fill-opacity"] = 0.55;
-    paintMap["fill-outline-color"] = "#047857";
-    layerParams["paint"] = paintMap;
+    if (hasCustomSymbolStyle) {
+        // --- 🌿 CUSTOM SVG + SLD + QML SYMBOL STYLING (e.g. Bamboo) ---
+        QString svgPath = svgFiles.first().absoluteFilePath();
+        QString iconId = "icon-" + QString::number(qHash(svgPath));
 
-    if (!map->layerExists(sanitizedId)) {
-        map->addLayer(sanitizedId, layerParams);
+        QImage iconImage(32, 32, QImage::Format_ARGB32);
+        iconImage.fill(Qt::transparent);
+
+        QSvgRenderer svgRenderer(svgPath);
+        if (svgRenderer.isValid()) {
+            QPainter painter(&iconImage);
+            painter.setRenderHint(QPainter::Antialiasing);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform);
+            svgRenderer.render(&painter);
+            qWarning() << "[VectorPublisher] Successfully rendered custom SVG symbol icon from:" << svgPath;
+        } else {
+            qWarning() << "[VectorPublisher] Warning: QSvgRenderer failed to parse SVG file:" << svgPath;
+        }
+
+        map->addImage(iconId, iconImage);
+
+        // Render Symbol Layer with SVG Icon ONLY (no extra point/circle plot)
+        layerParams["id"] = sanitizedId;
+        layerParams["type"] = "symbol";
+        layerParams["source"] = sanitizedId + "-src";
+        layerParams["source-layer"] = vectorLayerName;
+
+        QVariantMap layoutMap;
+        layoutMap["icon-image"] = iconId;
+        layoutMap["icon-size"] = 0.5;
+        layoutMap["icon-allow-overlap"] = true;
+        layoutMap["icon-ignore-placement"] = true;
+        layerParams["layout"] = layoutMap;
+
+        QVariantMap paintMap;
+        paintMap["icon-opacity"] = 1.0;
+        layerParams["paint"] = paintMap;
+
+        if (!map->layerExists(sanitizedId)) {
+            map->addLayer(sanitizedId, layerParams);
+        }
+    } else {
+        // --- 📍 STANDARD VECTOR / FALLBACK SIMPLE POINT / FILL PLOT ---
+        layerParams["id"] = sanitizedId;
+        layerParams["type"] = "fill";
+        layerParams["source"] = sanitizedId + "-src";
+        layerParams["source-layer"] = vectorLayerName;
+
+        QVariantMap paintMap;
+        paintMap["fill-color"] = "#10b981";
+        paintMap["fill-opacity"] = 0.55;
+        paintMap["fill-outline-color"] = "#047857";
+        layerParams["paint"] = paintMap;
+
+        if (!map->layerExists(sanitizedId)) {
+            map->addLayer(sanitizedId, layerParams);
+        }
+
+        // Add outline stroke sub-layer for crisp boundary rendering
+        QString strokeLayerId = sanitizedId + "-stroke";
+        strokeParams["id"] = strokeLayerId;
+        strokeParams["type"] = "line";
+        strokeParams["source"] = sanitizedId + "-src";
+        strokeParams["source-layer"] = vectorLayerName;
+
+        QVariantMap linePaint;
+        linePaint["line-color"] = "#059669";
+        linePaint["line-width"] = 2.0;
+        strokeParams["paint"] = linePaint;
+
+        if (!map->layerExists(strokeLayerId)) {
+            map->addLayer(strokeLayerId, strokeParams);
+        }
     }
 
-    // Add outline stroke sub-layer for crisp vector boundary rendering
-    QString strokeLayerId = sanitizedId + "-stroke";
-    QVariantMap lineParams;
-    lineParams["id"] = strokeLayerId;
-    lineParams["type"] = "line";
-    lineParams["source"] = sanitizedId + "-src";
-    lineParams["source-layer"] = vectorLayerName;
-
-    QVariantMap linePaint;
-    linePaint["line-color"] = "#059669";
-    linePaint["line-width"] = 2.0;
-    lineParams["paint"] = linePaint;
-
-    if (!map->layerExists(strokeLayerId)) {
-        map->addLayer(strokeLayerId, lineParams);
-    }
-
-    auto adapter = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(sanitizedId, map, vectorExtent, layerParams, lineParams);
+    auto adapter = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(sanitizedId, map, vectorExtent, layerParams, strokeParams);
     layerManager->addLayer(layerName, adapter, targetGroup);
 
     if (progressCb) progressCb(100, "Vector MBTiles layer successfully published!");

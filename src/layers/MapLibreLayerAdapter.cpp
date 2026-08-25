@@ -72,8 +72,21 @@ void MapLibreLayerAdapter::setOpacity(float opacity) {
         if (m_layerId.startsWith("raster-")) {
             m_map->setPaintProperty(m_layerId, "raster-opacity", dOpacity);
         } else {
-            m_map->setPaintProperty(m_layerId, "fill-opacity", dOpacity);
-            m_map->setPaintProperty(m_layerId + "-stroke", "line-opacity", dOpacity);
+            QString mainType = m_layerParams.value("type").toString();
+            if (mainType == "fill") {
+                m_map->setPaintProperty(m_layerId, "fill-opacity", dOpacity);
+            } else if (mainType == "symbol") {
+                m_map->setPaintProperty(m_layerId, "icon-opacity", dOpacity);
+            } else if (mainType == "circle") {
+                m_map->setPaintProperty(m_layerId, "circle-opacity", dOpacity);
+            }
+
+            QString strokeType = m_strokeParams.value("type").toString();
+            if (strokeType == "line") {
+                m_map->setPaintProperty(m_layerId + "-stroke", "line-opacity", dOpacity);
+            } else if (strokeType == "circle") {
+                m_map->setPaintProperty(m_layerId + "-stroke", "circle-opacity", dOpacity);
+            }
         }
     }
 }
@@ -126,12 +139,21 @@ void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
             m_map->setPaintProperty(m_layerId, "raster-opacity", static_cast<double>(m_opacity));
         } else if (typeStr == "fill") {
             m_map->setPaintProperty(m_layerId, "fill-opacity", static_cast<double>(m_opacity));
+        } else if (typeStr == "symbol") {
+            m_map->setPaintProperty(m_layerId, "icon-opacity", static_cast<double>(m_opacity));
+        } else if (typeStr == "circle") {
+            m_map->setPaintProperty(m_layerId, "circle-opacity", static_cast<double>(m_opacity));
         }
     }
     if (!m_strokeParams.isEmpty()) {
         m_map->addLayer(strokeId, m_strokeParams, beforeLayerId);
         m_map->setLayoutProperty(strokeId, "visibility", m_visible ? "visible" : "none");
-        m_map->setPaintProperty(strokeId, "line-opacity", static_cast<double>(m_opacity));
+        QString strokeTypeStr = m_strokeParams.value("type").toString();
+        if (strokeTypeStr == "line") {
+            m_map->setPaintProperty(strokeId, "line-opacity", static_cast<double>(m_opacity));
+        } else if (strokeTypeStr == "circle") {
+            m_map->setPaintProperty(strokeId, "circle-opacity", static_cast<double>(m_opacity));
+        }
     }
 }
 

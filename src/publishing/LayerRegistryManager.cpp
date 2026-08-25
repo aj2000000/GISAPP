@@ -112,31 +112,48 @@ void LayerRegistryManager::saveToDisk() {
 }
 
 void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerManager) {
+    if (m_isRestoring || !m_restorationComplete) return;
     if (!layerManager || !layerManager->model()) return;
 
-    int orderIdx = 0;
-    std::function<void(GISApp::Layers::LayerTreeNode*)> traverse = [&](GISApp::Layers::LayerTreeNode *node) {
+    auto root = layerManager->model()->rootNode();
+    if (!root) return;
+
+    m_customGroups.clear();
+    int globalOrderIdx = 0;
+
+    std::function<void(GISApp::Layers::LayerTreeNode*, const QString&)> traverse = 
+        [&](GISApp::Layers::LayerTreeNode *node, const QString &currentGroupName) {
         if (!node) return;
-        if (node->nodeType() == GISApp::Layers::NodeType::Layer) {
+
+        if (node->nodeType() == GISApp::Layers::NodeType::Group) {
+            GISApp::Layers::LayerGroupNode *gNode = static_cast<GISApp::Layers::LayerGroupNode*>(node);
+            QString gName = gNode->name();
+            if (node->parentNode() == root && !gName.isEmpty()) {
+                if (!m_customGroups.contains(gName)) {
+                    m_customGroups.append(gName);
+                }
+            }
+            for (int i = 0; i < gNode->childCount(); ++i) {
+                traverse(gNode->child(i), gName);
+            }
+        } else if (node->nodeType() == GISApp::Layers::NodeType::Layer) {
             for (auto &meta : m_registry) {
                 if (meta.name == node->name()) {
                     meta.isVisible = (node->checkState() == Qt::Checked);
                     meta.opacity = node->opacity();
-                    meta.orderIndex = orderIdx++;
+                    if (!currentGroupName.isEmpty()) {
+                        meta.groupName = currentGroupName;
+                    }
+                    meta.orderIndex = globalOrderIdx;
                     break;
                 }
             }
-        } else if (node->nodeType() == GISApp::Layers::NodeType::Group) {
-            GISApp::Layers::LayerGroupNode *gNode = static_cast<GISApp::Layers::LayerGroupNode*>(node);
-            for (int i = 0; i < gNode->childCount(); ++i) {
-                traverse(gNode->child(i));
-            }
+            globalOrderIdx++;
         }
     };
 
-    auto root = layerManager->model()->rootNode();
     for (int i = 0; i < root->childCount(); ++i) {
-        traverse(root->child(i));
+        traverse(root->child(i), QString());
     }
 
     saveToDisk();
@@ -145,7 +162,9 @@ void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerMana
 void LayerRegistryManager::registerGroup(const QString &groupName) {
     if (!groupName.isEmpty() && !m_customGroups.contains(groupName)) {
         m_customGroups.append(groupName);
-        saveToDisk();
+        if (m_restorationComplete && !m_isRestoring) {
+            saveToDisk();
+        }
     }
 }
 
@@ -213,9 +232,10 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
 {
     if (!layerManager || !map || !publishingService) return;
 
+    m_isRestoring = true;
     loadFromDisk();
 
-    // 1. First restore custom groups into LayerManager tree
+    // 1. Ensure custom groups exist in LayerManager tree
     for (const QString &grpName : m_customGroups) {
         if (grpName.isEmpty()) continue;
         GISApp::Layers::LayerGroupNode *existingGrp = nullptr;
@@ -234,65 +254,136 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
         }
     }
 
-    if (m_registry.isEmpty()) return;
-
-    // Sort by saved Z-order index before restoring
-    std::sort(m_registry.begin(), m_registry.end(), [](const PublishedLayerMeta &a, const PublishedLayerMeta &b) {
-        return a.orderIndex < b.orderIndex;
-    });
-
-    qWarning() << "[LayerRegistry] Auto-restoring" << m_registry.size() << "published layers in saved order from disk...";
-
-    for (const auto &meta : m_registry) {
-        if (!QFileInfo(meta.folderPath).exists()) {
-            qWarning() << "[LayerRegistry] Skipping missing file/folder:" << meta.folderPath;
-            continue;
-        }
-
-        // Find or create target group
-        GISApp::Layers::LayerGroupNode *targetGroup = nullptr;
-        QString searchGroupName = meta.groupName;
-        if (searchGroupName.isEmpty() || searchGroupName == "🌍 Base Maps & Terrain") {
-            searchGroupName = (meta.type == LayerType::Vector) ? "📍 Custom Vector Layers" : "🗺️ Raster Imagery & DSM";
-        }
-
-        if (layerManager->model()) {
-            auto root = layerManager->model()->rootNode();
-            for (int i = 0; i < root->childCount(); ++i) {
-                auto child = root->child(i);
-                if (child->nodeType() == GISApp::Layers::NodeType::Group && child->name() == searchGroupName) {
-                    targetGroup = static_cast<GISApp::Layers::LayerGroupNode*>(child);
-                    break;
+    // 2. Re-order top-level group nodes under root to match saved m_customGroups order
+    if (layerManager->model() && !m_customGroups.isEmpty()) {
+        auto root = layerManager->model()->rootNode();
+        if (root) {
+            for (int targetIdx = 0; targetIdx < m_customGroups.size(); ++targetIdx) {
+                QString targetGrpName = m_customGroups[targetIdx];
+                int currentIdx = -1;
+                for (int i = 0; i < root->childCount(); ++i) {
+                    if (root->child(i)->name() == targetGrpName) {
+                        currentIdx = i;
+                        break;
+                    }
+                }
+                if (currentIdx != -1 && currentIdx > targetIdx) {
+                    while (currentIdx > targetIdx) {
+                        layerManager->moveUp(root->child(currentIdx));
+                        currentIdx--;
+                    }
+                } else if (currentIdx != -1 && currentIdx < targetIdx) {
+                    while (currentIdx < targetIdx) {
+                        layerManager->moveDown(root->child(currentIdx));
+                        currentIdx++;
+                    }
                 }
             }
-            if (!targetGroup) {
-                targetGroup = layerManager->addGroup(searchGroupName);
+        }
+    }
+
+    if (!m_registry.isEmpty()) {
+        // Sort by saved Z-order index before restoring
+        std::sort(m_registry.begin(), m_registry.end(), [](const PublishedLayerMeta &a, const PublishedLayerMeta &b) {
+            return a.orderIndex < b.orderIndex;
+        });
+
+        qWarning() << "[LayerRegistry] Auto-restoring" << m_registry.size() << "published layers in saved order from disk...";
+
+        for (const auto &meta : m_registry) {
+            if (!QFileInfo(meta.folderPath).exists()) {
+                qWarning() << "[LayerRegistry] Skipping missing file/folder:" << meta.folderPath;
+                continue;
+            }
+
+            // Find or create target group
+            GISApp::Layers::LayerGroupNode *targetGroup = nullptr;
+            QString searchGroupName = meta.groupName;
+            if (searchGroupName.isEmpty() || searchGroupName == "🌍 Base Maps & Terrain") {
+                searchGroupName = (meta.type == LayerType::Vector) ? "📍 Custom Vector Layers" : "🗺️ Raster Imagery & DSM";
+            }
+
+            if (layerManager->model()) {
+                auto root = layerManager->model()->rootNode();
+                for (int i = 0; i < root->childCount(); ++i) {
+                    auto child = root->child(i);
+                    if (child->nodeType() == GISApp::Layers::NodeType::Group && child->name() == searchGroupName) {
+                        targetGroup = static_cast<GISApp::Layers::LayerGroupNode*>(child);
+                        break;
+                    }
+                }
+                if (!targetGroup) {
+                    targetGroup = layerManager->addGroup(searchGroupName);
+                }
+            }
+
+            qWarning() << "[LayerRegistry] Restoring saved layer:" << meta.name << "from" << meta.folderPath << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
+            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map);
+
+            // Apply saved opacity & visibility to restored node
+            if (layerManager->model()) {
+                auto root = layerManager->model()->rootNode();
+                std::function<void(GISApp::Layers::LayerTreeNode*)> applyMeta = [&](GISApp::Layers::LayerTreeNode *node) {
+                    if (!node) return;
+                    if (node->nodeType() == GISApp::Layers::NodeType::Layer && node->name() == meta.name) {
+                        layerManager->setOpacity(node, meta.opacity);
+                        layerManager->setVisibility(node, meta.isVisible);
+                    } else if (node->nodeType() == GISApp::Layers::NodeType::Group) {
+                        GISApp::Layers::LayerGroupNode *gNode = static_cast<GISApp::Layers::LayerGroupNode*>(node);
+                        for (int i = 0; i < gNode->childCount(); ++i) {
+                            applyMeta(gNode->child(i));
+                        }
+                    }
+                };
+                for (int i = 0; i < root->childCount(); ++i) {
+                    applyMeta(root->child(i));
+                }
             }
         }
 
-        qWarning() << "[LayerRegistry] Restoring saved layer:" << meta.name << "from" << meta.folderPath << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
-        publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map);
-
-        // Apply saved opacity & visibility to restored node
+        // 3. Re-order child nodes inside groups to strictly match saved orderIndex
         if (layerManager->model()) {
             auto root = layerManager->model()->rootNode();
-            std::function<void(GISApp::Layers::LayerTreeNode*)> applyMeta = [&](GISApp::Layers::LayerTreeNode *node) {
-                if (!node) return;
-                if (node->nodeType() == GISApp::Layers::NodeType::Layer && node->name() == meta.name) {
-                    layerManager->setOpacity(node, meta.opacity);
-                    layerManager->setVisibility(node, meta.isVisible);
-                } else if (node->nodeType() == GISApp::Layers::NodeType::Group) {
-                    GISApp::Layers::LayerGroupNode *gNode = static_cast<GISApp::Layers::LayerGroupNode*>(node);
-                    for (int i = 0; i < gNode->childCount(); ++i) {
-                        applyMeta(gNode->child(i));
+            std::function<void(GISApp::Layers::LayerGroupNode*)> sortGroupChildren = [&](GISApp::Layers::LayerGroupNode *parentGroup) {
+                if (!parentGroup) return;
+                for (int i = 0; i < parentGroup->childCount(); ++i) {
+                    auto childNode = parentGroup->child(i);
+                    if (childNode->nodeType() == GISApp::Layers::NodeType::Group) {
+                        sortGroupChildren(static_cast<GISApp::Layers::LayerGroupNode*>(childNode));
+                    }
+                }
+                bool swapped = true;
+                while (swapped) {
+                    swapped = false;
+                    for (int i = 0; i < parentGroup->childCount() - 1; ++i) {
+                        auto nodeA = parentGroup->child(i);
+                        auto nodeB = parentGroup->child(i + 1);
+                        int orderA = 999999;
+                        int orderB = 999999;
+                        for (const auto &meta : m_registry) {
+                            if (meta.name == nodeA->name()) orderA = meta.orderIndex;
+                            if (meta.name == nodeB->name()) orderB = meta.orderIndex;
+                        }
+                        if (orderA > orderB) {
+                            layerManager->moveDown(nodeA);
+                            swapped = true;
+                        }
                     }
                 }
             };
             for (int i = 0; i < root->childCount(); ++i) {
-                applyMeta(root->child(i));
+                if (root->child(i)->nodeType() == GISApp::Layers::NodeType::Group) {
+                    sortGroupChildren(static_cast<GISApp::Layers::LayerGroupNode*>(root->child(i)));
+                }
             }
         }
     }
+
+    m_isRestoring = false;
+    m_restorationComplete = true;
+
+    // Perform final state sync and map rendering z-index sort
+    syncTreeState(layerManager);
     layerManager->syncRenderOrder();
 }
 

@@ -73,6 +73,8 @@ private:
 
     QList<PublishedLayerMeta> m_registry;
     QStringList m_customGroups;
+    bool m_isRestoring{false};
+    bool m_restorationComplete{false};
 };
 
 } // namespace GISApp::Publishing

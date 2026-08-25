@@ -30,6 +30,7 @@ LayerGroupNode* LayerManager::addGroup(const QString &groupName, LayerGroupNode 
     m_model->endNodeInsert();
 
     GISApp::Publishing::LayerRegistryManager::instance().registerGroup(groupName);
+    GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
 
     return rawPtr;
 }
@@ -46,6 +47,7 @@ LayerNode* LayerManager::addLayer(const QString &layerName, std::shared_ptr<ILay
     
     m_model->endNodeInsert();
     syncRenderOrder();
+    GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
     return rawPtr;
 }
 
