@@ -4,6 +4,9 @@
 #include <cmath>
 #include <QDebug>
 
+#include "publishing/LayerRegistryManager.h"
+#include "publishing/LayerPublishingService.h"
+
 namespace GISApp {
 namespace Layers {
 
@@ -106,20 +109,21 @@ void TacticalLayerProvider::setupTacticalLayers(QMapLibre::Map *map)
 
 void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLibre::Map *map, GISApp::Controllers::MapController *mapController)
 {
-    if (!layerManager) {
-        qWarning() << "[TacticalLayerProvider] populateLayerTree failed: layerManager is null";
+    if (!layerManager || !map) {
+        qWarning() << "[TacticalLayerProvider] populateLayerTree failed: layerManager or map is null";
         return;
     }
-    if (!map) {
-        qWarning() << "[TacticalLayerProvider] populateLayerTree failed: map is null";
+
+    if (layerManager->model() && layerManager->model()->rootNode() && layerManager->model()->rootNode()->childCount() > 0) {
+        qWarning() << "[TacticalLayerProvider] Layer tree already populated. Skipping duplicate population.";
         return;
     }
     qWarning() << "[TacticalLayerProvider] populateLayerTree executing...";
 
-    
+    auto rasterGroup = layerManager->addGroup("🗺️ Raster Imagery & DSM");
     auto tacticalGroup = layerManager->addGroup("🛡️ Tactical Operations");
     auto intelligenceGroup = layerManager->addGroup("📡 Signals & Sensors");
-auto baseGroup = layerManager->addGroup("🌍 Base Maps & Terrain");
+
     LayerExtent indiaExtent{
         GISApp::Core::Models::GeoCoordinate(8.4, 68.7),
         GISApp::Core::Models::GeoCoordinate(37.6, 97.25)
@@ -130,10 +134,6 @@ auto baseGroup = layerManager->addGroup("🌍 Base Maps & Terrain");
         GISApp::Core::Models::GeoCoordinate(28.88, 77.40)
     };
 
-    auto darkBaseAdapter = std::make_shared<MapLibreLayerAdapter>(
-        "dark-matter-base", map, indiaExtent);
-    layerManager->addLayer("Dark Matter Vector Base", darkBaseAdapter, baseGroup);
-
     auto airZoneAdapter = std::make_shared<MapLibreLayerAdapter>(
         "air-zones-layer", map, ncrExtent);
     layerManager->addLayer("Restricted Airspace Zones", airZoneAdapter, tacticalGroup);
@@ -142,8 +142,9 @@ auto baseGroup = layerManager->addGroup("🌍 Base Maps & Terrain");
         "radar-coverage", map, indiaExtent);
     layerManager->addLayer("Primary Radar Coverage", radarCoverageAdapter, intelligenceGroup);
 
-    // Zoom to Extent handler is typically connected in the UI View level, 
-    // but the model supplies the extents via the adapter!
+    // Auto-restore custom published layers from persistent disk JSON registry
+    GISApp::Publishing::LayerPublishingService publishingService;
+    GISApp::Publishing::LayerRegistryManager::instance().restoreSavedLayers(layerManager, map, &publishingService);
 }
 
 } // namespace Layers

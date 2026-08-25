@@ -47,12 +47,19 @@ public:
     LayerTreeNode* nodeFromIndex(const QModelIndex &index) const;
     QModelIndex indexFromNode(LayerTreeNode *node) const;
 
+    bool moveNodeUp(const QModelIndex &index);
+    bool moveNodeDown(const QModelIndex &index);
+    bool removeNode(LayerTreeNode *node);
+
     void beginNodeInsert(const QModelIndex &parent, int first, int last) {
         beginInsertRows(parent, first, last);
     }
     void endNodeInsert() {
         endInsertRows();
     }
+
+signals:
+    void orderChanged();
 
 private:
     std::unique_ptr<LayerGroupNode> m_rootNode;

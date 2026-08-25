@@ -1,0 +1,32 @@
+{
+    "groups": [
+        "🗺️ Raster Imagery & DSM",
+        "WorldMap",
+        "🛡️ Tactical Operations",
+        "📡 Signals & Sensors"
+    ],
+    "layers": [
+        {
+            "folderPath": "/home/crl/aman/map/DSM",
+            "groupName": "🗺️ Raster Imagery & DSM",
+            "isTiled": true,
+            "isVisible": true,
+            "name": "DSM50K",
+            "opacity": 1,
+            "orderIndex": 0,
+            "tilePath": "/home/crl/aman/MAPDATA/dsm50k",
+            "type": "Raster"
+        },
+        {
+            "folderPath": "/home/crl/aman/MAPDATA/WorldMap/countries_world.geojson",
+            "groupName": "WorldMap",
+            "isTiled": true,
+            "isVisible": true,
+            "name": "countries_world",
+            "opacity": 1,
+            "orderIndex": 1,
+            "tilePath": "/home/crl/aman/MAPDATA/countries_world",
+            "type": "Vector"
+        }
+    ]
+}

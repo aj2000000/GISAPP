@@ -23,7 +23,11 @@ public:
      * @param mapPointer Pointer to active QMapLibre::Map instance.
      * @param defaultExtent Spatial extent for pan to bounds.
      */
-    MapLibreLayerAdapter(const QString &layerId, QMapLibre::Map *mapPointer, const LayerExtent &defaultExtent = LayerExtent());
+    MapLibreLayerAdapter(const QString &layerId, 
+                         QMapLibre::Map *mapPointer, 
+                         const LayerExtent &defaultExtent = LayerExtent(),
+                         const QVariantMap &layerParams = {},
+                         const QVariantMap &strokeParams = {});
 
     QString layerId() const override;
     void setVisibility(bool visible) override;
@@ -31,6 +35,8 @@ public:
     void setOpacity(float opacity) override;
     float opacity() const override;
     LayerExtent getExtent() const override;
+    void removeLayer() override;
+    void reinsertLayer(const QString &beforeLayerId) override;
 
 private:
     QString m_layerId;
@@ -38,6 +44,8 @@ private:
     bool m_visible{true};
     float m_opacity{1.0f};
     LayerExtent m_extent;
+    QVariantMap m_layerParams;
+    QVariantMap m_strokeParams;
 };
 
 } // namespace GISApp::Layers

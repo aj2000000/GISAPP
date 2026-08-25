@@ -65,6 +65,13 @@ std::unique_ptr<LayerTreeNode> LayerGroupNode::removeChild(int row) {
     return nullptr;
 }
 
+void LayerGroupNode::swapChildren(int row1, int row2) {
+    if (row1 >= 0 && row1 < static_cast<int>(m_children.size()) &&
+        row2 >= 0 && row2 < static_cast<int>(m_children.size()) && row1 != row2) {
+        std::swap(m_children[row1], m_children[row2]);
+    }
+}
+
 int LayerGroupNode::childCount() const {
     return static_cast<int>(m_children.size());
 }
@@ -94,23 +101,54 @@ void LayerGroupNode::setOpacity(float opacity) {
     }
 }
 
-LayerExtent LayerGroupNode::getExtent() const {
-    LayerExtent combinedExtent;
-    for (const auto &childNode : m_children) {
-        LayerExtent ext = childNode->getExtent();
+static void collectGroupLeafExtents(const LayerTreeNode *node, std::vector<LayerExtent> &extents) {
+    if (!node) return;
+    if (node->nodeType() == NodeType::Layer) {
+        LayerExtent ext = node->getExtent();
         if (ext.isValid()) {
-            if (!combinedExtent.isValid()) {
-                combinedExtent = ext;
-            } else {
-                double minLat = std::min(combinedExtent.southWest.latitude(), ext.southWest.latitude());
-                double minLon = std::min(combinedExtent.southWest.longitude(), ext.southWest.longitude());
-                double maxLat = std::max(combinedExtent.northEast.latitude(), ext.northEast.latitude());
-                double maxLon = std::max(combinedExtent.northEast.longitude(), ext.northEast.longitude());
-                combinedExtent.southWest = GISApp::Core::Models::GeoCoordinate(minLat, minLon);
-                combinedExtent.northEast = GISApp::Core::Models::GeoCoordinate(maxLat, maxLon);
-            }
+            extents.push_back(ext);
+        }
+    } else if (node->nodeType() == NodeType::Group) {
+        auto groupNode = static_cast<const LayerGroupNode*>(node);
+        for (int i = 0; i < groupNode->childCount(); ++i) {
+            collectGroupLeafExtents(groupNode->child(i), extents);
         }
     }
+}
+
+LayerExtent LayerGroupNode::getExtent() const {
+    std::vector<LayerExtent> leafExtents;
+    collectGroupLeafExtents(this, leafExtents);
+
+    if (leafExtents.empty()) {
+        return LayerExtent();
+    }
+
+    double minLat = 90.0;
+    double minLon = 180.0;
+    double maxLat = -90.0;
+    double maxLon = -180.0;
+    bool foundAny = false;
+
+    for (const auto &ext : leafExtents) {
+        if (!ext.isValid()) continue;
+        minLat = std::min(minLat, ext.southWest.latitude());
+        minLon = std::min(minLon, ext.southWest.longitude());
+        maxLat = std::max(maxLat, ext.northEast.latitude());
+        maxLon = std::max(maxLon, ext.northEast.longitude());
+        foundAny = true;
+    }
+
+    if (!foundAny) return LayerExtent();
+
+    minLat = std::clamp(minLat, -89.9, 89.9);
+    maxLat = std::clamp(maxLat, -89.9, 89.9);
+    minLon = std::clamp(minLon, -180.0, 180.0);
+    maxLon = std::clamp(maxLon, -180.0, 180.0);
+
+    LayerExtent combinedExtent;
+    combinedExtent.southWest = GISApp::Core::Models::GeoCoordinate(minLat, minLon);
+    combinedExtent.northEast = GISApp::Core::Models::GeoCoordinate(maxLat, maxLon);
     return combinedExtent;
 }
 

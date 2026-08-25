@@ -17,7 +17,10 @@
 #include "ui/layertree/LayerTreeFloatingWidget.h"
 #include "layers/TacticalLayerProvider.h"
 #include <cmath>
+#include <QDir>
 
+#include "ui/publishing/PublishLayerDialog.h"
+#include "ui/publishing/GroupManagerDialog.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -108,16 +111,28 @@ void MainWindow::setupMapView()
             timer->stop();
             timer->deleteLater();
             
-            // Connect Zoom to Extent Signal to Map Camera Pan Controller
+            // Helper lambda to pan and dynamically zoom to bounding box extent
+            auto handlePanToExtent = [this](const GISApp::Layers::LayerExtent &extent) {
+                if (m_mapController && extent.isValid()) {
+                    double centerLat = (extent.southWest.latitude() + extent.northEast.latitude()) / 2.0;
+                    double centerLon = (extent.southWest.longitude() + extent.northEast.longitude()) / 2.0;
+
+                    double latDiff = std::max(0.0001, extent.northEast.latitude() - extent.southWest.latitude());
+                    double lonDiff = std::max(0.0001, extent.northEast.longitude() - extent.southWest.longitude());
+
+                    double zoomLon = std::log2(360.0 / lonDiff);
+                    double zoomLat = std::log2(180.0 / latDiff);
+                    double fitZoom = std::clamp(std::min(zoomLon, zoomLat) + 0.2, 1.5, 16.0);
+
+                    m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(centerLat, centerLon), fitZoom);
+                }
+            };
+
             if (m_layerFloatingPanel && m_layerFloatingPanel->treeView()) {
-                connect(m_layerFloatingPanel->treeView(), &GISApp::UI::LayerTreeView::zoomToExtentRequested,
-                    [this](const GISApp::Layers::LayerExtent &extent) {
-                    if (m_mapController && extent.isValid()) {
-                        double centerLat = (extent.southWest.latitude() + extent.northEast.latitude()) / 2.0;
-                        double centerLon = (extent.southWest.longitude() + extent.northEast.longitude()) / 2.0;
-                        m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(centerLat, centerLon), 7.5);
-                    }
-                });
+                connect(m_layerFloatingPanel->treeView(), &GISApp::UI::LayerTreeView::zoomToExtentRequested, handlePanToExtent);
+            }
+            if (m_layerManager) {
+                connect(m_layerManager, &GISApp::Layers::LayerManager::panToExtentRequested, handlePanToExtent);
             }
             
             // Connect model updates to force map view repaints for instant visibility & opacity updates
@@ -142,8 +157,9 @@ void MainWindow::setupMapView()
                 }
             });
 
-            // Set Initial Style and Camera
-            m_mapController->setStyle("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
+            // Set Initial Offline Tactical Dark Style and Camera
+            QString offlineStyle = QString("file://%1/config/offline_dark_style.json").arg(QDir::currentPath());
+            m_mapController->setStyle(offlineStyle);
             m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(28.6139, 77.2090), 10.0);
         }
     });
@@ -255,6 +271,22 @@ void MainWindow::setupThemeMenu()
     QMenu *themeMenu = menuBar()->addMenu(tr("THE&MES"));
     QMenu *windowMenu = menuBar()->addMenu(tr("&WINDOW"));
     QMenu *helpMenu = menuBar()->addMenu(tr("&HELP"));
+    QMenu *layersMenu = menuBar()->addMenu(tr("&LAYERS"));
+
+    QAction *publishAction = layersMenu->addAction(tr("🚀 Publish Layer..."));
+    QAction *manageGroupsAction = layersMenu->addAction(tr("📁 Manage Layer Groups..."));
+    connect(publishAction, &QAction::triggered, [this]() {
+        if (m_mapWidget && m_mapWidget->map()) {
+            GISApp::UI::Publishing::PublishLayerDialog dialog(m_layerManager, m_mapWidget->map(), this);
+            dialog.exec();
+        }
+    });
+    connect(manageGroupsAction, &QAction::triggered, [this]() {
+        if (m_layerManager) {
+            GISApp::UI::Publishing::GroupManagerDialog dialog(m_layerManager, this);
+            dialog.exec();
+        }
+    });
 
     (void)fileMenu; (void)editMenu; (void)viewMenu; (void)toolsMenu; (void)windowMenu; (void)helpMenu;
 

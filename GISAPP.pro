@@ -1,4 +1,4 @@
-QT += core gui widgets opengl network
+QT += core gui widgets opengl network sql
 
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -12,17 +12,19 @@ MOC_DIR     = $$PWD/build/moc
 UI_DIR      = $$PWD/build/ui
 
 
-INCLUDEPATH += /home/aman/maplibre-install/include \
-               /home/aman/maplibre-install/include/QMapLibre \
-               /home/aman/maplibre-install/include/QMapLibreWidgets
+INCLUDEPATH += /home/crl/maplibre-install/include \
+               /home/crl/maplibre-install/include/QMapLibre \
+               /home/crl/maplibre-install/include/QMapLibreWidgets
 
-LIBS += -L/home/aman/maplibre-install/lib -lQMapLibre -lQMapLibreWidgets
+LIBS += -L/home/crl/maplibre-install/lib -lQMapLibre -lQMapLibreWidgets
 
-QMAKE_LFLAGS += -Wl,-rpath,/home/aman/maplibre-install/lib
+QMAKE_LFLAGS += -Wl,-rpath,/home/crl/maplibre-install/lib
 
 
-INCLUDEPATH += $$PWD/src
-
+INCLUDEPATH += $$PWD/src \
+               $$PWD/src/publishing \
+               $$PWD/src/ui/publishing
+            
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
@@ -49,8 +51,14 @@ SOURCES += \
     src/layers/TacticalLayerProvider.cpp \
     src/ui/layertree/LayerTreeView.cpp \
     src/ui/layertree/LayerTreeFloatingWidget.cpp \
-    src/ui/layertree/LayerItemDelegate.cpp
-
+    src/ui/layertree/LayerItemDelegate.cpp \
+    src/publishing/RasterLayerPublisher.cpp \
+    src/publishing/VectorLayerPublisher.cpp \
+    src/publishing/LayerPublishingService.cpp \
+    src/ui/publishing/PublishLayerDialog.cpp \
+    src/ui/publishing/GroupManagerDialog.cpp \
+    src/publishing/LocalTileServer.cpp \
+    src/publishing/LayerRegistryManager.cpp
 
 HEADERS += \
     src/ui/mainwindow.h \
@@ -76,7 +84,15 @@ HEADERS += \
     src/layers/TacticalLayerProvider.h \
     src/ui/layertree/LayerTreeView.h \
     src/ui/layertree/LayerTreeFloatingWidget.h \
-    src/ui/layertree/LayerItemDelegate.h
+    src/ui/layertree/LayerItemDelegate.h \
+    src/publishing/IPublisherStrategy.h \
+    src/publishing/RasterLayerPublisher.h \
+    src/publishing/VectorLayerPublisher.h \
+    src/publishing/LayerPublishingService.h \
+    src/ui/publishing/PublishLayerDialog.h \
+    src/ui/publishing/GroupManagerDialog.h \
+    src/publishing/LocalTileServer.h \
+    src/publishing/LayerRegistryManager.h
 
 
 

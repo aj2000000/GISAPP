@@ -2,7 +2,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="/home/aman/maplibre-install"
+INSTALL_DIR="/home/crl/maplibre-install"
+QT_DIR="/home/crl/Qt/6.10.1/gcc_64"
 BUILD_DIR="$SCRIPT_DIR/build"
 
 echo "=========================================="
@@ -13,8 +14,8 @@ echo "=========================================="
 if [ ! -f "$INSTALL_DIR/lib/libQMapLibre.so" ] || [ ! -f "$INSTALL_DIR/lib/libQMapLibreWidgets.so" ]; then
     echo "[!] MapLibre installation not found at $INSTALL_DIR."
     echo "[*] Compiling MapLibre Native Qt..."
-    mkdir -p /home/aman/maplibre-native-qt/build
-    cd /home/aman/maplibre-native-qt/build
+    mkdir -p /home/crl/maplibre-native-qt/build
+    cd /home/crl/maplibre-native-qt/build
     cmake .. -G Ninja \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
         -DMLN_QT_WITH_LOCATION=OFF \
@@ -29,14 +30,15 @@ fi
 # 2. Build GISAPP
 echo "[*] Configuring and compiling GISAPP..."
 cd "$SCRIPT_DIR"
-rm -rf Makefile build/obj build/moc build/ui
+mkdir -p build/obj build/moc build/ui build/bin
 qmake6 GISAPP.pro
 make -j$(nproc)
 
 echo "[✓] GISAPP build completed successfully."
 
 # 3. Environment & Execution
-export LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
+export QT_PLUGIN_PATH="$QT_DIR/plugins:$QT_PLUGIN_PATH"
+export LD_LIBRARY_PATH="$QT_DIR/lib:$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
 
 if [ -x "$BUILD_DIR/bin/GISAPP" ]; then
     echo "[*] Launching GISAPP..."

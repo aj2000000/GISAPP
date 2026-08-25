@@ -76,6 +76,7 @@ public:
 
     void addChild(std::unique_ptr<LayerTreeNode> child);
     std::unique_ptr<LayerTreeNode> removeChild(int row);
+    void swapChildren(int row1, int row2);
 
     int childCount() const override;
     LayerTreeNode* child(int row) const override;

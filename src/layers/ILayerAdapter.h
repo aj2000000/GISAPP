@@ -75,6 +75,16 @@ public:
      * @return LayerExtent Struct containing bounding coordinates.
      */
     virtual LayerExtent getExtent() const = 0;
+
+    /**
+     * @brief Remove layer and associated source from underlying engine.
+     */
+    virtual void removeLayer() = 0;
+
+    /**
+     * @brief Re-insert layer into engine graphics Z-stack before target layer ID.
+     */
+    virtual void reinsertLayer(const QString &beforeLayerId) { (void)beforeLayerId; }
 };
 
 } // namespace GISApp::Layers

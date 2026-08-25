@@ -1,0 +1,14 @@
+{
+  "version": 8,
+  "name": "Tactical Offline Dark",
+  "sources": {},
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#0b0f19"
+      }
+    }
+  ]
+}

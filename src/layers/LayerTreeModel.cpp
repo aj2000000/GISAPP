@@ -106,4 +106,57 @@ QModelIndex LayerTreeModel::indexFromNode(LayerTreeNode *node) const {
     return createIndex(node->row(), 0, node);
 }
 
+bool LayerTreeModel::moveNodeUp(const QModelIndex &index) {
+    if (!index.isValid()) return false;
+    LayerTreeNode *node = nodeFromIndex(index);
+    if (!node || !node->parentNode()) return false;
+    LayerGroupNode *parentGroup = static_cast<LayerGroupNode*>(node->parentNode());
+    int curRow = node->row();
+    if (curRow <= 0) return false;
+
+    beginMoveRows(parent(index), curRow, curRow, parent(index), curRow - 1);
+    parentGroup->swapChildren(curRow, curRow - 1);
+    endMoveRows();
+
+    emit orderChanged();
+    emit layoutChanged();
+    return true;
+}
+
+bool LayerTreeModel::moveNodeDown(const QModelIndex &index) {
+    if (!index.isValid()) return false;
+    LayerTreeNode *node = nodeFromIndex(index);
+    if (!node || !node->parentNode()) return false;
+    LayerGroupNode *parentGroup = static_cast<LayerGroupNode*>(node->parentNode());
+    int curRow = node->row();
+    if (curRow >= parentGroup->childCount() - 1) return false;
+
+    beginMoveRows(parent(index), curRow + 1, curRow + 1, parent(index), curRow);
+    parentGroup->swapChildren(curRow, curRow + 1);
+    endMoveRows();
+
+    emit orderChanged();
+    emit layoutChanged();
+    return true;
+}
+
+bool LayerTreeModel::removeNode(LayerTreeNode *node) {
+    if (!node || node == m_rootNode.get()) return false;
+
+    LayerTreeNode *parent = node->parentNode();
+    if (!parent || parent->nodeType() != NodeType::Group) return false;
+
+    LayerGroupNode *parentGroup = static_cast<LayerGroupNode*>(parent);
+    int r = node->row();
+    QModelIndex parentIdx = indexFromNode(parentGroup);
+
+    beginRemoveRows(parentIdx, r, r);
+    parentGroup->removeChild(r);
+    endRemoveRows();
+
+    emit orderChanged();
+    emit layoutChanged();
+    return true;
+}
+
 } // namespace GISApp::Layers

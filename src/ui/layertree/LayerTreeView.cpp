@@ -7,6 +7,7 @@
 #include "layers/LayerTreeModel.h"
 #include <QContextMenuEvent>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <QHeaderView>
 
 namespace GISApp::UI {
@@ -107,7 +108,11 @@ void LayerTreeView::contextMenuEvent(QContextMenuEvent *event) {
 
     QAction *zoomAction = contextMenu.addAction("🎯 Pan to Extent");
     QAction *opacityAction = contextMenu.addAction("💧 Set Opacity...");
+    QAction *moveUpAction = contextMenu.addAction("⬆ Move Up (Render Higher)");
+    QAction *moveDownAction = contextMenu.addAction("🔽 Move Down (Render Lower)");
     QAction *toggleAction = contextMenu.addAction(node->checkState() == Qt::Checked ? "👁 Hide Layer" : "👁 Show Layer");
+    contextMenu.addSeparator();
+    QAction *removeAction = contextMenu.addAction(node->nodeType() == GISApp::Layers::NodeType::Group ? "🗑 Remove Group" : "🗑 Remove Layer");
 
     connect(zoomAction, &QAction::triggered, [this, node]() {
         GISApp::Layers::LayerExtent extent = node->getExtent();
@@ -125,9 +130,31 @@ void LayerTreeView::contextMenuEvent(QContextMenuEvent *event) {
         }
     });
 
+    connect(moveUpAction, &QAction::triggered, [this, node]() {
+        if (m_layerManager) {
+            m_layerManager->moveUp(node);
+        }
+    });
+
+    connect(moveDownAction, &QAction::triggered, [this, node]() {
+        if (m_layerManager) {
+            m_layerManager->moveDown(node);
+        }
+    });
+
     connect(toggleAction, &QAction::triggered, [this, node]() {
         bool isVisible = (node->checkState() == Qt::Checked);
         m_layerManager->setVisibility(node, !isVisible);
+    });
+
+    connect(removeAction, &QAction::triggered, [this, node]() {
+        if (!m_layerManager) return;
+        QString itemType = (node->nodeType() == GISApp::Layers::NodeType::Group) ? "group" : "layer";
+        if (QMessageBox::question(this, "Confirm Removal",
+                                  QString("Are you sure you want to remove the %1 '%2'?").arg(itemType, node->name()),
+                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+            m_layerManager->removeNode(node);
+        }
     });
 
     contextMenu.exec(event->globalPos());

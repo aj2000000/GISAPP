@@ -1,23 +1,31 @@
 /**
  * @file MapLibreLayerAdapter.cpp
- * @brief Implementation of MapLibre Native Layer Adapter.
+ * @brief Implementation of MapLibre Native Layer Adapter with custom layer filtering.
  */
 
 #include "layers/MapLibreLayerAdapter.h"
 #include <QVariantMap>
+#include <QDebug>
+#include <algorithm>
 
 namespace GISApp::Layers {
 
-MapLibreLayerAdapter::MapLibreLayerAdapter(const QString &layerId, QMapLibre::Map *mapPointer, const LayerExtent &defaultExtent)
-    : m_layerId(layerId), m_map(mapPointer), m_extent(defaultExtent)
+MapLibreLayerAdapter::MapLibreLayerAdapter(const QString &layerId, 
+                                           QMapLibre::Map *mapPointer, 
+                                           const LayerExtent &defaultExtent,
+                                           const QVariantMap &layerParams,
+                                           const QVariantMap &strokeParams)
+    : m_layerId(layerId), 
+      m_map(mapPointer), 
+      m_extent(defaultExtent),
+      m_layerParams(layerParams),
+      m_strokeParams(strokeParams)
 {
 }
 
 QString MapLibreLayerAdapter::layerId() const {
     return m_layerId;
 }
-
-#include <QDebug>
 
 void MapLibreLayerAdapter::setVisibility(bool visible) {
     m_visible = visible;
@@ -27,15 +35,15 @@ void MapLibreLayerAdapter::setVisibility(bool visible) {
 
     if (m_layerId == "dark-matter-base") {
         const auto layers = m_map->layerIds();
-        qWarning() << "[DEBUG - LayerAdapter] Toggling base map to" << visString << "| Layers count:" << layers.size();
         for (const QString &id : layers) {
-            // Keep user-added custom tactical overlays intact
-            if (id != "air-zones-layer" && id != "radar-coverage") {
+            // Protect user-published custom layers from base map bulk toggling
+            if (id != "air-zones-layer" && id != "radar-coverage" && 
+                !id.startsWith("raster-") && !id.startsWith("vector-")) {
                 m_map->setLayoutProperty(id, "visibility", visString);
             }
         }
     } else {
-        qWarning() << "[DEBUG - LayerAdapter] Toggling single layer:" << m_layerId << "to" << visString;
+        qWarning() << "[LayerAdapter] Setting visibility for single layer:" << m_layerId << "->" << visString;
         m_map->setLayoutProperty(m_layerId, "visibility", visString);
     }
 }
@@ -48,27 +56,25 @@ void MapLibreLayerAdapter::setOpacity(float opacity) {
     m_opacity = std::clamp(opacity, 0.0f, 1.0f);
     if (!m_map) return;
 
+    double dOpacity = static_cast<double>(m_opacity);
+
     if (m_layerId == "dark-matter-base") {
         const auto layers = m_map->layerIds();
-        qWarning() << "[DEBUG - LayerAdapter] Setting base map opacity to" << m_opacity << "| Layers count:" << layers.size();
         for (const QString &id : layers) {
-            if (id != "air-zones-layer" && id != "radar-coverage") {
-                m_map->setPaintProperty(id, "raster-opacity", m_opacity);
-                m_map->setPaintProperty(id, "fill-opacity", m_opacity);
-                m_map->setPaintProperty(id, "line-opacity", m_opacity);
-                m_map->setPaintProperty(id, "circle-opacity", m_opacity);
-                m_map->setPaintProperty(id, "symbol-opacity", m_opacity);
-                m_map->setPaintProperty(id, "background-opacity", m_opacity);
+            if (id != "air-zones-layer" && id != "radar-coverage" && 
+                !id.startsWith("raster-") && !id.startsWith("vector-")) {
+                m_map->setPaintProperty(id, "raster-opacity", dOpacity);
+                m_map->setPaintProperty(id, "fill-opacity", dOpacity);
             }
         }
     } else {
-        qWarning() << "[DEBUG - LayerAdapter] Setting single layer opacity:" << m_layerId << "to" << m_opacity;
-        m_map->setPaintProperty(m_layerId, "raster-opacity", m_opacity);
-        m_map->setPaintProperty(m_layerId, "fill-opacity", m_opacity);
-        m_map->setPaintProperty(m_layerId, "line-opacity", m_opacity);
-        m_map->setPaintProperty(m_layerId, "circle-opacity", m_opacity);
-        m_map->setPaintProperty(m_layerId, "symbol-opacity", m_opacity);
-        m_map->setPaintProperty(m_layerId, "background-opacity", m_opacity);
+        qWarning() << "[LayerAdapter] Setting opacity for single layer:" << m_layerId << "->" << dOpacity;
+        if (m_layerId.startsWith("raster-")) {
+            m_map->setPaintProperty(m_layerId, "raster-opacity", dOpacity);
+        } else {
+            m_map->setPaintProperty(m_layerId, "fill-opacity", dOpacity);
+            m_map->setPaintProperty(m_layerId + "-stroke", "line-opacity", dOpacity);
+        }
     }
 }
 
@@ -78,6 +84,55 @@ float MapLibreLayerAdapter::opacity() const {
 
 LayerExtent MapLibreLayerAdapter::getExtent() const {
     return m_extent;
+}
+
+void MapLibreLayerAdapter::removeLayer() {
+    if (!m_map || m_layerId.isEmpty()) return;
+
+    qWarning() << "[MapLibreLayerAdapter] Removing layer and source from MapLibre engine:" << m_layerId;
+
+    if (m_map->layerExists(m_layerId)) {
+        m_map->removeLayer(m_layerId);
+    }
+    QString strokeId = m_layerId + "-stroke";
+    if (m_map->layerExists(strokeId)) {
+        m_map->removeLayer(strokeId);
+    }
+
+    QString sourceId = m_layerId + "-src";
+    if (m_map->sourceExists(sourceId)) {
+        m_map->removeSource(sourceId);
+    }
+}
+
+void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
+    if (!m_map || m_layerId.isEmpty()) return;
+
+    qWarning() << "[MapLibreLayerAdapter] Re-inserting layer:" << m_layerId << "BEFORE:" << beforeLayerId;
+
+    if (m_map->layerExists(m_layerId)) {
+        m_map->removeLayer(m_layerId);
+    }
+    QString strokeId = m_layerId + "-stroke";
+    if (m_map->layerExists(strokeId)) {
+        m_map->removeLayer(strokeId);
+    }
+
+    if (!m_layerParams.isEmpty()) {
+        m_map->addLayer(m_layerId, m_layerParams, beforeLayerId);
+        m_map->setLayoutProperty(m_layerId, "visibility", m_visible ? "visible" : "none");
+        QString typeStr = m_layerParams.value("type").toString();
+        if (typeStr == "raster") {
+            m_map->setPaintProperty(m_layerId, "raster-opacity", static_cast<double>(m_opacity));
+        } else if (typeStr == "fill") {
+            m_map->setPaintProperty(m_layerId, "fill-opacity", static_cast<double>(m_opacity));
+        }
+    }
+    if (!m_strokeParams.isEmpty()) {
+        m_map->addLayer(strokeId, m_strokeParams, beforeLayerId);
+        m_map->setLayoutProperty(strokeId, "visibility", m_visible ? "visible" : "none");
+        m_map->setPaintProperty(strokeId, "line-opacity", static_cast<double>(m_opacity));
+    }
 }
 
 } // namespace GISApp::Layers

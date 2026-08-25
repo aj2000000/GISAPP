@@ -62,6 +62,20 @@ public:
     void setOpacity(LayerTreeNode *node, float opacity);
 
     /**
+     * @brief Remove a node from the tree.
+     * @param node Target node.
+     */
+    void removeNode(LayerTreeNode *node);
+
+    bool moveUp(LayerTreeNode *node);
+    bool moveDown(LayerTreeNode *node);
+
+    /**
+     * @brief Synchronize MapLibre engine Z-stack with the UI tree list order.
+     */
+    void syncRenderOrder();
+
+    /**
      * @brief Request panning/zooming to the geographic extent of a node.
      * @param node Target node.
      */
