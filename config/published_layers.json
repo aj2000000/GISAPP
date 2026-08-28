@@ -8,42 +8,16 @@
     ],
     "layers": [
         {
-            "folderPath": "/home/aman/aman/MAPDATA/WorldMap/worldgeo.json",
-            "groupName": "📍 Custom Vector Layers",
-            "isTiled": true,
-            "isVisible": true,
-            "maxZoom": 22,
-            "minZoom": 0,
-            "name": "worldgeo",
-            "opacity": 0.10000000149011612,
-            "orderIndex": 0,
-            "tilePath": "/home/aman/MAPDATA/worldgeo",
-            "type": "Vector"
-        },
-        {
-            "folderPath": "/home/aman/aman/MAPDATA/baseTiff",
-            "groupName": "🗺️ Raster Imagery & DSM",
-            "isTiled": true,
-            "isVisible": false,
-            "maxZoom": 22,
-            "minZoom": 0,
-            "name": "base",
-            "opacity": 1,
-            "orderIndex": 3,
-            "tilePath": "/home/aman/MAPDATA/base",
-            "type": "Raster"
-        },
-        {
-            "folderPath": "/home/aman/MAPDATA/d1/Google_Sat_Downloaded.tif",
+            "folderPath": "/home/aman/MAPDATA/Google_Satwq_Downloaded.tif",
             "groupName": "🗺️ Raster Imagery & DSM",
             "isTiled": true,
             "isVisible": true,
             "maxZoom": 22,
             "minZoom": 0,
-            "name": "Google_Sat_Downloaded",
+            "name": "Google_Satwq_Downloaded",
             "opacity": 1,
             "orderIndex": 0,
-            "tilePath": "/home/aman/MAPDATA/google_sat_downloaded",
+            "tilePath": "/home/aman/MAPDATA/google_satwq_downloaded",
             "type": "Raster"
         }
     ]

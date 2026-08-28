@@ -7,6 +7,7 @@
 
 #include "core/tasks/BackgroundTaskManager.h"
 #include "core/tasks/FunctionalTask.h"
+#include "core/notifications/NotificationManager.h"
 #include <QMutexLocker>
 #include <QUuid>
 #include <QtConcurrent>
@@ -51,9 +52,31 @@ QString BackgroundTaskManager::submitTaskCommand(TaskPtr task)
             updateProgress(task->id(), percent, status);
         });
 
-        if (task->state() == TaskState::Cancelled) {
-            cancelTask(task->id());
-        } else if (success) {
+        TaskState currentState = task->state();
+
+        bool isAlreadyFinalized = false;
+        {
+            QMutexLocker locker(&m_mutex);
+            for (const auto &t : m_tasks) {
+                if (t.id == task->id()) {
+                    if (t.state == TaskState::Completed || t.state == TaskState::Failed || t.state == TaskState::Cancelled) {
+                        isAlreadyFinalized = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (currentState == TaskState::Cancelled) {
+            if (!isAlreadyFinalized) {
+                cancelTask(task->id());
+            }
+        } else if (isAlreadyFinalized) {
+            // Task state was explicitly set via markCompleted(), markFailed(), or cancelTask()
+        } else if (currentState == TaskState::Running) {
+            // Task worker has delegated remaining steps asynchronously (e.g. QMetaObject::invokeMethod to GUI thread).
+            // Do not prematurely mark as failed.
+        } else if (success || currentState == TaskState::Completed) {
             markCompleted(task->id(), task->statusText().isEmpty() ? "Task finished successfully." : task->statusText());
         } else {
             markFailed(task->id(), task->statusText().isEmpty() ? "Task failed during execution." : task->statusText());
@@ -96,33 +119,49 @@ void BackgroundTaskManager::updateProgress(const QString &taskId, int percent, c
 
 void BackgroundTaskManager::markCompleted(const QString &taskId, const QString &completionMsg)
 {
-    QMutexLocker locker(&m_mutex);
-    for (auto &task : m_tasks) {
-        if (task.id == taskId) {
-            task.progress = 100;
-            task.statusText = completionMsg;
-            task.state = TaskState::Completed;
-            task.endTime = QDateTime::currentDateTime();
-            task.process = nullptr;
-            break;
+    TaskPtr commandTask = nullptr;
+    {
+        QMutexLocker locker(&m_mutex);
+        for (auto &task : m_tasks) {
+            if (task.id == taskId) {
+                task.progress = 100;
+                task.statusText = completionMsg;
+                task.state = TaskState::Completed;
+                task.endTime = QDateTime::currentDateTime();
+                task.process = nullptr;
+                commandTask = task.commandTask;
+                break;
+            }
         }
     }
     emit taskCompleted(taskId, completionMsg);
+
+    if (commandTask) {
+        commandTask->notifyCompletion(true);
+    }
 }
 
 void BackgroundTaskManager::markFailed(const QString &taskId, const QString &errorMsg)
 {
-    QMutexLocker locker(&m_mutex);
-    for (auto &task : m_tasks) {
-        if (task.id == taskId) {
-            task.statusText = errorMsg;
-            task.state = TaskState::Failed;
-            task.endTime = QDateTime::currentDateTime();
-            task.process = nullptr;
-            break;
+    TaskPtr commandTask = nullptr;
+    {
+        QMutexLocker locker(&m_mutex);
+        for (auto &task : m_tasks) {
+            if (task.id == taskId) {
+                task.statusText = errorMsg;
+                task.state = TaskState::Failed;
+                task.endTime = QDateTime::currentDateTime();
+                task.process = nullptr;
+                commandTask = task.commandTask;
+                break;
+            }
         }
     }
     emit taskFailed(taskId, errorMsg);
+
+    if (commandTask) {
+        commandTask->notifyCompletion(false);
+    }
 }
 
 void BackgroundTaskManager::cancelTask(const QString &taskId)

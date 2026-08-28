@@ -323,28 +323,8 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
                 }
             }
 
-            qWarning() << "[LayerRegistry] Restoring saved layer:" << meta.name << "from" << meta.folderPath << "| Zoom:" << meta.minZoom << "-" << meta.maxZoom << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
-            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map, nullptr, meta.minZoom, meta.maxZoom);
-
-            // Apply saved opacity & visibility to restored node
-            if (layerManager->model()) {
-                auto root = layerManager->model()->rootNode();
-                std::function<void(GISApp::Layers::LayerTreeNode*)> applyMeta = [&](GISApp::Layers::LayerTreeNode *node) {
-                    if (!node) return;
-                    if (node->nodeType() == GISApp::Layers::NodeType::Layer && node->name() == meta.name) {
-                        layerManager->setOpacity(node, meta.opacity);
-                        layerManager->setVisibility(node, meta.isVisible);
-                    } else if (node->nodeType() == GISApp::Layers::NodeType::Group) {
-                        GISApp::Layers::LayerGroupNode *gNode = static_cast<GISApp::Layers::LayerGroupNode*>(node);
-                        for (int i = 0; i < gNode->childCount(); ++i) {
-                            applyMeta(gNode->child(i));
-                        }
-                    }
-                };
-                for (int i = 0; i < root->childCount(); ++i) {
-                    applyMeta(root->child(i));
-                }
-            }
+            qWarning() << "[LayerRegistry] Restoring saved layer in background:" << meta.name << "from" << meta.folderPath << "| Zoom:" << meta.minZoom << "-" << meta.maxZoom << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
+            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map, nullptr, meta.minZoom, meta.maxZoom, true, true, meta.opacity, meta.isVisible);
         }
 
         // 3. Re-order child nodes inside groups to strictly match saved orderIndex

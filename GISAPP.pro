@@ -34,7 +34,9 @@ INCLUDEPATH += $$PWD/src \
                $$PWD/src/ui/publishing \
                $$PWD/src/core/tasks \
                $$PWD/src/ui/tasks \
-               $$PWD/src/ui/download
+               $$PWD/src/ui/download \
+               $$PWD/src/core/notifications \
+               $$PWD/src/ui/notifications
 
 SOURCES += \
     src/main.cpp \
@@ -72,7 +74,11 @@ SOURCES += \
     src/core/tasks/BackgroundTaskManager.cpp \
     src/ui/tasks/BackgroundTaskDialog.cpp \
     src/core/tasks/GoogleSatDownloaderTask.cpp \
-    src/ui/download/DownloadSatImageryDialog.cpp
+    src/ui/download/DownloadSatImageryDialog.cpp \
+    src/core/notifications/NotificationFactory.cpp \
+    src/core/notifications/NotificationManager.cpp \
+    src/ui/notifications/CriticalNotificationStrategy.cpp \
+    src/ui/notifications/FlashNotificationStrategy.cpp
 
 HEADERS += \
     src/core/SystemConfigManager.h \
@@ -114,7 +120,14 @@ HEADERS += \
     src/core/tasks/BackgroundTaskManager.h \
     src/ui/tasks/BackgroundTaskDialog.h \
     src/core/tasks/GoogleSatDownloaderTask.h \
-    src/ui/download/DownloadSatImageryDialog.h
+    src/ui/download/DownloadSatImageryDialog.h \
+    src/core/notifications/NotificationTypes.h \
+    src/core/notifications/INotificationStrategy.h \
+    src/core/notifications/INotificationObserver.h \
+    src/core/notifications/NotificationFactory.h \
+    src/core/notifications/NotificationManager.h \
+    src/ui/notifications/CriticalNotificationStrategy.h \
+    src/ui/notifications/FlashNotificationStrategy.h
 
 
 

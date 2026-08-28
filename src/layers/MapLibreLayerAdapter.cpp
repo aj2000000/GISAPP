@@ -63,6 +63,10 @@ void MapLibreLayerAdapter::setVisibility(bool visible) {
         if (m_map->layerExists(m_layerId)) {
             m_map->setLayoutProperty(m_layerId, "visibility", visString);
         }
+        QString strokeId = m_layerId + "-stroke";
+        if (m_map->layerExists(strokeId)) {
+            m_map->setLayoutProperty(strokeId, "visibility", visString);
+        }
     }
 }
 
@@ -93,6 +97,8 @@ void MapLibreLayerAdapter::setOpacity(float opacity) {
             QString mainType = m_layerParams.value("type").toString();
             if (mainType == "fill") {
                 m_map->setPaintProperty(m_layerId, "fill-opacity", dOpacity);
+            } else if (mainType == "line") {
+                m_map->setPaintProperty(m_layerId, "line-opacity", dOpacity);
             } else if (mainType == "symbol") {
                 m_map->setPaintProperty(m_layerId, "icon-opacity", dOpacity);
             } else if (mainType == "circle") {

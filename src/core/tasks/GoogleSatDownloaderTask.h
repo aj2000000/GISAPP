@@ -44,6 +44,7 @@ public:
     QString statusText() const override;
     QDateTime startTime() const override;
     QDateTime endTime() const override;
+    void notifyCompletion(bool success) override;
 
     /**
      * @brief Convenience static method launching background download task.

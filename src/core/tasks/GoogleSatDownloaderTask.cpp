@@ -5,6 +5,7 @@
 
 #include "core/tasks/GoogleSatDownloaderTask.h"
 #include "core/tasks/BackgroundTaskManager.h"
+#include "core/notifications/NotificationManager.h"
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -17,6 +18,8 @@
 #include <QUuid>
 #include <QDebug>
 #include <cmath>
+#include <vector>
+#include <algorithm>
 
 #include <gdal_priv.h>
 #include <ogr_spatialref.h>
@@ -124,6 +127,44 @@ QString GoogleSatDownloaderTask::startDownload(const DownloaderParams &params)
     return BackgroundTaskManager::instance().submitTaskCommand(task);
 }
 
+struct TileWorkItem {
+    int x;
+    int y;
+    int destX;
+    int destY;
+    int retries{0};
+};
+
+static void writeTileToGdal(GDALDataset *dataset, int destX, int destY, const QImage &tileImg) {
+    if (!dataset || tileImg.isNull()) return;
+
+    int tw = tileImg.width();
+    int th = tileImg.height();
+
+    QByteArray rBuf(tw * th, 0);
+    QByteArray gBuf(tw * th, 0);
+    QByteArray bBuf(tw * th, 0);
+
+    char *rPtr = rBuf.data();
+    char *gPtr = gBuf.data();
+    char *bPtr = bBuf.data();
+
+    for (int py = 0; py < th; ++py) {
+        const QRgb *scanline = reinterpret_cast<const QRgb*>(tileImg.constScanLine(py));
+        int offset = py * tw;
+        for (int px = 0; px < tw; ++px) {
+            QRgb pixel = scanline[px];
+            rPtr[offset + px] = static_cast<char>(qRed(pixel));
+            gPtr[offset + px] = static_cast<char>(qGreen(pixel));
+            bPtr[offset + px] = static_cast<char>(qBlue(pixel));
+        }
+    }
+
+    dataset->GetRasterBand(1)->RasterIO(GF_Write, destX, destY, tw, th, rBuf.data(), tw, th, GDT_Byte, 0, 0);
+    dataset->GetRasterBand(2)->RasterIO(GF_Write, destX, destY, tw, th, gBuf.data(), tw, th, GDT_Byte, 0, 0);
+    dataset->GetRasterBand(3)->RasterIO(GF_Write, destX, destY, tw, th, bBuf.data(), tw, th, GDT_Byte, 0, 0);
+}
+
 bool GoogleSatDownloaderTask::execute(ProgressCallback progressCb)
 {
     {
@@ -155,86 +196,7 @@ bool GoogleSatDownloaderTask::execute(ProgressCallback progressCb)
     int imgWidth = cols * 256;
     int imgHeight = rows * 256;
 
-    QImage stitchedImage(imgWidth, imgHeight, QImage::Format_RGB32);
-    stitchedImage.fill(Qt::black);
-
-    QNetworkAccessManager nam;
-    int downloadedCount = 0;
-    int validTilesCount = 0;
-
-    for (int y = minY; y <= maxY; ++y) {
-        for (int x = minX; x <= maxX; ++x) {
-            if (m_cancelRequested) {
-                QMutexLocker locker(&m_mutex);
-                m_state = TaskState::Cancelled;
-                m_endTime = QDateTime::currentDateTime();
-                return false;
-            }
-
-            int serverNum = (x + y) % 4;
-            QString tileUrl = QString("https://mt%1.google.com/vt/lyrs=y&x=%2&y=%3&z=%4")
-                                  .arg(serverNum).arg(x).arg(y).arg(targetZoom);
-
-            QNetworkRequest request((QUrl(tileUrl)));
-            request.setRawHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36");
-
-            QEventLoop loop;
-            QTimer timer;
-            timer.setSingleShot(true);
-            
-            QNetworkReply *reply = nam.get(request);
-            QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-            QObject::connect(&timer, &QTimer::timeout, &loop, [&]() {
-                if (reply->isRunning()) {
-                    reply->abort();
-                }
-                loop.quit();
-            });
-
-            timer.start(10000); // 10 second network timeout per tile
-            loop.exec();
-
-            if (reply->error() == QNetworkReply::NoError) {
-                QImage tileImg;
-                if (tileImg.loadFromData(reply->readAll())) {
-                    int destX = (x - minX) * 256;
-                    int destY = (y - minY) * 256;
-                    QPainter painter(&stitchedImage);
-                    painter.drawImage(destX, destY, tileImg);
-                    validTilesCount++;
-                }
-            }
-            reply->deleteLater();
-
-            downloadedCount++;
-            int percent = (downloadedCount * 90) / totalTiles;
-            QString statusMsg = QString("Downloaded tile %1 of %2 (Zoom %3)")
-                                    .arg(downloadedCount).arg(totalTiles).arg(targetZoom);
-
-            {
-                QMutexLocker locker(&m_mutex);
-                m_progress = percent;
-                m_statusText = statusMsg;
-            }
-            if (progressCb) {
-                progressCb(percent, statusMsg);
-            }
-        }
-    }
-
-    if (validTilesCount == 0) {
-        QMutexLocker locker(&m_mutex);
-        m_state = TaskState::Failed;
-        m_statusText = "Download failed: No satellite tiles could be fetched. Check internet connection.";
-        m_endTime = QDateTime::currentDateTime();
-        return false;
-    }
-
-    if (progressCb) {
-        progressCb(92, "Writing GeoTIFF raster dataset...");
-    }
-
-    // Ensure target directory exists
+    // Ensure output directory exists
     QFileInfo fileInfo(m_params.outputPath);
     QDir().mkpath(fileInfo.absolutePath());
 
@@ -254,8 +216,9 @@ bool GoogleSatDownloaderTask::execute(ProgressCallback progressCb)
 
     GDALDataset *dataset = driver->Create(m_params.outputPath.toUtf8().constData(),
                                          imgWidth, imgHeight, 3, GDT_Byte, options);
+    CSLDestroy(options);
+
     if (!dataset) {
-        CSLDestroy(options);
         QMutexLocker locker(&m_mutex);
         m_state = TaskState::Failed;
         m_statusText = "Failed to create output GeoTIFF file.";
@@ -281,39 +244,155 @@ bool GoogleSatDownloaderTask::execute(ProgressCallback progressCb)
     dataset->SetProjection(wkt);
     CPLFree(wkt);
 
-    QByteArray rLine(imgWidth, 0);
-    QByteArray gLine(imgWidth, 0);
-    QByteArray bLine(imgWidth, 0);
-
-    for (int y = 0; y < imgHeight; ++y) {
-        const QRgb *scanline = reinterpret_cast<const QRgb*>(stitchedImage.constScanLine(y));
-        char *rPtr = rLine.data();
-        char *gPtr = gLine.data();
-        char *bPtr = bLine.data();
-
-        for (int x = 0; x < imgWidth; ++x) {
-            QRgb pixel = scanline[x];
-            rPtr[x] = static_cast<char>(qRed(pixel));
-            gPtr[x] = static_cast<char>(qGreen(pixel));
-            bPtr[x] = static_cast<char>(qBlue(pixel));
+    // Prepare tile work items
+    std::vector<TileWorkItem> workQueue;
+    workQueue.reserve(totalTiles);
+    for (int y = minY; y <= maxY; ++y) {
+        for (int x = minX; x <= maxX; ++x) {
+            TileWorkItem item;
+            item.x = x;
+            item.y = y;
+            item.destX = (x - minX) * 256;
+            item.destY = (y - minY) * 256;
+            workQueue.push_back(item);
         }
-
-        dataset->GetRasterBand(1)->RasterIO(GF_Write, 0, y, imgWidth, 1, rLine.data(), imgWidth, 1, GDT_Byte, 0, 0);
-        dataset->GetRasterBand(2)->RasterIO(GF_Write, 0, y, imgWidth, 1, gLine.data(), imgWidth, 1, GDT_Byte, 0, 0);
-        dataset->GetRasterBand(3)->RasterIO(GF_Write, 0, y, imgWidth, 1, bLine.data(), imgWidth, 1, GDT_Byte, 0, 0);
     }
 
-    GDALClose(dataset);
-    CSLDestroy(options);
+    QNetworkAccessManager nam;
+    int downloadedCount = 0;
+    int validTilesCount = 0;
 
+    // Batch downloading up to 6 tiles concurrently
+    const size_t BATCH_SIZE = 6;
+    size_t queueIndex = 0;
+
+    while (queueIndex < workQueue.size()) {
+        if (m_cancelRequested) {
+            GDALClose(dataset);
+            QMutexLocker locker(&m_mutex);
+            m_state = TaskState::Cancelled;
+            m_endTime = QDateTime::currentDateTime();
+            return false;
+        }
+
+        size_t currentBatchCount = std::min(BATCH_SIZE, workQueue.size() - queueIndex);
+        QEventLoop loop;
+        int finishedInBatch = 0;
+
+        for (size_t i = 0; i < currentBatchCount; ++i) {
+            TileWorkItem &item = workQueue[queueIndex + i];
+            int serverNum = (item.x + item.y) % 4;
+            QString tileUrl = QString("https://mt%1.google.com/vt/lyrs=y&x=%2&y=%3&z=%4")
+                                  .arg(serverNum).arg(item.x).arg(item.y).arg(targetZoom);
+
+            QNetworkRequest request((QUrl(tileUrl)));
+            request.setRawHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            request.setRawHeader("Referer", "https://maps.google.com/");
+
+            QNetworkReply *reply = nam.get(request);
+
+            QTimer *timer = new QTimer(reply);
+            timer->setSingleShot(true);
+
+            QObject::connect(timer, &QTimer::timeout, reply, [reply]() {
+                if (reply->isRunning()) {
+                    reply->abort();
+                }
+            });
+
+            QObject::connect(reply, &QNetworkReply::finished, [reply, timer, &item, dataset, &finishedInBatch, &validTilesCount, &loop, currentBatchCount]() {
+                timer->stop();
+                if (reply->error() == QNetworkReply::NoError) {
+                    QImage tileImg;
+                    if (tileImg.loadFromData(reply->readAll())) {
+                        writeTileToGdal(dataset, item.destX, item.destY, tileImg);
+                        validTilesCount++;
+                    }
+                } else if (item.retries < 2) {
+                    item.retries++;
+                    qWarning() << "[GoogleSatDownloader] Retrying tile x:" << item.x << "y:" << item.y << "Attempt:" << item.retries;
+                }
+                reply->deleteLater();
+                finishedInBatch++;
+                if (static_cast<size_t>(finishedInBatch) >= currentBatchCount) {
+                    loop.quit();
+                }
+            });
+
+            timer->start(8000); // 8 second timeout per tile
+        }
+
+        loop.exec();
+
+        downloadedCount += currentBatchCount;
+        queueIndex += currentBatchCount;
+
+        int percent = (downloadedCount * 95) / totalTiles;
+        QString statusMsg = QString("Streaming tiles to disk: %1 of %2 (Zoom %3)")
+                                .arg(downloadedCount).arg(totalTiles).arg(targetZoom);
+
+        {
+            QMutexLocker locker(&m_mutex);
+            m_progress = percent;
+            m_statusText = statusMsg;
+        }
+        if (progressCb) {
+            progressCb(percent, statusMsg);
+        }
+
+        if (downloadedCount % 30 == 0) {
+            dataset->FlushCache();
+        }
+    }
+
+    if (validTilesCount == 0) {
+        GDALClose(dataset);
+        QMutexLocker locker(&m_mutex);
+        m_state = TaskState::Failed;
+        m_statusText = "Download failed: No satellite tiles could be fetched. Check internet connection.";
+        m_endTime = QDateTime::currentDateTime();
+        return false;
+    }
+
+    {
+        QMutexLocker locker(&m_mutex);
+        m_progress = 98;
+        m_statusText = "Finalizing GeoTIFF dataset & writing metadata...";
+    }
+    if (progressCb) {
+        progressCb(98, "Finalizing GeoTIFF dataset & writing metadata...");
+    }
+
+    dataset->FlushCache();
+    GDALClose(dataset);
+
+    QString finalMsg = QString("Successfully saved GeoTIFF to %1").arg(m_params.outputPath);
     {
         QMutexLocker locker(&m_mutex);
         m_state = TaskState::Completed;
         m_progress = 100;
-        m_statusText = QString("Successfully saved GeoTIFF to %1").arg(m_params.outputPath);
+        m_statusText = finalMsg;
         m_endTime = QDateTime::currentDateTime();
     }
+    if (progressCb) {
+        progressCb(100, finalMsg);
+    }
     return true;
+}
+
+void GoogleSatDownloaderTask::notifyCompletion(bool success)
+{
+    if (success) {
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Download Complete",
+            QString("Satellite imagery downloaded successfully to '%1'.").arg(m_params.outputPath)
+        );
+    } else {
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyCritical(
+            "Download Failed",
+            QString("Failed to download satellite imagery: %1").arg(statusText())
+        );
+    }
 }
 
 } // namespace GISApp::Core::Tasks

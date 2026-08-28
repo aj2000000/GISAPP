@@ -24,6 +24,7 @@
 #include "ui/tasks/BackgroundTaskDialog.h"
 #include "ui/download/DownloadSatImageryDialog.h"
 #include "core/SystemConfigManager.h"
+#include "core/notifications/NotificationManager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -309,6 +310,26 @@ void MainWindow::setupThemeMenu()
             m_backgroundTaskDialog->raise();
             m_backgroundTaskDialog->activateWindow();
         }
+    });
+
+    toolsMenu->addSeparator();
+    QAction *flashNotifAction = toolsMenu->addAction(tr("🔔 Test Flash Notification (5s Auto-Vanish)"));
+    connect(flashNotifAction, &QAction::triggered, [this]() {
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Spatial Indexing Complete",
+            "Vector dataset spatial cache loaded successfully in background thread.",
+            5000,
+            this
+        );
+    });
+
+    QAction *criticalNotifAction = toolsMenu->addAction(tr("🚨 Test Critical Notification (User Ack Required)"));
+    connect(criticalNotifAction, &QAction::triggered, [this]() {
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyCritical(
+            "GPS Telemetry Connection Lost",
+            "Lost connection to high-precision NMEA receiver. Please verify hardware port configuration immediately.",
+            this
+        );
     });
 
     QMenu *downloadMenu = menuBar()->addMenu(tr("&DOWNLOAD"));

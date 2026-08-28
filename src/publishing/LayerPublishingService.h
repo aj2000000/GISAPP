@@ -39,7 +39,10 @@ public:
                       ProgressCallback progressCb = nullptr,
                       int minZoom = 0,
                       int maxZoom = 22,
-                      bool runInBackground = false);
+                      bool runInBackground = false,
+                      bool suppressNotification = false,
+                      float initialOpacity = 1.0f,
+                      bool initialVisible = true);
 
     QString lastStatusMessage() const;
 

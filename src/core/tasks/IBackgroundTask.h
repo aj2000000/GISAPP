@@ -85,6 +85,11 @@ public:
      * @brief Gets timestamp when task finished/failed/cancelled.
      */
     virtual QDateTime endTime() const = 0;
+
+    /**
+     * @brief Triggers completion notification. Default implementation in AbstractBackgroundTask displays a Flash Notification.
+     */
+    virtual void notifyCompletion(bool success) { Q_UNUSED(success); }
 };
 
 using TaskPtr = std::shared_ptr<IBackgroundTask>;

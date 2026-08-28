@@ -2,7 +2,7 @@
 #include "MapLibreLayerAdapter.h"
 #include <QVariantMap>
 #include <cmath>
-#include <QDebug>
+#include <QTimer>
 
 #include "publishing/LayerRegistryManager.h"
 #include "publishing/LayerPublishingService.h"
@@ -183,9 +183,11 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
         "radar-coverage", map, indiaExtent);
     layerManager->addLayer("Primary Radar Coverage", radarCoverageAdapter, intelligenceGroup);
 
-    // Auto-restore custom published layers from persistent disk JSON registry
-    GISApp::Publishing::LayerPublishingService publishingService;
-    GISApp::Publishing::LayerRegistryManager::instance().restoreSavedLayers(layerManager, map, &publishingService);
+    // Auto-restore custom published layers asynchronously after main UI window finishes rendering
+    QTimer::singleShot(150, [layerManager, map]() {
+        auto publishingService = new GISApp::Publishing::LayerPublishingService(layerManager);
+        GISApp::Publishing::LayerRegistryManager::instance().restoreSavedLayers(layerManager, map, publishingService);
+    });
 }
 
 } // namespace Layers
