@@ -51,7 +51,11 @@ template <> constexpr inline auto GISApp::Map::MapLibreWidget::qt_create_metaobj
         "cameraChanged",
         "zoomLevel",
         "scaleDenominator",
-        "center"
+        "center",
+        "customContextMenuRequested",
+        "QPoint",
+        "globalPos",
+        "localPos"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -74,6 +78,10 @@ template <> constexpr inline auto GISApp::Map::MapLibreWidget::qt_create_metaobj
         // Signal 'cameraChanged'
         QtMocHelpers::SignalData<void(double, double, const GISApp::Core::Models::GeoCoordinate &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::Double, 11 }, { QMetaType::Double, 12 }, { 0x80000000 | 3, 13 },
+        }}),
+        // Signal 'customContextMenuRequested'
+        QtMocHelpers::SignalData<void(const QPoint &, const QPoint &, const GISApp::Core::Models::GeoCoordinate &)>(14, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { 0x80000000 | 15, 16 }, { 0x80000000 | 15, 17 }, { 0x80000000 | 3, 4 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -103,6 +111,7 @@ void GISApp::Map::MapLibreWidget::qt_static_metacall(QObject *_o, QMetaObject::C
         case 2: _t->mousePressed((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[2]))); break;
         case 3: _t->mouseReleased((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[2]))); break;
         case 4: _t->cameraChanged((*reinterpret_cast<std::add_pointer_t<double>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<double>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[3]))); break;
+        case 5: _t->customContextMenuRequested((*reinterpret_cast<std::add_pointer_t<QPoint>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QPoint>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[3]))); break;
         default: ;
         }
     }
@@ -116,6 +125,8 @@ void GISApp::Map::MapLibreWidget::qt_static_metacall(QObject *_o, QMetaObject::C
         if (QtMocHelpers::indexOfMethod<void (MapLibreWidget::*)(QMouseEvent * , const GISApp::Core::Models::GeoCoordinate & )>(_a, &MapLibreWidget::mouseReleased, 3))
             return;
         if (QtMocHelpers::indexOfMethod<void (MapLibreWidget::*)(double , double , const GISApp::Core::Models::GeoCoordinate & )>(_a, &MapLibreWidget::cameraChanged, 4))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (MapLibreWidget::*)(const QPoint & , const QPoint & , const GISApp::Core::Models::GeoCoordinate & )>(_a, &MapLibreWidget::customContextMenuRequested, 5))
             return;
     }
 }
@@ -141,14 +152,14 @@ int GISApp::Map::MapLibreWidget::qt_metacall(QMetaObject::Call _c, int _id, void
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 5)
+        if (_id < 6)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 5;
+        _id -= 6;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 5)
+        if (_id < 6)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 5;
+        _id -= 6;
     }
     return _id;
 }
@@ -181,5 +192,11 @@ void GISApp::Map::MapLibreWidget::mouseReleased(QMouseEvent * _t1, const GISApp:
 void GISApp::Map::MapLibreWidget::cameraChanged(double _t1, double _t2, const GISApp::Core::Models::GeoCoordinate & _t3)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 4, nullptr, _t1, _t2, _t3);
+}
+
+// SIGNAL 5
+void GISApp::Map::MapLibreWidget::customContextMenuRequested(const QPoint & _t1, const QPoint & _t2, const GISApp::Core::Models::GeoCoordinate & _t3)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 5, nullptr, _t1, _t2, _t3);
 }
 QT_WARNING_POP

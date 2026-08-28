@@ -42,7 +42,9 @@ template <> constexpr inline auto GISApp::UI::LayerTreeView::qt_create_metaobjec
         "zoomToExtentRequested",
         "",
         "GISApp::Layers::LayerExtent",
-        "extent"
+        "extent",
+        "ingestAreaOfViewRequested",
+        "ingestTracksRequested"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -50,6 +52,10 @@ template <> constexpr inline auto GISApp::UI::LayerTreeView::qt_create_metaobjec
         QtMocHelpers::SignalData<void(const GISApp::Layers::LayerExtent &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
             { 0x80000000 | 3, 4 },
         }}),
+        // Signal 'ingestAreaOfViewRequested'
+        QtMocHelpers::SignalData<void()>(5, 2, QMC::AccessPublic, QMetaType::Void),
+        // Signal 'ingestTracksRequested'
+        QtMocHelpers::SignalData<void()>(6, 2, QMC::AccessPublic, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -74,11 +80,17 @@ void GISApp::UI::LayerTreeView::qt_static_metacall(QObject *_o, QMetaObject::Cal
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->zoomToExtentRequested((*reinterpret_cast<std::add_pointer_t<GISApp::Layers::LayerExtent>>(_a[1]))); break;
+        case 1: _t->ingestAreaOfViewRequested(); break;
+        case 2: _t->ingestTracksRequested(); break;
         default: ;
         }
     }
     if (_c == QMetaObject::IndexOfMethod) {
         if (QtMocHelpers::indexOfMethod<void (LayerTreeView::*)(const GISApp::Layers::LayerExtent & )>(_a, &LayerTreeView::zoomToExtentRequested, 0))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (LayerTreeView::*)()>(_a, &LayerTreeView::ingestAreaOfViewRequested, 1))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (LayerTreeView::*)()>(_a, &LayerTreeView::ingestTracksRequested, 2))
             return;
     }
 }
@@ -102,14 +114,14 @@ int GISApp::UI::LayerTreeView::qt_metacall(QMetaObject::Call _c, int _id, void *
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 3;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 1)
+        if (_id < 3)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 1;
+        _id -= 3;
     }
     return _id;
 }
@@ -118,5 +130,17 @@ int GISApp::UI::LayerTreeView::qt_metacall(QMetaObject::Call _c, int _id, void *
 void GISApp::UI::LayerTreeView::zoomToExtentRequested(const GISApp::Layers::LayerExtent & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1);
+}
+
+// SIGNAL 1
+void GISApp::UI::LayerTreeView::ingestAreaOfViewRequested()
+{
+    QMetaObject::activate(this, &staticMetaObject, 1, nullptr);
+}
+
+// SIGNAL 2
+void GISApp::UI::LayerTreeView::ingestTracksRequested()
+{
+    QMetaObject::activate(this, &staticMetaObject, 2, nullptr);
 }
 QT_WARNING_POP

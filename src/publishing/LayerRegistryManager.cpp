@@ -65,7 +65,7 @@ void LayerRegistryManager::loadFromDisk() {
             meta.minZoom = obj.value("minZoom").toInt(0);
             meta.maxZoom = obj.value("maxZoom").toInt(22);
 
-            if (!meta.name.isEmpty() && (!meta.folderPath.isEmpty() || !meta.tilePath.isEmpty())) {
+            if (!meta.name.isEmpty()) {
                 m_registry.append(meta);
                 if (!meta.groupName.isEmpty() && !m_customGroups.contains(meta.groupName)) {
                     m_customGroups.append(meta.groupName);
@@ -90,7 +90,7 @@ void LayerRegistryManager::saveToDisk() {
         obj["name"] = meta.name;
         obj["type"] = (meta.type == LayerType::Vector) ? "Vector" : "Raster";
         obj["folderPath"] = meta.folderPath;
-        obj["tilePath"] = meta.tilePath.isEmpty() ? QString("%1/MAPDATA/%2").arg(QDir::homePath()).arg(QString(meta.name).toLower().replace(' ', '_')) : meta.tilePath;
+        obj["tilePath"] = meta.tilePath;
         obj["groupName"] = meta.groupName;
         obj["isTiled"] = meta.isTiled;
         obj["isVisible"] = meta.isVisible;
@@ -120,6 +120,7 @@ void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerMana
 
     m_customGroups.clear();
     int globalOrderIdx = 0;
+    QList<PublishedLayerMeta> updatedRegistry;
 
     std::function<void(GISApp::Layers::LayerTreeNode*, const QString&)> traverse = 
         [&](GISApp::Layers::LayerTreeNode *node, const QString &currentGroupName) {
@@ -137,17 +138,30 @@ void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerMana
                 traverse(gNode->child(i), gName);
             }
         } else if (node->nodeType() == GISApp::Layers::NodeType::Layer) {
-            for (auto &meta : m_registry) {
+            PublishedLayerMeta targetMeta;
+            bool found = false;
+            for (const auto &meta : m_registry) {
                 if (meta.name == node->name()) {
-                    meta.isVisible = (node->checkState() == Qt::Checked);
-                    meta.opacity = node->opacity();
-                    if (!currentGroupName.isEmpty()) {
-                        meta.groupName = currentGroupName;
-                    }
-                    meta.orderIndex = globalOrderIdx;
+                    targetMeta = meta;
+                    found = true;
                     break;
                 }
             }
+            if (!found) {
+                targetMeta.name = node->name();
+                targetMeta.type = LayerType::Vector;
+                targetMeta.isTiled = false;
+                targetMeta.minZoom = 0;
+                targetMeta.maxZoom = 22;
+            }
+            targetMeta.isVisible = (node->checkState() == Qt::Checked);
+            targetMeta.opacity = node->opacity();
+            if (!currentGroupName.isEmpty()) {
+                targetMeta.groupName = currentGroupName;
+            }
+            targetMeta.orderIndex = globalOrderIdx;
+
+            updatedRegistry.append(targetMeta);
             globalOrderIdx++;
         }
     };
@@ -156,6 +170,7 @@ void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerMana
         traverse(root->child(i), QString());
     }
 
+    m_registry = updatedRegistry;
     saveToDisk();
 }
 
@@ -202,7 +217,9 @@ void LayerRegistryManager::registerPublishedLayer(LayerType type,
                                                   const QString &layerName,
                                                   const QString &groupName,
                                                   int minZoom,
-                                                  int maxZoom)
+                                                  int maxZoom,
+                                                  float opacity,
+                                                  bool isVisible)
 {
     registerGroup(groupName);
 
@@ -214,6 +231,8 @@ void LayerRegistryManager::registerPublishedLayer(LayerType type,
             meta.groupName = groupName;
             meta.minZoom = minZoom;
             meta.maxZoom = maxZoom;
+            meta.opacity = opacity;
+            meta.isVisible = isVisible;
             saveToDisk();
             return;
         }
@@ -224,7 +243,8 @@ void LayerRegistryManager::registerPublishedLayer(LayerType type,
     meta.type = type;
     meta.folderPath = folderPath;
     meta.groupName = groupName;
-    meta.isVisible = true;
+    meta.opacity = opacity;
+    meta.isVisible = isVisible;
     meta.minZoom = minZoom;
     meta.maxZoom = maxZoom;
 
@@ -297,7 +317,32 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
         qWarning() << "[LayerRegistry] Auto-restoring" << m_registry.size() << "published layers in saved order from disk...";
 
         for (const auto &meta : m_registry) {
-            if (!QFileInfo(meta.folderPath).exists()) {
+            // Find existing layer node in LayerManager tree
+            GISApp::Layers::LayerTreeNode *existingNode = nullptr;
+            if (layerManager->model()) {
+                auto root = layerManager->model()->rootNode();
+                std::function<void(GISApp::Layers::LayerTreeNode*)> findNode = [&](GISApp::Layers::LayerTreeNode *n) {
+                    if (!n || existingNode) return;
+                    if (n->nodeType() == GISApp::Layers::NodeType::Layer && n->name() == meta.name) {
+                        existingNode = n;
+                        return;
+                    }
+                    if (n->nodeType() == GISApp::Layers::NodeType::Group) {
+                        auto g = static_cast<GISApp::Layers::LayerGroupNode*>(n);
+                        for (int i = 0; i < g->childCount(); ++i) findNode(g->child(i));
+                    }
+                };
+                for (int i = 0; i < root->childCount(); ++i) findNode(root->child(i));
+            }
+
+            if (existingNode) {
+                qWarning() << "[LayerRegistry] Restoring existing layer properties:" << meta.name << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
+                layerManager->setOpacity(existingNode, meta.opacity);
+                layerManager->setVisibility(existingNode, meta.isVisible);
+                continue;
+            }
+
+            if (!meta.folderPath.isEmpty() && !QFileInfo(meta.folderPath).exists()) {
                 qWarning() << "[LayerRegistry] Skipping missing file/folder:" << meta.folderPath;
                 continue;
             }
@@ -323,8 +368,8 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
                 }
             }
 
-            qWarning() << "[LayerRegistry] Restoring saved layer in background:" << meta.name << "from" << meta.folderPath << "| Zoom:" << meta.minZoom << "-" << meta.maxZoom << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
-            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map, nullptr, meta.minZoom, meta.maxZoom, true, true, meta.opacity, meta.isVisible);
+            qWarning() << "[LayerRegistry] Restoring saved layer:" << meta.name << "from" << meta.folderPath << "| Zoom:" << meta.minZoom << "-" << meta.maxZoom << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
+            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map, nullptr, meta.minZoom, meta.maxZoom, false, true, meta.opacity, meta.isVisible);
         }
 
         // 3. Re-order child nodes inside groups to strictly match saved orderIndex
@@ -341,9 +386,11 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
                 bool swapped = true;
                 while (swapped) {
                     swapped = false;
-                    for (int i = 0; i < parentGroup->childCount() - 1; ++i) {
+                    int count = parentGroup->childCount();
+                    for (int i = 0; i < count - 1; ++i) {
                         auto nodeA = parentGroup->child(i);
                         auto nodeB = parentGroup->child(i + 1);
+                        if (!nodeA || !nodeB) continue;
                         int orderA = 999999;
                         int orderB = 999999;
                         for (const auto &meta : m_registry) {
@@ -353,6 +400,7 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
                         if (orderA > orderB) {
                             layerManager->moveDown(nodeA);
                             swapped = true;
+                            break; // Restart loop after moveDown as child container layout changed
                         }
                     }
                 }

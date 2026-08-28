@@ -36,6 +36,7 @@ public:
     void setOpacity(float opacity) override;
     float opacity() const override;
     LayerExtent getExtent() const override;
+    void setExtent(const LayerExtent &extent) override;
     void removeLayer() override;
     void reinsertLayer(const QString &beforeLayerId) override;
 

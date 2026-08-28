@@ -38,9 +38,11 @@ bool LayerPublishingService::publishLayer(LayerType type,
         // Dispatch to Core BackgroundTaskManager Subsystem
         m_lastStatus = QString("Task '%1' dispatched to Background Task Manager.").arg(layerName);
 
+        QString targetGroupName = targetGroup ? targetGroup->name() : "";
+
         GISApp::Core::Tasks::BackgroundTaskManager::instance().submitTask(
             QString("Publish Layer: %1").arg(layerName),
-            [type, folderPath, layerName, targetGroup, layerManager, map, minZoom, maxZoom, suppressNotification, initialOpacity, initialVisible](QString taskId) {
+            [type, folderPath, layerName, targetGroupName, layerManager, map, minZoom, maxZoom, suppressNotification, initialOpacity, initialVisible](QString taskId) {
                 
                 auto bgProgressCb = [taskId](int percent, const QString &statusText) {
                     GISApp::Core::Tasks::BackgroundTaskManager::instance().updateProgress(taskId, percent, statusText);
@@ -56,8 +58,13 @@ bool LayerPublishingService::publishLayer(LayerType type,
                 }
 
                 // STEP 2: Only invoke light map rendering and layer addition on the main GUI thread safely!
-                QMetaObject::invokeMethod(QCoreApplication::instance(), [publisher, type, folderPath, layerName, targetGroup, layerManager, map, minZoom, maxZoom, taskId, bgProgressCb, suppressNotification, initialOpacity, initialVisible]() {
-                    bool ok = publisher ? publisher->publish(folderPath, layerName, targetGroup, layerManager, map, bgProgressCb, minZoom, maxZoom) : false;
+                QMetaObject::invokeMethod(QCoreApplication::instance(), [publisher, type, folderPath, layerName, targetGroupName, layerManager, map, minZoom, maxZoom, taskId, bgProgressCb, suppressNotification, initialOpacity, initialVisible]() {
+                    GISApp::Layers::LayerGroupNode *actualTargetGroup = nullptr;
+                    if (layerManager && !targetGroupName.isEmpty()) {
+                        actualTargetGroup = layerManager->findGroupByName(targetGroupName);
+                    }
+
+                    bool ok = publisher ? publisher->publish(folderPath, layerName, actualTargetGroup, layerManager, map, bgProgressCb, minZoom, maxZoom) : false;
 
                     if (ok) {
                         if (layerManager && layerManager->model()) {
@@ -79,8 +86,7 @@ bool LayerPublishingService::publishLayer(LayerType type,
                             }
                         }
 
-                        QString groupName = targetGroup ? targetGroup->name() : "";
-                        GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(type, folderPath, layerName, groupName, minZoom, maxZoom);
+                        GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(type, folderPath, layerName, targetGroupName, minZoom, maxZoom, initialOpacity, initialVisible);
                         GISApp::Core::Tasks::BackgroundTaskManager::instance().markCompleted(taskId, QString("Layer '%1' published successfully!").arg(layerName));
                         
                         if (!suppressNotification) {
@@ -120,13 +126,37 @@ bool LayerPublishingService::publishLayer(LayerType type,
 
     bool success = publisher->publish(folderPath, layerName, targetGroup, layerManager, map, progressCb, minZoom, maxZoom);
     m_lastStatus = publisher->statusMessage();
-    if (!suppressNotification) {
-        if (success) {
+    if (success) {
+        if (layerManager && layerManager->model()) {
+            auto root = layerManager->model()->rootNode();
+            std::function<void(GISApp::Layers::LayerTreeNode*)> applyMeta = [&](GISApp::Layers::LayerTreeNode *node) {
+                if (!node) return;
+                if (node->nodeType() == GISApp::Layers::NodeType::Layer && node->name() == layerName) {
+                    layerManager->setOpacity(node, initialOpacity);
+                    layerManager->setVisibility(node, initialVisible);
+                } else if (node->nodeType() == GISApp::Layers::NodeType::Group) {
+                    GISApp::Layers::LayerGroupNode *gNode = static_cast<GISApp::Layers::LayerGroupNode*>(node);
+                    for (int i = 0; i < gNode->childCount(); ++i) {
+                        applyMeta(gNode->child(i));
+                    }
+                }
+            };
+            for (int i = 0; i < root->childCount(); ++i) {
+                applyMeta(root->child(i));
+            }
+        }
+
+        QString targetGroupName = targetGroup ? targetGroup->name() : "";
+        GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(type, folderPath, layerName, targetGroupName, minZoom, maxZoom, initialOpacity, initialVisible);
+
+        if (!suppressNotification) {
             GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
                 "Layer Published",
                 QString("Spatial dataset '%1' added to map view.").arg(layerName)
             );
-        } else {
+        }
+    } else {
+        if (!suppressNotification) {
             GISApp::Core::Notifications::NotificationManager::instance()->notifyCritical(
                 "Publishing Error",
                 m_lastStatus

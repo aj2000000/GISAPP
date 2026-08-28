@@ -14,10 +14,10 @@ EQ            = =
 
 CC            = gcc
 CXX           = g++
-DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_OPENGL_LIB -DQT_SVG_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -DQT_CONCURRENT_LIB -DQT_CORE_LIB
+DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_OPENGL_LIB -DQT_SVG_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -DQT_CONCURRENT_LIB -DQT_XML_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -Wall -Wextra -D_REENTRANT $(DEFINES)
 CXXFLAGS      = -pipe -O2 -std=gnu++1z -Wall -Wextra -D_REENTRANT $(DEFINES)
-INCPATH       = -I. -I../../../maplibre-install/include -I../../../maplibre-install/include/QMapLibre -I../../../maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -Isrc -Isrc/core -Isrc/publishing -Isrc/ui/publishing -Isrc/core/tasks -Isrc/ui/tasks -Isrc/ui/download -Isrc/core/notifications -Isrc/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -Ibuild/moc -Ibuild/ui -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++
+INCPATH       = -I. -I../../../maplibre-install/include -I../../../maplibre-install/include/QMapLibre -I../../../maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -Isrc -Isrc/core -Isrc/publishing -Isrc/ui/publishing -Isrc/core/tasks -Isrc/ui/tasks -Isrc/ui/download -Isrc/core/notifications -Isrc/ui/notifications -Isrc/core/models -Isrc/core/database -Isrc/core/repositories -Isrc/core/services -Isrc/core/renderers -Isrc/ui/tracks -Isrc/ui/area_of_view -Isrc/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -Ibuild/moc -Ibuild/ui -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++
 QMAKE         = /usr/bin/qmake6
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -40,7 +40,7 @@ DISTNAME      = GISAPP1.0.0
 DISTDIR = /home/aman/aman/FRONTENDAPP/GISAPP/build/obj/GISAPP1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-rpath,/home/aman/maplibre-install/lib -Wl,-O1 -Wl,-rpath-link,/usr/lib/x86_64-linux-gnu
-LIBS          = $(SUBLIBS) -L/home/aman/maplibre-install/lib -lQMapLibre -lQMapLibreWidgets -lgdal /usr/lib/x86_64-linux-gnu/libQt6Widgets.so /usr/lib/x86_64-linux-gnu/libQt6OpenGL.so /usr/lib/x86_64-linux-gnu/libQt6Svg.so /usr/lib/x86_64-linux-gnu/libQt6Gui.so /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so /usr/lib/x86_64-linux-gnu/libQt6Network.so /usr/lib/x86_64-linux-gnu/libQt6Sql.so /usr/lib/x86_64-linux-gnu/libQt6Concurrent.so /usr/lib/x86_64-linux-gnu/libQt6Core.so -lpthread -lGLX -lOpenGL   
+LIBS          = $(SUBLIBS) -L/home/aman/maplibre-install/lib -lQMapLibre -lQMapLibreWidgets -lgdal /usr/lib/x86_64-linux-gnu/libQt6Widgets.so /usr/lib/x86_64-linux-gnu/libQt6OpenGL.so /usr/lib/x86_64-linux-gnu/libQt6Svg.so /usr/lib/x86_64-linux-gnu/libQt6Gui.so /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so /usr/lib/x86_64-linux-gnu/libQt6Network.so /usr/lib/x86_64-linux-gnu/libQt6Sql.so /usr/lib/x86_64-linux-gnu/libQt6Concurrent.so /usr/lib/x86_64-linux-gnu/libQt6Xml.so /usr/lib/x86_64-linux-gnu/libQt6Core.so -lpthread -lGLX -lOpenGL   
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -91,7 +91,25 @@ SOURCES       = src/main.cpp \
 		src/core/notifications/NotificationFactory.cpp \
 		src/core/notifications/NotificationManager.cpp \
 		src/ui/notifications/CriticalNotificationStrategy.cpp \
-		src/ui/notifications/FlashNotificationStrategy.cpp build/moc/moc_SystemConfigManager.cpp \
+		src/ui/notifications/FlashNotificationStrategy.cpp \
+		src/core/models/TrackRecord.cpp \
+		src/core/database/DatabaseManager.cpp \
+		src/core/repositories/TrackRepository.cpp \
+		src/core/services/CsvTrackIngestor.cpp \
+		src/core/services/MapLibreTrackAdapter.cpp \
+		src/ui/tracks/TrackTableModel.cpp \
+		src/ui/tracks/TracksTableDialog.cpp \
+		src/ui/tracks/TrackDetailDialog.cpp \
+		src/core/models/AreaOfViewRecord.cpp \
+		src/core/repositories/AreaOfViewRepository.cpp \
+		src/core/services/XmlAreaOfViewIngestor.cpp \
+		src/core/services/MapLibreAreaOfViewAdapter.cpp \
+		src/ui/area_of_view/AreaOfViewTableDialog.cpp \
+		src/core/models/GenericGisEntity.cpp \
+		src/core/models/GisEntityRegistry.cpp \
+		src/core/repositories/GenericEntityRepository.cpp \
+		src/core/services/MapLibreGenericEntityAdapter.cpp \
+		src/ui/entities/UniversalEntityEditorDialog.cpp build/moc/moc_SystemConfigManager.cpp \
 		build/moc/moc_mainwindow.cpp \
 		build/moc/moc_MapLibreWidget.cpp \
 		build/moc/moc_MapController.cpp \
@@ -120,7 +138,22 @@ SOURCES       = src/main.cpp \
 		build/moc/moc_DownloadSatImageryDialog.cpp \
 		build/moc/moc_NotificationManager.cpp \
 		build/moc/moc_CriticalNotificationStrategy.cpp \
-		build/moc/moc_FlashNotificationStrategy.cpp
+		build/moc/moc_FlashNotificationStrategy.cpp \
+		build/moc/moc_ITrackRepository.cpp \
+		build/moc/moc_TrackRepository.cpp \
+		build/moc/moc_MapLibreTrackAdapter.cpp \
+		build/moc/moc_TrackTableModel.cpp \
+		build/moc/moc_TracksTableDialog.cpp \
+		build/moc/moc_TrackDetailDialog.cpp \
+		build/moc/moc_IAreaOfViewRepository.cpp \
+		build/moc/moc_AreaOfViewRepository.cpp \
+		build/moc/moc_XmlAreaOfViewIngestor.cpp \
+		build/moc/moc_MapLibreAreaOfViewAdapter.cpp \
+		build/moc/moc_AreaOfViewTableDialog.cpp \
+		build/moc/moc_IGisEntityRepository.cpp \
+		build/moc/moc_GenericEntityRepository.cpp \
+		build/moc/moc_MapLibreGenericEntityAdapter.cpp \
+		build/moc/moc_UniversalEntityEditorDialog.cpp
 OBJECTS       = build/obj/main.o \
 		build/obj/SystemConfigManager.o \
 		build/obj/mainwindow.o \
@@ -161,6 +194,24 @@ OBJECTS       = build/obj/main.o \
 		build/obj/NotificationManager.o \
 		build/obj/CriticalNotificationStrategy.o \
 		build/obj/FlashNotificationStrategy.o \
+		build/obj/TrackRecord.o \
+		build/obj/DatabaseManager.o \
+		build/obj/TrackRepository.o \
+		build/obj/CsvTrackIngestor.o \
+		build/obj/MapLibreTrackAdapter.o \
+		build/obj/TrackTableModel.o \
+		build/obj/TracksTableDialog.o \
+		build/obj/TrackDetailDialog.o \
+		build/obj/AreaOfViewRecord.o \
+		build/obj/AreaOfViewRepository.o \
+		build/obj/XmlAreaOfViewIngestor.o \
+		build/obj/MapLibreAreaOfViewAdapter.o \
+		build/obj/AreaOfViewTableDialog.o \
+		build/obj/GenericGisEntity.o \
+		build/obj/GisEntityRegistry.o \
+		build/obj/GenericEntityRepository.o \
+		build/obj/MapLibreGenericEntityAdapter.o \
+		build/obj/UniversalEntityEditorDialog.o \
 		build/obj/moc_SystemConfigManager.o \
 		build/obj/moc_mainwindow.o \
 		build/obj/moc_MapLibreWidget.o \
@@ -190,7 +241,22 @@ OBJECTS       = build/obj/main.o \
 		build/obj/moc_DownloadSatImageryDialog.o \
 		build/obj/moc_NotificationManager.o \
 		build/obj/moc_CriticalNotificationStrategy.o \
-		build/obj/moc_FlashNotificationStrategy.o
+		build/obj/moc_FlashNotificationStrategy.o \
+		build/obj/moc_ITrackRepository.o \
+		build/obj/moc_TrackRepository.o \
+		build/obj/moc_MapLibreTrackAdapter.o \
+		build/obj/moc_TrackTableModel.o \
+		build/obj/moc_TracksTableDialog.o \
+		build/obj/moc_TrackDetailDialog.o \
+		build/obj/moc_IAreaOfViewRepository.o \
+		build/obj/moc_AreaOfViewRepository.o \
+		build/obj/moc_XmlAreaOfViewIngestor.o \
+		build/obj/moc_MapLibreAreaOfViewAdapter.o \
+		build/obj/moc_AreaOfViewTableDialog.o \
+		build/obj/moc_IGisEntityRepository.o \
+		build/obj/moc_GenericEntityRepository.o \
+		build/obj/moc_MapLibreGenericEntityAdapter.o \
+		build/obj/moc_UniversalEntityEditorDialog.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/common/linux.conf \
@@ -358,7 +424,33 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		src/core/notifications/NotificationFactory.h \
 		src/core/notifications/NotificationManager.h \
 		src/ui/notifications/CriticalNotificationStrategy.h \
-		src/ui/notifications/FlashNotificationStrategy.h src/main.cpp \
+		src/ui/notifications/FlashNotificationStrategy.h \
+		src/core/models/IGisGeometry.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/TrackRecord.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		src/core/database/DatabaseManager.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/repositories/TrackRepository.h \
+		src/core/services/ITrackIngestor.h \
+		src/core/services/CsvTrackIngestor.h \
+		src/core/services/MapLibreTrackAdapter.h \
+		src/ui/tracks/TrackTableModel.h \
+		src/ui/tracks/TracksTableDialog.h \
+		src/ui/tracks/TrackDetailDialog.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/repositories/AreaOfViewRepository.h \
+		src/core/services/XmlAreaOfViewIngestor.h \
+		src/core/services/MapLibreAreaOfViewAdapter.h \
+		src/ui/area_of_view/AreaOfViewTableDialog.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/GisEntityRegistry.h \
+		src/core/repositories/IGisEntityRepository.h \
+		src/core/repositories/GenericEntityRepository.h \
+		src/core/renderers/IEntityPainter.h \
+		src/core/services/MapLibreGenericEntityAdapter.h \
+		src/ui/entities/UniversalEntityEditorDialog.h src/main.cpp \
 		src/core/SystemConfigManager.cpp \
 		src/ui/mainwindow.cpp \
 		src/map/MapLibreWidget.cpp \
@@ -397,7 +489,25 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		src/core/notifications/NotificationFactory.cpp \
 		src/core/notifications/NotificationManager.cpp \
 		src/ui/notifications/CriticalNotificationStrategy.cpp \
-		src/ui/notifications/FlashNotificationStrategy.cpp
+		src/ui/notifications/FlashNotificationStrategy.cpp \
+		src/core/models/TrackRecord.cpp \
+		src/core/database/DatabaseManager.cpp \
+		src/core/repositories/TrackRepository.cpp \
+		src/core/services/CsvTrackIngestor.cpp \
+		src/core/services/MapLibreTrackAdapter.cpp \
+		src/ui/tracks/TrackTableModel.cpp \
+		src/ui/tracks/TracksTableDialog.cpp \
+		src/ui/tracks/TrackDetailDialog.cpp \
+		src/core/models/AreaOfViewRecord.cpp \
+		src/core/repositories/AreaOfViewRepository.cpp \
+		src/core/services/XmlAreaOfViewIngestor.cpp \
+		src/core/services/MapLibreAreaOfViewAdapter.cpp \
+		src/ui/area_of_view/AreaOfViewTableDialog.cpp \
+		src/core/models/GenericGisEntity.cpp \
+		src/core/models/GisEntityRegistry.cpp \
+		src/core/repositories/GenericEntityRepository.cpp \
+		src/core/services/MapLibreGenericEntityAdapter.cpp \
+		src/ui/entities/UniversalEntityEditorDialog.cpp
 QMAKE_TARGET  = GISAPP
 DESTDIR       = build/bin/
 TARGET        = build/bin/GISAPP
@@ -539,6 +649,7 @@ Makefile: GISAPP.pro /usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++/qmake.conf 
 		/usr/lib/x86_64-linux-gnu/libQt6Network.prl \
 		/usr/lib/x86_64-linux-gnu/libQt6Sql.prl \
 		/usr/lib/x86_64-linux-gnu/libQt6Concurrent.prl \
+		/usr/lib/x86_64-linux-gnu/libQt6Xml.prl \
 		/usr/lib/x86_64-linux-gnu/libQt6Core.prl
 	$(QMAKE) -o Makefile GISAPP.pro
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf:
@@ -670,6 +781,7 @@ GISAPP.pro:
 /usr/lib/x86_64-linux-gnu/libQt6Network.prl:
 /usr/lib/x86_64-linux-gnu/libQt6Sql.prl:
 /usr/lib/x86_64-linux-gnu/libQt6Concurrent.prl:
+/usr/lib/x86_64-linux-gnu/libQt6Xml.prl:
 /usr/lib/x86_64-linux-gnu/libQt6Core.prl:
 qmake: FORCE
 	@$(QMAKE) -o Makefile GISAPP.pro
@@ -686,8 +798,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents src/core/SystemConfigManager.h src/ui/mainwindow.h src/core/models/GeoCoordinate.h src/core/interfaces/IMapView.h src/map/MapLibreWidget.h src/controllers/MapController.h src/core/interfaces/ITool.h src/tools/MeasureTool.h src/tools/PanTool.h src/controllers/ToolManager.h src/map/OverlayWidget.h src/ui/ThemeManager.h src/ui/LeftSidebar.h src/ui/RightToolPanel.h src/ui/ZoomControlsWidget.h src/ui/TacticalStatusBar.h src/ui/HeaderBar.h src/layers/ILayerAdapter.h src/layers/LayerTreeNode.h src/layers/LayerTreeModel.h src/layers/LayerManager.h src/layers/TacticalLayerProvider.h src/ui/layertree/LayerTreeView.h src/ui/layertree/LayerTreeFloatingWidget.h src/ui/layertree/LayerItemDelegate.h src/publishing/IPublisherStrategy.h src/publishing/PublisherFactory.h src/publishing/RasterLayerPublisher.h src/publishing/VectorLayerPublisher.h src/publishing/LayerPublishingService.h src/ui/publishing/PublishLayerDialog.h src/ui/publishing/GroupManagerDialog.h src/publishing/LocalTileServer.h src/publishing/LayerRegistryManager.h src/core/tasks/IBackgroundTask.h src/core/tasks/FunctionalTask.h src/core/tasks/BackgroundTaskManager.h src/ui/tasks/BackgroundTaskDialog.h src/core/tasks/GoogleSatDownloaderTask.h src/ui/download/DownloadSatImageryDialog.h src/core/notifications/NotificationTypes.h src/core/notifications/INotificationStrategy.h src/core/notifications/INotificationObserver.h src/core/notifications/NotificationFactory.h src/core/notifications/NotificationManager.h src/ui/notifications/CriticalNotificationStrategy.h src/ui/notifications/FlashNotificationStrategy.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/main.cpp src/core/SystemConfigManager.cpp src/ui/mainwindow.cpp src/map/MapLibreWidget.cpp src/controllers/MapController.cpp src/tools/MeasureTool.cpp src/tools/PanTool.cpp src/controllers/ToolManager.cpp src/map/OverlayWidget.cpp src/ui/ThemeManager.cpp src/ui/LeftSidebar.cpp src/ui/RightToolPanel.cpp src/ui/ZoomControlsWidget.cpp src/ui/TacticalStatusBar.cpp src/ui/HeaderBar.cpp src/layers/MapLibreLayerAdapter.cpp src/layers/LayerTreeNode.cpp src/layers/LayerTreeModel.cpp src/layers/LayerManager.cpp src/layers/TacticalLayerProvider.cpp src/ui/layertree/LayerTreeView.cpp src/ui/layertree/LayerTreeFloatingWidget.cpp src/ui/layertree/LayerItemDelegate.cpp src/publishing/RasterLayerPublisher.cpp src/publishing/VectorLayerPublisher.cpp src/publishing/LayerPublishingService.cpp src/ui/publishing/PublishLayerDialog.cpp src/ui/publishing/GroupManagerDialog.cpp src/publishing/LocalTileServer.cpp src/publishing/LayerRegistryManager.cpp src/publishing/PublisherFactory.cpp src/core/tasks/FunctionalTask.cpp src/core/tasks/BackgroundTaskManager.cpp src/ui/tasks/BackgroundTaskDialog.cpp src/core/tasks/GoogleSatDownloaderTask.cpp src/ui/download/DownloadSatImageryDialog.cpp src/core/notifications/NotificationFactory.cpp src/core/notifications/NotificationManager.cpp src/ui/notifications/CriticalNotificationStrategy.cpp src/ui/notifications/FlashNotificationStrategy.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents src/core/SystemConfigManager.h src/ui/mainwindow.h src/core/models/GeoCoordinate.h src/core/interfaces/IMapView.h src/map/MapLibreWidget.h src/controllers/MapController.h src/core/interfaces/ITool.h src/tools/MeasureTool.h src/tools/PanTool.h src/controllers/ToolManager.h src/map/OverlayWidget.h src/ui/ThemeManager.h src/ui/LeftSidebar.h src/ui/RightToolPanel.h src/ui/ZoomControlsWidget.h src/ui/TacticalStatusBar.h src/ui/HeaderBar.h src/layers/ILayerAdapter.h src/layers/LayerTreeNode.h src/layers/LayerTreeModel.h src/layers/LayerManager.h src/layers/TacticalLayerProvider.h src/ui/layertree/LayerTreeView.h src/ui/layertree/LayerTreeFloatingWidget.h src/ui/layertree/LayerItemDelegate.h src/publishing/IPublisherStrategy.h src/publishing/PublisherFactory.h src/publishing/RasterLayerPublisher.h src/publishing/VectorLayerPublisher.h src/publishing/LayerPublishingService.h src/ui/publishing/PublishLayerDialog.h src/ui/publishing/GroupManagerDialog.h src/publishing/LocalTileServer.h src/publishing/LayerRegistryManager.h src/core/tasks/IBackgroundTask.h src/core/tasks/FunctionalTask.h src/core/tasks/BackgroundTaskManager.h src/ui/tasks/BackgroundTaskDialog.h src/core/tasks/GoogleSatDownloaderTask.h src/ui/download/DownloadSatImageryDialog.h src/core/notifications/NotificationTypes.h src/core/notifications/INotificationStrategy.h src/core/notifications/INotificationObserver.h src/core/notifications/NotificationFactory.h src/core/notifications/NotificationManager.h src/ui/notifications/CriticalNotificationStrategy.h src/ui/notifications/FlashNotificationStrategy.h src/core/models/IGisGeometry.h src/core/models/IGisEntity.h src/core/models/TrackRecord.h src/core/renderers/IMapRendererAdapter.h src/core/database/DatabaseManager.h src/core/repositories/ITrackRepository.h src/core/repositories/TrackRepository.h src/core/services/ITrackIngestor.h src/core/services/CsvTrackIngestor.h src/core/services/MapLibreTrackAdapter.h src/ui/tracks/TrackTableModel.h src/ui/tracks/TracksTableDialog.h src/ui/tracks/TrackDetailDialog.h src/core/models/AreaOfViewRecord.h src/core/repositories/IAreaOfViewRepository.h src/core/repositories/AreaOfViewRepository.h src/core/services/XmlAreaOfViewIngestor.h src/core/services/MapLibreAreaOfViewAdapter.h src/ui/area_of_view/AreaOfViewTableDialog.h src/core/models/GenericGisEntity.h src/core/models/GisEntityRegistry.h src/core/repositories/IGisEntityRepository.h src/core/repositories/GenericEntityRepository.h src/core/renderers/IEntityPainter.h src/core/services/MapLibreGenericEntityAdapter.h src/ui/entities/UniversalEntityEditorDialog.h $(DISTDIR)/
+	$(COPY_FILE) --parents src/main.cpp src/core/SystemConfigManager.cpp src/ui/mainwindow.cpp src/map/MapLibreWidget.cpp src/controllers/MapController.cpp src/tools/MeasureTool.cpp src/tools/PanTool.cpp src/controllers/ToolManager.cpp src/map/OverlayWidget.cpp src/ui/ThemeManager.cpp src/ui/LeftSidebar.cpp src/ui/RightToolPanel.cpp src/ui/ZoomControlsWidget.cpp src/ui/TacticalStatusBar.cpp src/ui/HeaderBar.cpp src/layers/MapLibreLayerAdapter.cpp src/layers/LayerTreeNode.cpp src/layers/LayerTreeModel.cpp src/layers/LayerManager.cpp src/layers/TacticalLayerProvider.cpp src/ui/layertree/LayerTreeView.cpp src/ui/layertree/LayerTreeFloatingWidget.cpp src/ui/layertree/LayerItemDelegate.cpp src/publishing/RasterLayerPublisher.cpp src/publishing/VectorLayerPublisher.cpp src/publishing/LayerPublishingService.cpp src/ui/publishing/PublishLayerDialog.cpp src/ui/publishing/GroupManagerDialog.cpp src/publishing/LocalTileServer.cpp src/publishing/LayerRegistryManager.cpp src/publishing/PublisherFactory.cpp src/core/tasks/FunctionalTask.cpp src/core/tasks/BackgroundTaskManager.cpp src/ui/tasks/BackgroundTaskDialog.cpp src/core/tasks/GoogleSatDownloaderTask.cpp src/ui/download/DownloadSatImageryDialog.cpp src/core/notifications/NotificationFactory.cpp src/core/notifications/NotificationManager.cpp src/ui/notifications/CriticalNotificationStrategy.cpp src/ui/notifications/FlashNotificationStrategy.cpp src/core/models/TrackRecord.cpp src/core/database/DatabaseManager.cpp src/core/repositories/TrackRepository.cpp src/core/services/CsvTrackIngestor.cpp src/core/services/MapLibreTrackAdapter.cpp src/ui/tracks/TrackTableModel.cpp src/ui/tracks/TracksTableDialog.cpp src/ui/tracks/TrackDetailDialog.cpp src/core/models/AreaOfViewRecord.cpp src/core/repositories/AreaOfViewRepository.cpp src/core/services/XmlAreaOfViewIngestor.cpp src/core/services/MapLibreAreaOfViewAdapter.cpp src/ui/area_of_view/AreaOfViewTableDialog.cpp src/core/models/GenericGisEntity.cpp src/core/models/GisEntityRegistry.cpp src/core/repositories/GenericEntityRepository.cpp src/core/services/MapLibreGenericEntityAdapter.cpp src/ui/entities/UniversalEntityEditorDialog.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents mainwindow.ui $(DISTDIR)/
 
 
@@ -720,13 +832,13 @@ compiler_moc_predefs_clean:
 build/moc/moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp
 	g++ -pipe -O2 -std=gnu++1z -Wall -Wextra -dM -E -o build/moc/moc_predefs.h /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp
+compiler_moc_header_make_all: build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp build/moc/moc_ITrackRepository.cpp build/moc/moc_TrackRepository.cpp build/moc/moc_MapLibreTrackAdapter.cpp build/moc/moc_TrackTableModel.cpp build/moc/moc_TracksTableDialog.cpp build/moc/moc_TrackDetailDialog.cpp build/moc/moc_IAreaOfViewRepository.cpp build/moc/moc_AreaOfViewRepository.cpp build/moc/moc_XmlAreaOfViewIngestor.cpp build/moc/moc_MapLibreAreaOfViewAdapter.cpp build/moc/moc_AreaOfViewTableDialog.cpp build/moc/moc_IGisEntityRepository.cpp build/moc/moc_GenericEntityRepository.cpp build/moc/moc_MapLibreGenericEntityAdapter.cpp build/moc/moc_UniversalEntityEditorDialog.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp
+	-$(DEL_FILE) build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp build/moc/moc_ITrackRepository.cpp build/moc/moc_TrackRepository.cpp build/moc/moc_MapLibreTrackAdapter.cpp build/moc/moc_TrackTableModel.cpp build/moc/moc_TracksTableDialog.cpp build/moc/moc_TrackDetailDialog.cpp build/moc/moc_IAreaOfViewRepository.cpp build/moc/moc_AreaOfViewRepository.cpp build/moc/moc_XmlAreaOfViewIngestor.cpp build/moc/moc_MapLibreAreaOfViewAdapter.cpp build/moc/moc_AreaOfViewTableDialog.cpp build/moc/moc_IGisEntityRepository.cpp build/moc/moc_GenericEntityRepository.cpp build/moc/moc_MapLibreGenericEntityAdapter.cpp build/moc/moc_UniversalEntityEditorDialog.cpp
 build/moc/moc_SystemConfigManager.cpp: src/core/SystemConfigManager.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/SystemConfigManager.h -o build/moc/moc_SystemConfigManager.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/SystemConfigManager.h -o build/moc/moc_SystemConfigManager.cpp
 
 build/moc/moc_mainwindow.cpp: src/ui/mainwindow.h \
 		src/map/MapLibreWidget.h \
@@ -763,9 +875,12 @@ build/moc/moc_mainwindow.cpp: src/ui/mainwindow.h \
 		src/ui/layertree/LayerTreeView.h \
 		src/ui/layertree/LayerItemDelegate.h \
 		src/ui/layertree/LayerTreeFloatingWidget.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/mainwindow.h -o build/moc/moc_mainwindow.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/mainwindow.h -o build/moc/moc_mainwindow.cpp
 
 build/moc/moc_MapLibreWidget.cpp: src/map/MapLibreWidget.h \
 		../../../maplibre-install/include/QMapLibreWidgets/qmaplibrewidgets.hpp \
@@ -785,35 +900,35 @@ build/moc/moc_MapLibreWidget.cpp: src/map/MapLibreWidget.h \
 		src/map/OverlayWidget.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/map/MapLibreWidget.h -o build/moc/moc_MapLibreWidget.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/map/MapLibreWidget.h -o build/moc/moc_MapLibreWidget.cpp
 
 build/moc/moc_MapController.cpp: src/controllers/MapController.h \
 		src/core/interfaces/IMapView.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/controllers/MapController.h -o build/moc/moc_MapController.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/controllers/MapController.h -o build/moc/moc_MapController.cpp
 
 build/moc/moc_MeasureTool.cpp: src/tools/MeasureTool.h \
 		src/core/interfaces/ITool.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/tools/MeasureTool.h -o build/moc/moc_MeasureTool.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/tools/MeasureTool.h -o build/moc/moc_MeasureTool.cpp
 
 build/moc/moc_PanTool.cpp: src/tools/PanTool.h \
 		src/core/interfaces/ITool.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/tools/PanTool.h -o build/moc/moc_PanTool.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/tools/PanTool.h -o build/moc/moc_PanTool.cpp
 
 build/moc/moc_ToolManager.cpp: src/controllers/ToolManager.h \
 		src/core/interfaces/ITool.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/controllers/ToolManager.h -o build/moc/moc_ToolManager.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/controllers/ToolManager.h -o build/moc/moc_ToolManager.cpp
 
 build/moc/moc_OverlayWidget.cpp: src/map/OverlayWidget.h \
 		../../../maplibre-install/include/QMapLibreWidgets/qmaplibrewidgets.hpp \
@@ -831,38 +946,38 @@ build/moc/moc_OverlayWidget.cpp: src/map/OverlayWidget.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/map/OverlayWidget.h -o build/moc/moc_OverlayWidget.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/map/OverlayWidget.h -o build/moc/moc_OverlayWidget.cpp
 
 build/moc/moc_ThemeManager.cpp: src/ui/ThemeManager.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/ThemeManager.h -o build/moc/moc_ThemeManager.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/ThemeManager.h -o build/moc/moc_ThemeManager.cpp
 
 build/moc/moc_LeftSidebar.cpp: src/ui/LeftSidebar.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/LeftSidebar.h -o build/moc/moc_LeftSidebar.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/LeftSidebar.h -o build/moc/moc_LeftSidebar.cpp
 
 build/moc/moc_RightToolPanel.cpp: src/ui/RightToolPanel.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/RightToolPanel.h -o build/moc/moc_RightToolPanel.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/RightToolPanel.h -o build/moc/moc_RightToolPanel.cpp
 
 build/moc/moc_ZoomControlsWidget.cpp: src/ui/ZoomControlsWidget.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/ZoomControlsWidget.h -o build/moc/moc_ZoomControlsWidget.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/ZoomControlsWidget.h -o build/moc/moc_ZoomControlsWidget.cpp
 
 build/moc/moc_TacticalStatusBar.cpp: src/ui/TacticalStatusBar.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/TacticalStatusBar.h -o build/moc/moc_TacticalStatusBar.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/TacticalStatusBar.h -o build/moc/moc_TacticalStatusBar.cpp
 
 build/moc/moc_HeaderBar.cpp: src/ui/HeaderBar.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/HeaderBar.h -o build/moc/moc_HeaderBar.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/HeaderBar.h -o build/moc/moc_HeaderBar.cpp
 
 build/moc/moc_LayerTreeModel.cpp: src/layers/LayerTreeModel.h \
 		src/layers/LayerTreeNode.h \
@@ -870,7 +985,7 @@ build/moc/moc_LayerTreeModel.cpp: src/layers/LayerTreeModel.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/layers/LayerTreeModel.h -o build/moc/moc_LayerTreeModel.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/layers/LayerTreeModel.h -o build/moc/moc_LayerTreeModel.cpp
 
 build/moc/moc_LayerManager.cpp: src/layers/LayerManager.h \
 		src/layers/LayerTreeModel.h \
@@ -879,7 +994,7 @@ build/moc/moc_LayerManager.cpp: src/layers/LayerManager.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/layers/LayerManager.h -o build/moc/moc_LayerManager.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/layers/LayerManager.h -o build/moc/moc_LayerManager.cpp
 
 build/moc/moc_TacticalLayerProvider.cpp: src/layers/TacticalLayerProvider.h \
 		../../../maplibre-install/include/QMapLibre/Map \
@@ -899,7 +1014,7 @@ build/moc/moc_TacticalLayerProvider.cpp: src/layers/TacticalLayerProvider.h \
 		src/core/interfaces/IMapView.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/layers/TacticalLayerProvider.h -o build/moc/moc_TacticalLayerProvider.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/layers/TacticalLayerProvider.h -o build/moc/moc_TacticalLayerProvider.cpp
 
 build/moc/moc_LayerTreeView.cpp: src/ui/layertree/LayerTreeView.h \
 		src/layers/LayerManager.h \
@@ -910,7 +1025,7 @@ build/moc/moc_LayerTreeView.cpp: src/ui/layertree/LayerTreeView.h \
 		src/ui/layertree/LayerItemDelegate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/layertree/LayerTreeView.h -o build/moc/moc_LayerTreeView.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/layertree/LayerTreeView.h -o build/moc/moc_LayerTreeView.cpp
 
 build/moc/moc_LayerTreeFloatingWidget.cpp: src/ui/layertree/LayerTreeFloatingWidget.h \
 		src/ui/layertree/LayerTreeView.h \
@@ -922,14 +1037,14 @@ build/moc/moc_LayerTreeFloatingWidget.cpp: src/ui/layertree/LayerTreeFloatingWid
 		src/ui/layertree/LayerItemDelegate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/layertree/LayerTreeFloatingWidget.h -o build/moc/moc_LayerTreeFloatingWidget.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/layertree/LayerTreeFloatingWidget.h -o build/moc/moc_LayerTreeFloatingWidget.cpp
 
 build/moc/moc_LayerItemDelegate.cpp: src/ui/layertree/LayerItemDelegate.h \
 		src/layers/ILayerAdapter.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/layertree/LayerItemDelegate.h -o build/moc/moc_LayerItemDelegate.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/layertree/LayerItemDelegate.h -o build/moc/moc_LayerItemDelegate.cpp
 
 build/moc/moc_LayerPublishingService.cpp: src/publishing/LayerPublishingService.h \
 		src/publishing/IPublisherStrategy.h \
@@ -949,7 +1064,7 @@ build/moc/moc_LayerPublishingService.cpp: src/publishing/LayerPublishingService.
 		src/publishing/PublisherFactory.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/publishing/LayerPublishingService.h -o build/moc/moc_LayerPublishingService.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/publishing/LayerPublishingService.h -o build/moc/moc_LayerPublishingService.cpp
 
 build/moc/moc_PublishLayerDialog.cpp: src/ui/publishing/PublishLayerDialog.h \
 		src/layers/LayerManager.h \
@@ -970,7 +1085,7 @@ build/moc/moc_PublishLayerDialog.cpp: src/ui/publishing/PublishLayerDialog.h \
 		src/publishing/PublisherFactory.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/publishing/PublishLayerDialog.h -o build/moc/moc_PublishLayerDialog.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/publishing/PublishLayerDialog.h -o build/moc/moc_PublishLayerDialog.cpp
 
 build/moc/moc_GroupManagerDialog.cpp: src/ui/publishing/GroupManagerDialog.h \
 		src/layers/LayerManager.h \
@@ -980,25 +1095,25 @@ build/moc/moc_GroupManagerDialog.cpp: src/ui/publishing/GroupManagerDialog.h \
 		src/core/models/GeoCoordinate.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/publishing/GroupManagerDialog.h -o build/moc/moc_GroupManagerDialog.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/publishing/GroupManagerDialog.h -o build/moc/moc_GroupManagerDialog.cpp
 
 build/moc/moc_LocalTileServer.cpp: src/publishing/LocalTileServer.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/publishing/LocalTileServer.h -o build/moc/moc_LocalTileServer.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/publishing/LocalTileServer.h -o build/moc/moc_LocalTileServer.cpp
 
 build/moc/moc_BackgroundTaskManager.cpp: src/core/tasks/BackgroundTaskManager.h \
 		src/core/tasks/IBackgroundTask.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/tasks/BackgroundTaskManager.h -o build/moc/moc_BackgroundTaskManager.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/tasks/BackgroundTaskManager.h -o build/moc/moc_BackgroundTaskManager.cpp
 
 build/moc/moc_BackgroundTaskDialog.cpp: src/ui/tasks/BackgroundTaskDialog.h \
 		src/core/tasks/BackgroundTaskManager.h \
 		src/core/tasks/IBackgroundTask.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/tasks/BackgroundTaskDialog.h -o build/moc/moc_BackgroundTaskDialog.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/tasks/BackgroundTaskDialog.h -o build/moc/moc_BackgroundTaskDialog.cpp
 
 build/moc/moc_DownloadSatImageryDialog.cpp: src/ui/download/DownloadSatImageryDialog.h \
 		src/map/MapLibreWidget.h \
@@ -1021,7 +1136,7 @@ build/moc/moc_DownloadSatImageryDialog.cpp: src/ui/download/DownloadSatImageryDi
 		src/core/tasks/IBackgroundTask.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/download/DownloadSatImageryDialog.h -o build/moc/moc_DownloadSatImageryDialog.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/download/DownloadSatImageryDialog.h -o build/moc/moc_DownloadSatImageryDialog.cpp
 
 build/moc/moc_NotificationManager.cpp: src/core/notifications/NotificationManager.h \
 		src/core/notifications/NotificationTypes.h \
@@ -1029,21 +1144,191 @@ build/moc/moc_NotificationManager.cpp: src/core/notifications/NotificationManage
 		src/core/notifications/INotificationObserver.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/notifications/NotificationManager.h -o build/moc/moc_NotificationManager.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/notifications/NotificationManager.h -o build/moc/moc_NotificationManager.cpp
 
 build/moc/moc_CriticalNotificationStrategy.cpp: src/ui/notifications/CriticalNotificationStrategy.h \
 		src/core/notifications/INotificationStrategy.h \
 		src/core/notifications/NotificationTypes.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/notifications/CriticalNotificationStrategy.h -o build/moc/moc_CriticalNotificationStrategy.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/notifications/CriticalNotificationStrategy.h -o build/moc/moc_CriticalNotificationStrategy.cpp
 
 build/moc/moc_FlashNotificationStrategy.cpp: src/ui/notifications/FlashNotificationStrategy.h \
 		src/core/notifications/INotificationStrategy.h \
 		src/core/notifications/NotificationTypes.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
-	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/notifications/FlashNotificationStrategy.h -o build/moc/moc_FlashNotificationStrategy.cpp
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/notifications/FlashNotificationStrategy.h -o build/moc/moc_FlashNotificationStrategy.cpp
+
+build/moc/moc_ITrackRepository.cpp: src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/repositories/ITrackRepository.h -o build/moc/moc_ITrackRepository.cpp
+
+build/moc/moc_TrackRepository.cpp: src/core/repositories/TrackRepository.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/repositories/TrackRepository.h -o build/moc/moc_TrackRepository.cpp
+
+build/moc/moc_MapLibreTrackAdapter.cpp: src/core/services/MapLibreTrackAdapter.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/services/MapLibreTrackAdapter.h -o build/moc/moc_MapLibreTrackAdapter.cpp
+
+build/moc/moc_TrackTableModel.cpp: src/ui/tracks/TrackTableModel.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/tracks/TrackTableModel.h -o build/moc/moc_TrackTableModel.cpp
+
+build/moc/moc_TracksTableDialog.cpp: src/ui/tracks/TracksTableDialog.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/ui/tracks/TrackTableModel.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/tracks/TracksTableDialog.h -o build/moc/moc_TracksTableDialog.cpp
+
+build/moc/moc_TrackDetailDialog.cpp: src/ui/tracks/TrackDetailDialog.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/tracks/TrackDetailDialog.h -o build/moc/moc_TrackDetailDialog.cpp
+
+build/moc/moc_IAreaOfViewRepository.cpp: src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/repositories/IAreaOfViewRepository.h -o build/moc/moc_IAreaOfViewRepository.cpp
+
+build/moc/moc_AreaOfViewRepository.cpp: src/core/repositories/AreaOfViewRepository.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/repositories/AreaOfViewRepository.h -o build/moc/moc_AreaOfViewRepository.cpp
+
+build/moc/moc_XmlAreaOfViewIngestor.cpp: src/core/services/XmlAreaOfViewIngestor.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/services/XmlAreaOfViewIngestor.h -o build/moc/moc_XmlAreaOfViewIngestor.cpp
+
+build/moc/moc_MapLibreAreaOfViewAdapter.cpp: src/core/services/MapLibreAreaOfViewAdapter.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/services/MapLibreAreaOfViewAdapter.h -o build/moc/moc_MapLibreAreaOfViewAdapter.cpp
+
+build/moc/moc_AreaOfViewTableDialog.cpp: src/ui/area_of_view/AreaOfViewTableDialog.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/services/MapLibreAreaOfViewAdapter.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/controllers/MapController.h \
+		src/core/interfaces/IMapView.h \
+		src/core/models/GeoCoordinate.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/area_of_view/AreaOfViewTableDialog.h -o build/moc/moc_AreaOfViewTableDialog.cpp
+
+build/moc/moc_IGisEntityRepository.cpp: src/core/repositories/IGisEntityRepository.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/repositories/IGisEntityRepository.h -o build/moc/moc_IGisEntityRepository.cpp
+
+build/moc/moc_GenericEntityRepository.cpp: src/core/repositories/GenericEntityRepository.h \
+		src/core/repositories/IGisEntityRepository.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/repositories/GenericEntityRepository.h -o build/moc/moc_GenericEntityRepository.cpp
+
+build/moc/moc_MapLibreGenericEntityAdapter.cpp: src/core/services/MapLibreGenericEntityAdapter.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/core/repositories/IGisEntityRepository.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/services/MapLibreGenericEntityAdapter.h -o build/moc/moc_MapLibreGenericEntityAdapter.cpp
+
+build/moc/moc_UniversalEntityEditorDialog.cpp: src/ui/entities/UniversalEntityEditorDialog.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/models/GisEntityRegistry.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/ui/entities/UniversalEntityEditorDialog.h -o build/moc/moc_UniversalEntityEditorDialog.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -1100,7 +1385,10 @@ build/obj/main.o: src/main.cpp src/ui/mainwindow.h \
 		src/layers/TacticalLayerProvider.h \
 		src/ui/layertree/LayerTreeView.h \
 		src/ui/layertree/LayerItemDelegate.h \
-		src/ui/layertree/LayerTreeFloatingWidget.h
+		src/ui/layertree/LayerTreeFloatingWidget.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/main.o src/main.cpp
 
 build/obj/SystemConfigManager.o: src/core/SystemConfigManager.cpp src/core/SystemConfigManager.h
@@ -1141,6 +1429,9 @@ build/obj/mainwindow.o: src/ui/mainwindow.cpp src/ui/mainwindow.h \
 		src/ui/layertree/LayerTreeView.h \
 		src/ui/layertree/LayerItemDelegate.h \
 		src/ui/layertree/LayerTreeFloatingWidget.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
 		build/ui/ui_mainwindow.h \
 		src/tools/PanTool.h \
 		src/layers/MapLibreLayerAdapter.h \
@@ -1158,7 +1449,29 @@ build/obj/mainwindow.o: src/ui/mainwindow.cpp src/ui/mainwindow.h \
 		src/core/notifications/NotificationManager.h \
 		src/core/notifications/NotificationTypes.h \
 		src/core/notifications/INotificationStrategy.h \
-		src/core/notifications/INotificationObserver.h
+		src/core/notifications/INotificationObserver.h \
+		src/core/database/DatabaseManager.h \
+		src/core/repositories/TrackRepository.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/services/MapLibreTrackAdapter.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		src/core/services/CsvTrackIngestor.h \
+		src/core/services/ITrackIngestor.h \
+		src/ui/tracks/TracksTableDialog.h \
+		src/ui/tracks/TrackTableModel.h \
+		src/ui/tracks/TrackDetailDialog.h \
+		src/core/repositories/AreaOfViewRepository.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/services/MapLibreAreaOfViewAdapter.h \
+		src/core/services/XmlAreaOfViewIngestor.h \
+		src/ui/area_of_view/AreaOfViewTableDialog.h \
+		src/core/models/GisEntityRegistry.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/repositories/GenericEntityRepository.h \
+		src/core/repositories/IGisEntityRepository.h \
+		src/core/services/MapLibreGenericEntityAdapter.h \
+		src/ui/entities/UniversalEntityEditorDialog.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/mainwindow.o src/ui/mainwindow.cpp
 
 build/obj/MapLibreWidget.o: src/map/MapLibreWidget.cpp src/map/MapLibreWidget.h \
@@ -1246,7 +1559,8 @@ build/obj/MapLibreLayerAdapter.o: src/layers/MapLibreLayerAdapter.cpp src/layers
 		../../../maplibre-install/include/QMapLibre/Settings \
 		../../../maplibre-install/include/QMapLibre/settings.hpp \
 		../../../maplibre-install/include/QMapLibre/Types \
-		../../../maplibre-install/include/QMapLibre/types.hpp
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/core/SystemConfigManager.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/MapLibreLayerAdapter.o src/layers/MapLibreLayerAdapter.cpp
 
 build/obj/LayerTreeNode.o: src/layers/LayerTreeNode.cpp src/layers/LayerTreeNode.h \
@@ -1295,10 +1609,19 @@ build/obj/TacticalLayerProvider.o: src/layers/TacticalLayerProvider.cpp src/laye
 		src/controllers/MapController.h \
 		src/core/interfaces/IMapView.h \
 		src/layers/MapLibreLayerAdapter.h \
+		src/core/SystemConfigManager.h \
 		src/publishing/LayerRegistryManager.h \
 		src/publishing/IPublisherStrategy.h \
 		src/publishing/LayerPublishingService.h \
-		src/publishing/PublisherFactory.h
+		src/publishing/PublisherFactory.h \
+		src/core/repositories/TrackRepository.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/repositories/AreaOfViewRepository.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/TacticalLayerProvider.o src/layers/TacticalLayerProvider.cpp
 
 build/obj/LayerTreeView.o: src/ui/layertree/LayerTreeView.cpp src/ui/layertree/LayerTreeView.h \
@@ -1537,6 +1860,196 @@ build/obj/FlashNotificationStrategy.o: src/ui/notifications/FlashNotificationStr
 		src/core/notifications/NotificationTypes.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/FlashNotificationStrategy.o src/ui/notifications/FlashNotificationStrategy.cpp
 
+build/obj/TrackRecord.o: src/core/models/TrackRecord.cpp src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/TrackRecord.o src/core/models/TrackRecord.cpp
+
+build/obj/DatabaseManager.o: src/core/database/DatabaseManager.cpp src/core/database/DatabaseManager.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/DatabaseManager.o src/core/database/DatabaseManager.cpp
+
+build/obj/TrackRepository.o: src/core/repositories/TrackRepository.cpp src/core/repositories/TrackRepository.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/database/DatabaseManager.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/TrackRepository.o src/core/repositories/TrackRepository.cpp
+
+build/obj/CsvTrackIngestor.o: src/core/services/CsvTrackIngestor.cpp src/core/services/CsvTrackIngestor.h \
+		src/core/services/ITrackIngestor.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/CsvTrackIngestor.o src/core/services/CsvTrackIngestor.cpp
+
+build/obj/MapLibreTrackAdapter.o: src/core/services/MapLibreTrackAdapter.cpp src/core/services/MapLibreTrackAdapter.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/core/SystemConfigManager.h \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/MapLibreTrackAdapter.o src/core/services/MapLibreTrackAdapter.cpp
+
+build/obj/TrackTableModel.o: src/ui/tracks/TrackTableModel.cpp src/ui/tracks/TrackTableModel.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/TrackTableModel.o src/ui/tracks/TrackTableModel.cpp
+
+build/obj/TracksTableDialog.o: src/ui/tracks/TracksTableDialog.cpp src/ui/tracks/TracksTableDialog.h \
+		src/core/repositories/ITrackRepository.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/ui/tracks/TrackTableModel.h \
+		src/core/services/CsvTrackIngestor.h \
+		src/core/services/ITrackIngestor.h \
+		src/core/services/MapLibreTrackAdapter.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/core/notifications/NotificationManager.h \
+		src/core/notifications/NotificationTypes.h \
+		src/core/notifications/INotificationStrategy.h \
+		src/core/notifications/INotificationObserver.h \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h \
+		src/layers/MapLibreLayerAdapter.h \
+		src/controllers/MapController.h \
+		src/core/interfaces/IMapView.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/TracksTableDialog.o src/ui/tracks/TracksTableDialog.cpp
+
+build/obj/TrackDetailDialog.o: src/ui/tracks/TrackDetailDialog.cpp src/ui/tracks/TrackDetailDialog.h \
+		src/core/models/TrackRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/TrackDetailDialog.o src/ui/tracks/TrackDetailDialog.cpp
+
+build/obj/AreaOfViewRecord.o: src/core/models/AreaOfViewRecord.cpp src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/AreaOfViewRecord.o src/core/models/AreaOfViewRecord.cpp
+
+build/obj/AreaOfViewRepository.o: src/core/repositories/AreaOfViewRepository.cpp src/core/repositories/AreaOfViewRepository.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/database/DatabaseManager.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/AreaOfViewRepository.o src/core/repositories/AreaOfViewRepository.cpp
+
+build/obj/XmlAreaOfViewIngestor.o: src/core/services/XmlAreaOfViewIngestor.cpp src/core/services/XmlAreaOfViewIngestor.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/repositories/IAreaOfViewRepository.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/XmlAreaOfViewIngestor.o src/core/services/XmlAreaOfViewIngestor.cpp
+
+build/obj/MapLibreAreaOfViewAdapter.o: src/core/services/MapLibreAreaOfViewAdapter.cpp src/core/services/MapLibreAreaOfViewAdapter.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/core/SystemConfigManager.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/MapLibreAreaOfViewAdapter.o src/core/services/MapLibreAreaOfViewAdapter.cpp
+
+build/obj/AreaOfViewTableDialog.o: src/ui/area_of_view/AreaOfViewTableDialog.cpp src/ui/area_of_view/AreaOfViewTableDialog.h \
+		src/core/repositories/IAreaOfViewRepository.h \
+		src/core/models/AreaOfViewRecord.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/services/MapLibreAreaOfViewAdapter.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/controllers/MapController.h \
+		src/core/interfaces/IMapView.h \
+		src/core/models/GeoCoordinate.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/AreaOfViewTableDialog.o src/ui/area_of_view/AreaOfViewTableDialog.cpp
+
+build/obj/GenericGisEntity.o: src/core/models/GenericGisEntity.cpp src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/GenericGisEntity.o src/core/models/GenericGisEntity.cpp
+
+build/obj/GisEntityRegistry.o: src/core/models/GisEntityRegistry.cpp src/core/models/GisEntityRegistry.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/GisEntityRegistry.o src/core/models/GisEntityRegistry.cpp
+
+build/obj/GenericEntityRepository.o: src/core/repositories/GenericEntityRepository.cpp src/core/repositories/GenericEntityRepository.h \
+		src/core/repositories/IGisEntityRepository.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/database/DatabaseManager.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/GenericEntityRepository.o src/core/repositories/GenericEntityRepository.cpp
+
+build/obj/MapLibreGenericEntityAdapter.o: src/core/services/MapLibreGenericEntityAdapter.cpp src/core/services/MapLibreGenericEntityAdapter.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/core/repositories/IGisEntityRepository.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/renderers/IMapRendererAdapter.h \
+		src/core/models/GisEntityRegistry.h \
+		src/core/SystemConfigManager.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/MapLibreGenericEntityAdapter.o src/core/services/MapLibreGenericEntityAdapter.cpp
+
+build/obj/UniversalEntityEditorDialog.o: src/ui/entities/UniversalEntityEditorDialog.cpp src/ui/entities/UniversalEntityEditorDialog.h \
+		src/core/models/GenericGisEntity.h \
+		src/core/models/IGisEntity.h \
+		src/core/models/IGisGeometry.h \
+		src/core/models/GisEntityRegistry.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/UniversalEntityEditorDialog.o src/ui/entities/UniversalEntityEditorDialog.cpp
+
 build/obj/moc_SystemConfigManager.o: build/moc/moc_SystemConfigManager.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_SystemConfigManager.o build/moc/moc_SystemConfigManager.cpp
 
@@ -1626,6 +2139,51 @@ build/obj/moc_CriticalNotificationStrategy.o: build/moc/moc_CriticalNotification
 
 build/obj/moc_FlashNotificationStrategy.o: build/moc/moc_FlashNotificationStrategy.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_FlashNotificationStrategy.o build/moc/moc_FlashNotificationStrategy.cpp
+
+build/obj/moc_ITrackRepository.o: build/moc/moc_ITrackRepository.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_ITrackRepository.o build/moc/moc_ITrackRepository.cpp
+
+build/obj/moc_TrackRepository.o: build/moc/moc_TrackRepository.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_TrackRepository.o build/moc/moc_TrackRepository.cpp
+
+build/obj/moc_MapLibreTrackAdapter.o: build/moc/moc_MapLibreTrackAdapter.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_MapLibreTrackAdapter.o build/moc/moc_MapLibreTrackAdapter.cpp
+
+build/obj/moc_TrackTableModel.o: build/moc/moc_TrackTableModel.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_TrackTableModel.o build/moc/moc_TrackTableModel.cpp
+
+build/obj/moc_TracksTableDialog.o: build/moc/moc_TracksTableDialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_TracksTableDialog.o build/moc/moc_TracksTableDialog.cpp
+
+build/obj/moc_TrackDetailDialog.o: build/moc/moc_TrackDetailDialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_TrackDetailDialog.o build/moc/moc_TrackDetailDialog.cpp
+
+build/obj/moc_IAreaOfViewRepository.o: build/moc/moc_IAreaOfViewRepository.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_IAreaOfViewRepository.o build/moc/moc_IAreaOfViewRepository.cpp
+
+build/obj/moc_AreaOfViewRepository.o: build/moc/moc_AreaOfViewRepository.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_AreaOfViewRepository.o build/moc/moc_AreaOfViewRepository.cpp
+
+build/obj/moc_XmlAreaOfViewIngestor.o: build/moc/moc_XmlAreaOfViewIngestor.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_XmlAreaOfViewIngestor.o build/moc/moc_XmlAreaOfViewIngestor.cpp
+
+build/obj/moc_MapLibreAreaOfViewAdapter.o: build/moc/moc_MapLibreAreaOfViewAdapter.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_MapLibreAreaOfViewAdapter.o build/moc/moc_MapLibreAreaOfViewAdapter.cpp
+
+build/obj/moc_AreaOfViewTableDialog.o: build/moc/moc_AreaOfViewTableDialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_AreaOfViewTableDialog.o build/moc/moc_AreaOfViewTableDialog.cpp
+
+build/obj/moc_IGisEntityRepository.o: build/moc/moc_IGisEntityRepository.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_IGisEntityRepository.o build/moc/moc_IGisEntityRepository.cpp
+
+build/obj/moc_GenericEntityRepository.o: build/moc/moc_GenericEntityRepository.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_GenericEntityRepository.o build/moc/moc_GenericEntityRepository.cpp
+
+build/obj/moc_MapLibreGenericEntityAdapter.o: build/moc/moc_MapLibreGenericEntityAdapter.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_MapLibreGenericEntityAdapter.o build/moc/moc_MapLibreGenericEntityAdapter.cpp
+
+build/obj/moc_UniversalEntityEditorDialog.o: build/moc/moc_UniversalEntityEditorDialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_UniversalEntityEditorDialog.o build/moc/moc_UniversalEntityEditorDialog.cpp
 
 ####### Install
 

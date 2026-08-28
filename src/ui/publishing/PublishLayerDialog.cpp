@@ -199,6 +199,33 @@ void PublishLayerDialog::setupUI()
             font-size: 12px;
         }
 
+        QMessageBox {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: 8px;
+        }
+        QMessageBox QLabel {
+            color: #f8fafc;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+        }
+        QMessageBox QPushButton {
+            background-color: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-weight: bold;
+            font-size: 12px;
+            min-width: 75px;
+        }
+        QMessageBox QPushButton:hover {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+
         QRadioButton, QCheckBox {
             color: #f1f5f9;
             font-size: 12px;
@@ -542,8 +569,6 @@ void PublishLayerDialog::onPublishClicked()
     m_btnCancel->setEnabled(true);
 
     if (success) {
-        QString groupName = targetGroup ? targetGroup->name() : "";
-        GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(type, folder, name, groupName, minZoom, maxZoom);
         QMessageBox::information(this, tr("Success"), tr("Layer successfully published!"));
         accept();
     } else {

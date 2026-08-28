@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AreaOfView>
+    <Polygon>
+        <Name>Northern Surveillance Sector Alpha</Name>
+        <NPoints>4</NPoints>
+        <Points>
+            <Point><Latitude>28.7651</Latitude><Longitude>76.9421</Longitude><Height>100.0</Height></Point>
+            <Point><Latitude>28.7430</Latitude><Longitude>77.5771</Longitude><Height>120.0</Height></Point>
+                        <Point><Latitude>28.4101</Latitude><Longitude>77.5213</Longitude><Height>90.0</Height></Point>
+            <Point><Latitude>28.3796</Latitude><Longitude>76.9642</Longitude><Height>110.0</Height></Point>
+
+        </Points>
+    </Polygon>
+</AreaOfView>

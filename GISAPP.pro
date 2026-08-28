@@ -1,4 +1,4 @@
-QT += core gui widgets opengl network sql svg concurrent
+QT += core gui widgets opengl network sql svg concurrent xml
 
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -36,7 +36,15 @@ INCLUDEPATH += $$PWD/src \
                $$PWD/src/ui/tasks \
                $$PWD/src/ui/download \
                $$PWD/src/core/notifications \
-               $$PWD/src/ui/notifications
+               $$PWD/src/ui/notifications \
+               $$PWD/src/core/models \
+               $$PWD/src/core/database \
+               $$PWD/src/core/repositories \
+               $$PWD/src/core/services \
+               $$PWD/src/core/renderers \
+               $$PWD/src/ui/tracks \
+               $$PWD/src/ui/area_of_view \
+               $$PWD/src/ui/entities
 
 SOURCES += \
     src/main.cpp \
@@ -78,7 +86,25 @@ SOURCES += \
     src/core/notifications/NotificationFactory.cpp \
     src/core/notifications/NotificationManager.cpp \
     src/ui/notifications/CriticalNotificationStrategy.cpp \
-    src/ui/notifications/FlashNotificationStrategy.cpp
+    src/ui/notifications/FlashNotificationStrategy.cpp \
+    src/core/models/TrackRecord.cpp \
+    src/core/database/DatabaseManager.cpp \
+    src/core/repositories/TrackRepository.cpp \
+    src/core/services/CsvTrackIngestor.cpp \
+    src/core/services/MapLibreTrackAdapter.cpp \
+    src/ui/tracks/TrackTableModel.cpp \
+    src/ui/tracks/TracksTableDialog.cpp \
+    src/ui/tracks/TrackDetailDialog.cpp \
+    src/core/models/AreaOfViewRecord.cpp \
+    src/core/repositories/AreaOfViewRepository.cpp \
+    src/core/services/XmlAreaOfViewIngestor.cpp \
+    src/core/services/MapLibreAreaOfViewAdapter.cpp \
+    src/ui/area_of_view/AreaOfViewTableDialog.cpp \
+    src/core/models/GenericGisEntity.cpp \
+    src/core/models/GisEntityRegistry.cpp \
+    src/core/repositories/GenericEntityRepository.cpp \
+    src/core/services/MapLibreGenericEntityAdapter.cpp \
+    src/ui/entities/UniversalEntityEditorDialog.cpp
 
 HEADERS += \
     src/core/SystemConfigManager.h \
@@ -127,7 +153,33 @@ HEADERS += \
     src/core/notifications/NotificationFactory.h \
     src/core/notifications/NotificationManager.h \
     src/ui/notifications/CriticalNotificationStrategy.h \
-    src/ui/notifications/FlashNotificationStrategy.h
+    src/ui/notifications/FlashNotificationStrategy.h \
+    src/core/models/IGisGeometry.h \
+    src/core/models/IGisEntity.h \
+    src/core/models/TrackRecord.h \
+    src/core/renderers/IMapRendererAdapter.h \
+    src/core/database/DatabaseManager.h \
+    src/core/repositories/ITrackRepository.h \
+    src/core/repositories/TrackRepository.h \
+    src/core/services/ITrackIngestor.h \
+    src/core/services/CsvTrackIngestor.h \
+    src/core/services/MapLibreTrackAdapter.h \
+    src/ui/tracks/TrackTableModel.h \
+    src/ui/tracks/TracksTableDialog.h \
+    src/ui/tracks/TrackDetailDialog.h \
+    src/core/models/AreaOfViewRecord.h \
+    src/core/repositories/IAreaOfViewRepository.h \
+    src/core/repositories/AreaOfViewRepository.h \
+    src/core/services/XmlAreaOfViewIngestor.h \
+    src/core/services/MapLibreAreaOfViewAdapter.h \
+    src/ui/area_of_view/AreaOfViewTableDialog.h \
+    src/core/models/GenericGisEntity.h \
+    src/core/models/GisEntityRegistry.h \
+    src/core/repositories/IGisEntityRepository.h \
+    src/core/repositories/GenericEntityRepository.h \
+    src/core/renderers/IEntityPainter.h \
+    src/core/services/MapLibreGenericEntityAdapter.h \
+    src/ui/entities/UniversalEntityEditorDialog.h
 
 
 

@@ -77,6 +77,11 @@ public:
     virtual LayerExtent getExtent() const = 0;
 
     /**
+     * @brief Set geographic spatial bounds of this layer.
+     */
+    virtual void setExtent(const LayerExtent &extent) { (void)extent; }
+
+    /**
      * @brief Remove layer and associated source from underlying engine.
      */
     virtual void removeLayer() = 0;

@@ -1,11 +1,16 @@
 #include "TacticalLayerProvider.h"
 #include "MapLibreLayerAdapter.h"
+#include "SystemConfigManager.h"
 #include <QVariantMap>
+#include <QFile>
+#include <QDir>
 #include <cmath>
 #include <QTimer>
 
 #include "publishing/LayerRegistryManager.h"
 #include "publishing/LayerPublishingService.h"
+#include "core/repositories/TrackRepository.h"
+#include "core/repositories/AreaOfViewRepository.h"
 
 namespace GISApp {
 namespace Layers {
@@ -19,29 +24,39 @@ void TacticalLayerProvider::setupTacticalLayers(QMapLibre::Map *map)
 {
     if (!map) return;
 
+    QString mapDataDir = Core::SystemConfigManager::instance().getMapDataDir();
+    QDir().mkpath(mapDataDir);
+
     // 1. Restricted Airspace Zone GeoJSON (Delhi/NCR Region)
     if (!map->sourceExists("air-zones-source")) {
+        QString airZonesPath = mapDataDir + "/air_zones.geojson";
+        QFile file(airZonesPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            file.write(R"({
+              "type": "FeatureCollection",
+              "features": [
+                {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                      [76.85, 28.40],
+                      [77.45, 28.40],
+                      [77.45, 28.90],
+                      [76.85, 28.90],
+                      [76.85, 28.40]
+                    ]]
+                  },
+                  "properties": {}
+                }
+              ]
+            })");
+            file.close();
+        }
+
         QVariantMap sourceParams;
         sourceParams["type"] = "geojson";
-        sourceParams["data"] = QString(R"({
-          "type": "FeatureCollection",
-          "features": [
-            {
-              "type": "Feature",
-              "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                  [76.85, 28.40],
-                  [77.45, 28.40],
-                  [77.45, 28.90],
-                  [76.85, 28.90],
-                  [76.85, 28.40]
-                ]]
-              },
-              "properties": {}
-            }
-          ]
-        })");
+        sourceParams["data"] = QString("file://%1").arg(airZonesPath);
         map->addSource("air-zones-source", sourceParams);
     }
 
@@ -61,9 +76,6 @@ void TacticalLayerProvider::setupTacticalLayers(QMapLibre::Map *map)
 
     // 2. Primary Radar Coverage Circle GeoJSON (Northern India)
     if (!map->sourceExists("radar-coverage-source")) {
-        QVariantMap radarSource;
-        radarSource["type"] = "geojson";
-        
         QString coordsStr;
         double centerLat = 28.6139;
         double centerLon = 77.2090;
@@ -76,19 +88,29 @@ void TacticalLayerProvider::setupTacticalLayers(QMapLibre::Map *map)
             if (i < 36) coordsStr += ", ";
         }
 
-        radarSource["data"] = QString(R"({
-          "type": "FeatureCollection",
-          "features": [
-            {
-              "type": "Feature",
-              "geometry": {
-                "type": "Polygon",
-                "coordinates": [[ %1 ]]
-              },
-              "properties": {}
-            }
-          ]
-        })").arg(coordsStr);
+        QString radarPath = mapDataDir + "/radar_coverage.geojson";
+        QFile file(radarPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            QString content = QString(R"({
+              "type": "FeatureCollection",
+              "features": [
+                {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[ %1 ]]
+                  },
+                  "properties": {}
+                }
+              ]
+            })").arg(coordsStr);
+            file.write(content.toUtf8());
+            file.close();
+        }
+
+        QVariantMap radarSource;
+        radarSource["type"] = "geojson";
+        radarSource["data"] = QString("file://%1").arg(radarPath);
         map->addSource("radar-coverage-source", radarSource);
     }
 
@@ -107,6 +129,7 @@ void TacticalLayerProvider::setupTacticalLayers(QMapLibre::Map *map)
     }
 }
 
+
 void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLibre::Map *map, GISApp::Controllers::MapController *mapController)
 {
     Q_UNUSED(mapController);
@@ -121,11 +144,12 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
     }
     qWarning() << "[TacticalLayerProvider] populateLayerTree executing...";
 
+    auto tacticalGroup = layerManager->addGroup("🛡️ Tactical Operations");
+    auto intelligenceGroup = layerManager->addGroup("📡 Signals & Sensors");
     auto googleGroup = layerManager->addGroup("🌐 Google Imagery");
     auto rasterGroup = layerManager->addGroup("🗺️ Raster Imagery & DSM");
     (void)rasterGroup;
-    auto tacticalGroup = layerManager->addGroup("🛡️ Tactical Operations");
-    auto intelligenceGroup = layerManager->addGroup("📡 Signals & Sensors");
+
 
     LayerExtent globalExtent{
         GISApp::Core::Models::GeoCoordinate(-85.0, -180.0),
@@ -178,6 +202,81 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
     auto airZoneAdapter = std::make_shared<MapLibreLayerAdapter>(
         "air-zones-layer", map, ncrExtent);
     layerManager->addLayer("Restricted Airspace Zones", airZoneAdapter, tacticalGroup);
+
+    LayerExtent tracksExtent = indiaExtent;
+    Core::Repositories::TrackRepository trackRepo;
+    auto tracks = trackRepo.getAllTracks();
+    if (!tracks.isEmpty()) {
+        double minLat = 90.0, maxLat = -90.0;
+        double minLon = 180.0, maxLon = -180.0;
+        for (const auto &tr : tracks) {
+            if (tr.trackLat < minLat) minLat = tr.trackLat;
+            if (tr.trackLat > maxLat) maxLat = tr.trackLat;
+            if (tr.trackLong < minLon) minLon = tr.trackLong;
+            if (tr.trackLong > maxLon) maxLon = tr.trackLong;
+        }
+        if (std::abs(maxLat - minLat) < 0.0001) {
+            minLat -= 0.005;
+            maxLat += 0.005;
+        }
+        if (std::abs(maxLon - minLon) < 0.0001) {
+            minLon -= 0.005;
+            maxLon += 0.005;
+        }
+        tracksExtent = LayerExtent{
+            Core::Models::GeoCoordinate(minLat, minLon),
+            Core::Models::GeoCoordinate(maxLat, maxLon)
+        };
+    }
+
+    auto tracksAdapter = std::make_shared<MapLibreLayerAdapter>(
+        "tracks-circle-layer", map, tracksExtent);
+    layerManager->addLayer("🎯 Tactical Tracks", tracksAdapter, tacticalGroup);
+
+    QVariantMap aovFillParams;
+    aovFillParams["id"] = "area-of-view-fill-layer";
+    aovFillParams["type"] = "fill";
+    aovFillParams["source"] = "area-of-view-geojson-source";
+
+    QVariantMap aovFillPaint;
+    aovFillPaint["fill-color"] = "rgba(0, 0, 0, 0)";
+    aovFillPaint["fill-opacity"] = 0.0;
+    aovFillParams["paint"] = aovFillPaint;
+
+    QVariantMap aovStrokeParams;
+    aovStrokeParams["id"] = "area-of-view-fill-layer-stroke";
+    aovStrokeParams["type"] = "line";
+    aovStrokeParams["source"] = "area-of-view-geojson-source";
+
+    QVariantMap aovStrokePaint;
+    aovStrokePaint["line-color"] = "#8B4513";
+    aovStrokePaint["line-width"] = 3.5;
+    aovStrokeParams["paint"] = aovStrokePaint;
+
+    LayerExtent aovExtent = indiaExtent;
+    Core::Repositories::AreaOfViewRepository aovRepo;
+    auto aovRecords = aovRepo.getAll();
+    if (!aovRecords.isEmpty()) {
+        const auto &rec = aovRecords.first();
+        if (!rec.points.isEmpty()) {
+            double minLat = 90.0, maxLat = -90.0;
+            double minLon = 180.0, maxLon = -180.0;
+            for (const auto &coord : rec.points) {
+                if (coord.latitude < minLat) minLat = coord.latitude;
+                if (coord.latitude > maxLat) maxLat = coord.latitude;
+                if (coord.longitude < minLon) minLon = coord.longitude;
+                if (coord.longitude > maxLon) maxLon = coord.longitude;
+            }
+            aovExtent = LayerExtent{
+                Core::Models::GeoCoordinate(minLat, minLon),
+                Core::Models::GeoCoordinate(maxLat, maxLon)
+            };
+        }
+    }
+
+    auto aovAdapter = std::make_shared<MapLibreLayerAdapter>(
+        "area-of-view-fill-layer", map, aovExtent, aovFillParams, aovStrokeParams);
+    layerManager->addLayer("👁️ Area of View", aovAdapter, tacticalGroup);
 
     auto radarCoverageAdapter = std::make_shared<MapLibreLayerAdapter>(
         "radar-coverage", map, indiaExtent);

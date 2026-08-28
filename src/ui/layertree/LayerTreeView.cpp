@@ -1,6 +1,6 @@
 /**
  * @file LayerTreeView.cpp
- * @brief Implementation of LayerTreeView widget with right-aligned action icons.
+ * @brief Implementation of LayerTreeView widget with right-aligned action icons and ingestion context options.
  */
 
 #include "ui/layertree/LayerTreeView.h"
@@ -85,12 +85,6 @@ void LayerTreeView::setLayerManager(GISApp::Layers::LayerManager *manager) {
 }
 
 void LayerTreeView::contextMenuEvent(QContextMenuEvent *event) {
-    QModelIndex idx = indexAt(event->pos());
-    if (!idx.isValid() || !m_layerManager) return;
-
-    GISApp::Layers::LayerTreeNode *node = m_layerManager->model()->nodeFromIndex(idx);
-    if (!node) return;
-
     QMenu contextMenu(this);
     contextMenu.setStyleSheet(R"(
         QMenu {
@@ -106,56 +100,70 @@ void LayerTreeView::contextMenuEvent(QContextMenuEvent *event) {
         }
     )");
 
-    QAction *zoomAction = contextMenu.addAction("🎯 Pan to Extent");
-    QAction *opacityAction = contextMenu.addAction("💧 Set Opacity...");
-    QAction *moveUpAction = contextMenu.addAction("⬆ Move Up (Render Higher)");
-    QAction *moveDownAction = contextMenu.addAction("🔽 Move Down (Render Lower)");
-    QAction *toggleAction = contextMenu.addAction(node->checkState() == Qt::Checked ? "👁 Hide Layer" : "👁 Show Layer");
-    contextMenu.addSeparator();
-    QAction *removeAction = contextMenu.addAction(node->nodeType() == GISApp::Layers::NodeType::Group ? "🗑 Remove Group" : "🗑 Remove Layer");
+    QModelIndex idx = indexAt(event->pos());
+    GISApp::Layers::LayerTreeNode *node = (m_layerManager && idx.isValid()) ? m_layerManager->model()->nodeFromIndex(idx) : nullptr;
 
-    connect(zoomAction, &QAction::triggered, [this, node]() {
-        GISApp::Layers::LayerExtent extent = node->getExtent();
-        if (extent.isValid()) {
-            emit zoomToExtentRequested(extent);
-        }
-    });
+    if (node) {
+        QAction *zoomAction = contextMenu.addAction("🎯 Pan to Extent");
+        QAction *opacityAction = contextMenu.addAction("💧 Set Opacity...");
+        QAction *moveUpAction = contextMenu.addAction("⬆ Move Up (Render Higher)");
+        QAction *moveDownAction = contextMenu.addAction("🔽 Move Down (Render Lower)");
+        QAction *toggleAction = contextMenu.addAction(node->checkState() == Qt::Checked ? "👁 Hide Layer" : "👁 Show Layer");
+        contextMenu.addSeparator();
+        QAction *removeAction = contextMenu.addAction(node->nodeType() == GISApp::Layers::NodeType::Group ? "🗑 Remove Group" : "🗑 Remove Layer");
 
-    connect(opacityAction, &QAction::triggered, [this, node]() {
-        bool ok = false;
-        int currentPercent = static_cast<int>(node->opacity() * 100.0f);
-        int percent = QInputDialog::getInt(this, "Layer Opacity", "Opacity Percentage (0-100%):", currentPercent, 0, 100, 5, &ok);
-        if (ok) {
-            m_layerManager->setOpacity(node, static_cast<float>(percent) / 100.0f);
-        }
-    });
+        connect(zoomAction, &QAction::triggered, [this, node]() {
+            GISApp::Layers::LayerExtent extent = node->getExtent();
+            if (extent.isValid()) {
+                emit zoomToExtentRequested(extent);
+            }
+        });
 
-    connect(moveUpAction, &QAction::triggered, [this, node]() {
-        if (m_layerManager) {
-            m_layerManager->moveUp(node);
-        }
-    });
+        connect(opacityAction, &QAction::triggered, [this, node]() {
+            bool ok = false;
+            int currentPercent = static_cast<int>(node->opacity() * 100.0f);
+            int percent = QInputDialog::getInt(this, "Layer Opacity", "Opacity Percentage (0-100%):", currentPercent, 0, 100, 5, &ok);
+            if (ok) {
+                m_layerManager->setOpacity(node, static_cast<float>(percent) / 100.0f);
+            }
+        });
 
-    connect(moveDownAction, &QAction::triggered, [this, node]() {
-        if (m_layerManager) {
-            m_layerManager->moveDown(node);
-        }
-    });
+        connect(moveUpAction, &QAction::triggered, [this, node]() {
+            if (m_layerManager) {
+                m_layerManager->moveUp(node);
+            }
+        });
 
-    connect(toggleAction, &QAction::triggered, [this, node]() {
-        bool isVisible = (node->checkState() == Qt::Checked);
-        m_layerManager->setVisibility(node, !isVisible);
-    });
+        connect(moveDownAction, &QAction::triggered, [this, node]() {
+            if (m_layerManager) {
+                m_layerManager->moveDown(node);
+            }
+        });
 
-    connect(removeAction, &QAction::triggered, [this, node]() {
-        if (!m_layerManager) return;
-        QString itemType = (node->nodeType() == GISApp::Layers::NodeType::Group) ? "group" : "layer";
-        if (QMessageBox::question(this, "Confirm Removal",
-                                  QString("Are you sure you want to remove the %1 '%2'?").arg(itemType, node->name()),
-                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-            m_layerManager->removeNode(node);
-        }
-    });
+        connect(toggleAction, &QAction::triggered, [this, node]() {
+            bool isVisible = (node->checkState() == Qt::Checked);
+            m_layerManager->setVisibility(node, !isVisible);
+        });
+
+        connect(removeAction, &QAction::triggered, [this, node]() {
+            if (!m_layerManager) return;
+            QString itemType = (node->nodeType() == GISApp::Layers::NodeType::Group) ? "group" : "layer";
+            if (QMessageBox::question(this, "Confirm Removal",
+                                      QString("Are you sure you want to remove the %1 '%2'?").arg(itemType, node->name()),
+                                      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                m_layerManager->removeNode(node);
+            }
+        });
+
+        contextMenu.addSeparator();
+    }
+
+    // Ingestion Actions available directly from Layer Tree
+    QAction *ingestAovAction = contextMenu.addAction("📥 Ingest Area of View (XML)...");
+    QAction *ingestTracksAction = contextMenu.addAction("📥 Ingest Tactical Tracks (CSV)...");
+
+    connect(ingestAovAction, &QAction::triggered, this, &LayerTreeView::ingestAreaOfViewRequested);
+    connect(ingestTracksAction, &QAction::triggered, this, &LayerTreeView::ingestTracksRequested);
 
     contextMenu.exec(event->globalPos());
 }

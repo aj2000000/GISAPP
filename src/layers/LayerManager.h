@@ -81,6 +81,20 @@ public:
      */
     void panToExtent(LayerTreeNode *node);
 
+    /**
+     * @brief Find a LayerNode by its underlying layer ID string.
+     * @param layerId Unique layer ID in MapLibre style stack.
+     * @return LayerNode* Pointer to matching layer node or nullptr if not present.
+     */
+    LayerNode* findLayerByLayerId(const QString &layerId) const;
+
+    /**
+     * @brief Find a LayerGroupNode by group name.
+     * @param groupName Name of the group to search for.
+     * @return LayerGroupNode* Pointer to matching group node or nullptr.
+     */
+    LayerGroupNode* findGroupByName(const QString &groupName) const;
+
 signals:
     /**
      * @brief Emitted when a pan to extent action is triggered.

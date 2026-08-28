@@ -79,10 +79,23 @@ void BackgroundTaskDialog::setupUI()
         }
         QTableWidget {
             background-color: #1e293b;
+            alternate-background-color: #0f172a;
             border: 1px solid #334155;
             border-radius: 8px;
             color: #f8fafc;
             gridline-color: #334155;
+        }
+        QTableWidget::item {
+            color: #f8fafc;
+            background-color: #1e293b;
+        }
+        QTableWidget::item:alternate {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        QTableWidget::item:selected {
+            background-color: #0284c7;
+            color: #ffffff;
         }
         QHeaderView::section {
             background-color: #0f172a;

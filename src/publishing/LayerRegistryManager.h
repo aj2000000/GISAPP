@@ -53,7 +53,9 @@ public:
                                 const QString &layerName,
                                 const QString &groupName,
                                 int minZoom = 0,
-                                int maxZoom = 22);
+                                int maxZoom = 22,
+                                float opacity = 1.0f,
+                                bool isVisible = true);
 
     void registerGroup(const QString &groupName);
     void unregisterLayer(const QString &layerName);

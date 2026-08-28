@@ -171,6 +171,61 @@ QString ThemeManager::getStyleSheet(ThemeType theme) const
             background-color: rgba(16, 185, 129, 0.30);
             color: #34d399;
         }
+
+        /* Global Dialog & MessageBox Styling for High-Contrast Text Visibility */
+        QDialog, QMessageBox, QInputDialog, QFileDialog {
+            background-color: %2;
+            color: %6;
+            border: 1px solid %5;
+            border-radius: 8px;
+        }
+        QMessageBox QLabel, QDialog QLabel, QInputDialog QLabel, QFileDialog QLabel {
+            color: %6;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+        }
+        QMessageBox QPushButton, QDialogButtonBox QPushButton, QDialog QPushButton {
+            background-color: %5;
+            color: %6;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 75px;
+        }
+        QMessageBox QPushButton:hover, QDialogButtonBox QPushButton:hover, QDialog QPushButton:hover {
+            background-color: %4;
+            color: #ffffff;
+            border-color: %4;
+        }
+        QMessageBox QPushButton:pressed, QDialogButtonBox QPushButton:pressed, QDialog QPushButton:pressed {
+            background-color: %4;
+            color: #ffffff;
+        }
+        QMessageBox QPushButton:disabled, QDialogButtonBox QPushButton:disabled, QDialog QPushButton:disabled {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: %7;
+            border-color: %5;
+        }
+        QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+            background-color: %1;
+            color: %6;
+            border: 1px solid %5;
+            border-radius: 4px;
+            padding: 5px 8px;
+            selection-background-color: %4;
+            selection-color: #ffffff;
+        }
+        QToolTip {
+            background-color: %2;
+            color: %6;
+            border: 1px solid %4;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
     )").arg(bgPrimary, bgPanel, bgFloating, accent, border, textPrimary, textMuted);
-}// namespace GISApp::UI
 }
+
+} // namespace GISApp::UI

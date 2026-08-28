@@ -6,6 +6,7 @@
 #include "map/MapLibreWidget.h"
 #include <QVBoxLayout>
 #include <QMouseEvent>
+#include <QContextMenuEvent>
 #include <QEvent>
 #include <QMapLibre/Map>
 #include <cmath>
@@ -126,6 +127,13 @@ bool MapLibreWidget::eventFilter(QObject *watched, QEvent *event)
             GISApp::Core::Models::GeoCoordinate geoCoord(coord.first, coord.second);
             emit mouseReleased(mouseEvent, geoCoord);
             emitCameraChanged();
+        }
+        else if (event->type() == QEvent::ContextMenu) {
+            QContextMenuEvent *cme = static_cast<QContextMenuEvent*>(event);
+            QMapLibre::Coordinate coord = map()->coordinateForPixel(cme->pos());
+            GISApp::Core::Models::GeoCoordinate geoCoord(coord.first, coord.second);
+            emit customContextMenuRequested(cme->globalPos(), cme->pos(), geoCoord);
+            return true;
         }
         else if (event->type() == QEvent::Wheel) {
             QMetaObject::invokeMethod(this, &MapLibreWidget::emitCameraChanged, Qt::QueuedConnection);

@@ -29,6 +29,69 @@ DownloadSatImageryDialog::DownloadSatImageryDialog(GISApp::Map::MapLibreWidget *
 
 void DownloadSatImageryDialog::setupUi()
 {
+    setStyleSheet(R"(
+        QDialog, QMessageBox {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: 8px;
+        }
+        QLabel, QMessageBox QLabel {
+            color: #f8fafc;
+            font-size: 12px;
+        }
+        QMessageBox QLabel {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        QMessageBox QPushButton {
+            background-color: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-weight: bold;
+            font-size: 12px;
+            min-width: 75px;
+        }
+        QMessageBox QPushButton:hover {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+        QGroupBox {
+            color: #38bdf8;
+            font-weight: bold;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 4px;
+        }
+        QLineEdit, QSpinBox, QDoubleSpinBox {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 4px;
+        }
+        QPushButton {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #334155;
+            color: #38bdf8;
+        }
+    )");
+
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);
 

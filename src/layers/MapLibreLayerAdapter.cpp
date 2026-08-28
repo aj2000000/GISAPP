@@ -4,9 +4,12 @@
  */
 
 #include "layers/MapLibreLayerAdapter.h"
+#include "SystemConfigManager.h"
 #include <QVariantMap>
+#include <QFile>
 #include <QDebug>
 #include <algorithm>
+
 
 namespace GISApp::Layers {
 
@@ -123,6 +126,10 @@ LayerExtent MapLibreLayerAdapter::getExtent() const {
     return m_extent;
 }
 
+void MapLibreLayerAdapter::setExtent(const LayerExtent &extent) {
+    m_extent = extent;
+}
+
 void MapLibreLayerAdapter::removeLayer() {
     if (!m_map || m_layerId.isEmpty()) return;
 
@@ -145,32 +152,125 @@ void MapLibreLayerAdapter::removeLayer() {
 void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
     if (!m_map || m_layerId.isEmpty()) return;
 
+    if (m_layerId == "tracks-circle-layer") {
+        if (!m_map->sourceExists("tracks-geojson-source")) {
+            QString mapDataDir = GISApp::Core::SystemConfigManager::instance().getMapDataDir();
+            QString geojsonPath = mapDataDir + "/tactical_tracks.geojson";
+            QVariantMap sourceParams;
+            sourceParams["type"] = "geojson";
+            sourceParams["data"] = QString("file://%1").arg(geojsonPath);
+            m_map->addSource("tracks-geojson-source", sourceParams);
+        }
+
+        if (m_layerParams.isEmpty()) {
+            m_layerParams["id"] = "tracks-circle-layer";
+            m_layerParams["type"] = "circle";
+            m_layerParams["source"] = "tracks-geojson-source";
+            QVariantMap paintMap;
+            paintMap["circle-color"] = "rgba(0, 230, 255, 0.85)";
+            paintMap["circle-radius"] = 7.0;
+            paintMap["circle-stroke-color"] = "#ffffff";
+            paintMap["circle-stroke-width"] = 2.0;
+            m_layerParams["paint"] = paintMap;
+        }
+    }
+
+    if (m_layerId == "area-of-view-fill-layer") {
+        if (!m_map->sourceExists("area-of-view-geojson-source")) {
+            QString mapDataDir = GISApp::Core::SystemConfigManager::instance().getMapDataDir();
+            QString geojsonPath = mapDataDir + "/area_of_view.geojson";
+            if (!QFile::exists(geojsonPath)) {
+                QFile file(geojsonPath);
+                if (file.open(QIODevice::WriteOnly)) {
+                    file.write(R"({"type":"FeatureCollection","features":[]})");
+                    file.close();
+                }
+            }
+            QVariantMap sourceParams;
+            sourceParams["type"] = "geojson";
+            sourceParams["data"] = QString("file://%1").arg(geojsonPath);
+            m_map->addSource("area-of-view-geojson-source", sourceParams);
+        }
+
+        if (m_layerParams.isEmpty()) {
+            m_layerParams["id"] = "area-of-view-fill-layer";
+            m_layerParams["type"] = "fill";
+            m_layerParams["source"] = "area-of-view-geojson-source";
+            QVariantMap fillPaint;
+            fillPaint["fill-color"] = "rgba(0, 0, 0, 0)";
+            fillPaint["fill-opacity"] = 0.0;
+            m_layerParams["paint"] = fillPaint;
+        }
+
+        if (m_strokeParams.isEmpty()) {
+            m_strokeParams["id"] = "area-of-view-fill-layer-stroke";
+            m_strokeParams["type"] = "line";
+            m_strokeParams["source"] = "area-of-view-geojson-source";
+            QVariantMap strokePaint;
+            strokePaint["line-color"] = "#8B4513";
+            strokePaint["line-width"] = 3.5;
+            m_strokeParams["paint"] = strokePaint;
+        }
+    }
+
+    if (m_layerParams.isEmpty()) {
+        // Do not remove layer if we cannot re-add it (avoids destroying native engine layers)
+        return;
+    }
+
+
     qWarning() << "[MapLibreLayerAdapter] Re-inserting layer:" << m_layerId << "BEFORE:" << beforeLayerId;
 
-    if (m_map->layerExists(m_layerId)) {
-        m_map->removeLayer(m_layerId);
-    }
     QString strokeId = m_layerId + "-stroke";
-    if (m_map->layerExists(strokeId)) {
-        m_map->removeLayer(strokeId);
+    try {
+        if (m_map->layerExists(m_layerId)) {
+            m_map->removeLayer(m_layerId);
+        }
+        if (m_map->layerExists(strokeId)) {
+            m_map->removeLayer(strokeId);
+        }
+
+        if (!m_map->layerExists(m_layerId)) {
+            if (beforeLayerId.isEmpty()) {
+                m_map->addLayer(m_layerId, m_layerParams);
+            } else {
+                m_map->addLayer(m_layerId, m_layerParams, beforeLayerId);
+            }
+        }
+
+        if (!m_strokeParams.isEmpty() && !m_map->layerExists(strokeId)) {
+            if (beforeLayerId.isEmpty()) {
+                m_map->addLayer(strokeId, m_strokeParams);
+            } else {
+                m_map->addLayer(strokeId, m_strokeParams, beforeLayerId);
+            }
+        }
+    } catch (const std::exception &e) {
+        qWarning() << "[MapLibreLayerAdapter] Exception during reinsertLayer:" << e.what();
+    } catch (...) {
+        qWarning() << "[MapLibreLayerAdapter] Unknown exception during reinsertLayer";
     }
 
-    if (!m_layerParams.isEmpty()) {
-        m_map->addLayer(m_layerId, m_layerParams, beforeLayerId);
+    if (m_map->layerExists(m_layerId)) {
         m_map->setLayoutProperty(m_layerId, "visibility", m_visible ? "visible" : "none");
         QString typeStr = m_layerParams.value("type").toString();
         if (typeStr == "raster") {
             m_map->setPaintProperty(m_layerId, "raster-opacity", static_cast<double>(m_opacity));
         } else if (typeStr == "fill") {
-            m_map->setPaintProperty(m_layerId, "fill-opacity", static_cast<double>(m_opacity));
+            QVariantMap paint = m_layerParams.value("paint").toMap();
+            if (paint.contains("fill-opacity") && paint.value("fill-opacity").toDouble() == 0.0) {
+                m_map->setPaintProperty(m_layerId, "fill-opacity", 0.0);
+            } else {
+                m_map->setPaintProperty(m_layerId, "fill-opacity", static_cast<double>(m_opacity));
+            }
         } else if (typeStr == "symbol") {
             m_map->setPaintProperty(m_layerId, "icon-opacity", static_cast<double>(m_opacity));
         } else if (typeStr == "circle") {
             m_map->setPaintProperty(m_layerId, "circle-opacity", static_cast<double>(m_opacity));
         }
     }
-    if (!m_strokeParams.isEmpty()) {
-        m_map->addLayer(strokeId, m_strokeParams, beforeLayerId);
+
+    if (!m_strokeParams.isEmpty() && m_map->layerExists(strokeId)) {
         m_map->setLayoutProperty(strokeId, "visibility", m_visible ? "visible" : "none");
         QString strokeTypeStr = m_strokeParams.value("type").toString();
         if (strokeTypeStr == "line") {
@@ -180,5 +280,7 @@ void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
         }
     }
 }
+
+
 
 } // namespace GISApp::Layers

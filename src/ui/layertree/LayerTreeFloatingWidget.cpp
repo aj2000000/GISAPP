@@ -1,6 +1,6 @@
 /**
  * @file LayerTreeFloatingWidget.cpp
- * @brief Implementation of floating draggable tactical layer tree widget.
+ * @brief Implementation of floating draggable tactical layer tree widget with ingestion actions.
  */
 
 #include "ui/layertree/LayerTreeFloatingWidget.h"
@@ -13,7 +13,7 @@ LayerTreeFloatingWidget::LayerTreeFloatingWidget(QWidget *parent)
 {
     setObjectName("LayerTreeFloatingWidget");
     setAttribute(Qt::WA_StyledBackground, true);
-    setFixedWidth(280);
+    setFixedWidth(290);
 
     // Glassmorphic Tactical Styling
     setStyleSheet(
@@ -68,10 +68,63 @@ LayerTreeFloatingWidget::LayerTreeFloatingWidget(QWidget *parent)
     m_treeView->setMinimumHeight(240);
     m_mainLayout->addWidget(m_treeView);
 
-    // 3. Connect Control Signals
+    // 3. Bottom Quick Ingestion Button Bar
+    m_buttonBar = new QWidget(this);
+    m_buttonBar->setStyleSheet(
+        "background-color: rgba(15, 23, 42, 0.90);"
+        "border-top: 1px solid rgba(255, 255, 255, 0.08);"
+        "border-bottom-left-radius: 7px;"
+        "border-bottom-right-radius: 7px;"
+    );
+    QHBoxLayout *btnLayout = new QHBoxLayout(m_buttonBar);
+    btnLayout->setContentsMargins(6, 6, 6, 6);
+    btnLayout->setSpacing(6);
+
+    m_ingestAovBtn = new QPushButton("📥 Ingest AoV (XML)", m_buttonBar);
+    m_ingestAovBtn->setCursor(Qt::PointingHandCursor);
+    m_ingestAovBtn->setStyleSheet(R"(
+        QPushButton {
+            background: rgba(0, 136, 255, 0.20);
+            color: #00E5FF;
+            border: 1px solid #0088FF;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background: rgba(0, 136, 255, 0.40);
+            color: #ffffff;
+        }
+    )");
+
+    m_ingestTracksBtn = new QPushButton("📥 Tracks (CSV)", m_buttonBar);
+    m_ingestTracksBtn->setCursor(Qt::PointingHandCursor);
+    m_ingestTracksBtn->setStyleSheet(R"(
+        QPushButton {
+            background: rgba(16, 185, 129, 0.20);
+            color: #10b981;
+            border: 1px solid #10b981;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background: rgba(16, 185, 129, 0.40);
+            color: #ffffff;
+        }
+    )");
+
+    btnLayout->addWidget(m_ingestAovBtn);
+    btnLayout->addWidget(m_ingestTracksBtn);
+    m_mainLayout->addWidget(m_buttonBar);
+
+    // 4. Connect Control & Ingestion Signals
     connect(m_collapseButton, &QPushButton::clicked, [this]() {
         m_isCollapsed = !m_isCollapsed;
         m_treeView->setVisible(!m_isCollapsed);
+        m_buttonBar->setVisible(!m_isCollapsed);
         m_collapseButton->setText(m_isCollapsed ? "+" : "−");
         adjustSize();
     });
@@ -80,6 +133,12 @@ LayerTreeFloatingWidget::LayerTreeFloatingWidget(QWidget *parent)
         hide();
         emit closed();
     });
+
+    connect(m_ingestAovBtn, &QPushButton::clicked, this, &LayerTreeFloatingWidget::ingestAreaOfViewRequested);
+    connect(m_ingestTracksBtn, &QPushButton::clicked, this, &LayerTreeFloatingWidget::ingestTracksRequested);
+
+    connect(m_treeView, &LayerTreeView::ingestAreaOfViewRequested, this, &LayerTreeFloatingWidget::ingestAreaOfViewRequested);
+    connect(m_treeView, &LayerTreeView::ingestTracksRequested, this, &LayerTreeFloatingWidget::ingestTracksRequested);
 
     // Drop shadow
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);

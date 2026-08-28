@@ -158,4 +158,47 @@ void LayerManager::removeNode(LayerTreeNode *node) {
     }
 }
 
+static LayerNode* recursiveFindLayer(LayerTreeNode *node, const QString &layerId) {
+    if (!node) return nullptr;
+    if (node->nodeType() == NodeType::Layer) {
+        auto layerNode = static_cast<LayerNode*>(node);
+        if (layerNode->adapter() && layerNode->adapter()->layerId() == layerId) {
+            return layerNode;
+        }
+    } else if (node->nodeType() == NodeType::Group) {
+        auto groupNode = static_cast<LayerGroupNode*>(node);
+        for (int i = 0; i < groupNode->childCount(); ++i) {
+            auto result = recursiveFindLayer(groupNode->child(i), layerId);
+            if (result) return result;
+        }
+    }
+    return nullptr;
+}
+
+static LayerGroupNode* recursiveFindGroup(LayerTreeNode *node, const QString &groupName) {
+    if (!node) return nullptr;
+    if (node->nodeType() == NodeType::Group) {
+        auto groupNode = static_cast<LayerGroupNode*>(node);
+        if (groupNode->name().contains(groupName, Qt::CaseInsensitive)) {
+            return groupNode;
+        }
+        for (int i = 0; i < groupNode->childCount(); ++i) {
+            auto result = recursiveFindGroup(groupNode->child(i), groupName);
+            if (result) return result;
+        }
+    }
+    return nullptr;
+}
+
+LayerNode* LayerManager::findLayerByLayerId(const QString &layerId) const {
+    if (!m_model || !m_model->rootNode()) return nullptr;
+    return recursiveFindLayer(m_model->rootNode(), layerId);
+}
+
+LayerGroupNode* LayerManager::findGroupByName(const QString &groupName) const {
+    if (!m_model || !m_model->rootNode()) return nullptr;
+    return recursiveFindGroup(m_model->rootNode(), groupName);
+}
+
 } // namespace GISApp::Layers
+

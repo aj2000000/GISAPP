@@ -1,12 +1,77 @@
 {
     "groups": [
-        "📍 Custom Vector Layers",
         "🛡️ Tactical Operations",
         "📡 Signals & Sensors",
+        "🌐 Google Imagery",
         "🗺️ Raster Imagery & DSM",
-        "🌐 Google Imagery"
+        "📍 Custom Vector Layers"
     ],
     "layers": [
+        {
+            "folderPath": "/home/aman/MAPDATA/air_zones.geojson",
+            "groupName": "🛡️ Tactical Operations",
+            "isTiled": false,
+            "isVisible": true,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "Restricted Airspace Zones",
+            "opacity": 1,
+            "orderIndex": 0,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "",
+            "groupName": "🛡️ Tactical Operations",
+            "isTiled": false,
+            "isVisible": true,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "🎯 Tactical Tracks",
+            "opacity": 1,
+            "orderIndex": 1,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "",
+            "groupName": "🛡️ Tactical Operations",
+            "isTiled": false,
+            "isVisible": true,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "👁️ Area of View",
+            "opacity": 1,
+            "orderIndex": 2,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "/home/aman/MAPDATA/radar_coverage.geojson",
+            "groupName": "📡 Signals & Sensors",
+            "isTiled": false,
+            "isVisible": false,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "Primary Radar Coverage",
+            "opacity": 1,
+            "orderIndex": 3,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "",
+            "groupName": "🌐 Google Imagery",
+            "isTiled": true,
+            "isVisible": true,
+            "maxZoom": 20,
+            "minZoom": 0,
+            "name": "Google Earth Satellite",
+            "opacity": 1,
+            "orderIndex": 4,
+            "tilePath": "",
+            "type": "Raster"
+        },
         {
             "folderPath": "/home/aman/MAPDATA/Google_Satwq_Downloaded.tif",
             "groupName": "🗺️ Raster Imagery & DSM",
@@ -16,9 +81,35 @@
             "minZoom": 0,
             "name": "Google_Satwq_Downloaded",
             "opacity": 1,
-            "orderIndex": 0,
+            "orderIndex": 5,
             "tilePath": "/home/aman/MAPDATA/google_satwq_downloaded",
             "type": "Raster"
+        },
+        {
+            "folderPath": "/home/aman/aman/MAPDATA/baseTiff/NE1_LR_LC.tif",
+            "groupName": "🗺️ Raster Imagery & DSM",
+            "isTiled": false,
+            "isVisible": true,
+            "maxZoom": 20,
+            "minZoom": 0,
+            "name": "NE1_LR_LC",
+            "opacity": 1,
+            "orderIndex": 6,
+            "tilePath": "",
+            "type": "Raster"
+        },
+        {
+            "folderPath": "/home/aman/aman/MAPDATA/WorldMap/worldgeo.json",
+            "groupName": "📍 Custom Vector Layers",
+            "isTiled": true,
+            "isVisible": true,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "worldgeo",
+            "opacity": 0.10000000149011612,
+            "orderIndex": 7,
+            "tilePath": "/home/aman/MAPDATA/worldgeo",
+            "type": "Vector"
         }
     ]
 }

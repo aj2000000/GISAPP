@@ -11,12 +11,16 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QTimer>
+#include <QGuiApplication>
+#include <QClipboard>
+#include <QMessageBox>
 #include <QMapLibre/Settings>
 #include "tools/PanTool.h"
 #include "layers/MapLibreLayerAdapter.h"
 #include "ui/layertree/LayerTreeFloatingWidget.h"
 #include "layers/TacticalLayerProvider.h"
 #include <cmath>
+#include <algorithm>
 #include <QDir>
 
 #include "ui/publishing/PublishLayerDialog.h"
@@ -25,6 +29,27 @@
 #include "ui/download/DownloadSatImageryDialog.h"
 #include "core/SystemConfigManager.h"
 #include "core/notifications/NotificationManager.h"
+
+// Track System MVC & SQLite Database Headers
+#include "core/database/DatabaseManager.h"
+#include "core/repositories/TrackRepository.h"
+#include "core/services/MapLibreTrackAdapter.h"
+#include "core/services/CsvTrackIngestor.h"
+#include "ui/tracks/TracksTableDialog.h"
+#include "ui/tracks/TrackDetailDialog.h"
+#include "core/repositories/AreaOfViewRepository.h"
+#include "core/services/MapLibreAreaOfViewAdapter.h"
+#include "core/services/XmlAreaOfViewIngestor.h"
+#include "ui/area_of_view/AreaOfViewTableDialog.h"
+
+// EMS Polymorphic Architecture Headers
+#include "core/models/GisEntityRegistry.h"
+#include "core/repositories/GenericEntityRepository.h"
+#include "core/services/MapLibreGenericEntityAdapter.h"
+#include "ui/entities/UniversalEntityEditorDialog.h"
+
+#include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -39,6 +64,12 @@ MainWindow::MainWindow(QWidget *parent)
     , m_themeActionGroup(nullptr)
 {
     ui->setupUi(this);
+
+    // Initialize SQLite Database and Repositories
+    GISApp::Core::Database::DatabaseManager::instance()->initialize();
+    m_trackRepository = new GISApp::Core::Repositories::TrackRepository(this);
+    m_areaOfViewRepository = new GISApp::Core::Repositories::AreaOfViewRepository(this);
+    m_genericEntityRepository = new GISApp::Core::Repositories::GenericEntityRepository(this);
     
     // 1. Initialize Layout and Overlay Components
     setupMapView();
@@ -96,6 +127,10 @@ void MainWindow::setupMapView()
     m_layerManager = new GISApp::Layers::LayerManager(this);
     if (m_layerFloatingPanel) {
         m_layerFloatingPanel->setLayerManager(m_layerManager);
+        connect(m_layerFloatingPanel, &GISApp::UI::LayerTreeFloatingWidget::ingestAreaOfViewRequested,
+                this, &MainWindow::onUploadAreaOfViewTriggered);
+        connect(m_layerFloatingPanel, &GISApp::UI::LayerTreeFloatingWidget::ingestTracksRequested,
+                this, &MainWindow::onUploadTracksTriggered);
     }
     
     // Connect Left Sidebar 'Layers' Button to Toggle Floating Layer Panel
@@ -114,20 +149,21 @@ void MainWindow::setupMapView()
             timer->stop();
             timer->deleteLater();
             
-            // Helper lambda to pan and dynamically zoom to bounding box extent
+            // Helper lambda to pan and dynamically zoom to bounding box extent using MapLibre Qt native coordinateZoomForBounds
             auto handlePanToExtent = [this](const GISApp::Layers::LayerExtent &extent) {
                 if (m_mapController && extent.isValid()) {
-                    double centerLat = (extent.southWest.latitude() + extent.northEast.latitude()) / 2.0;
-                    double centerLon = (extent.southWest.longitude() + extent.northEast.longitude()) / 2.0;
-
-                    double latDiff = std::max(0.0001, extent.northEast.latitude() - extent.southWest.latitude());
-                    double lonDiff = std::max(0.0001, extent.northEast.longitude() - extent.southWest.longitude());
-
-                    double zoomLon = std::log2(360.0 / lonDiff);
-                    double zoomLat = std::log2(180.0 / latDiff);
-                    double fitZoom = std::clamp(std::min(zoomLon, zoomLat) + 0.2, 1.5, 16.0);
-
-                    m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(centerLat, centerLon), fitZoom);
+                    if (m_mapWidget && m_mapWidget->map()) {
+                        QMapLibre::Coordinate sw(extent.southWest.latitude(), extent.southWest.longitude());
+                        QMapLibre::Coordinate ne(extent.northEast.latitude(), extent.northEast.longitude());
+                        QMapLibre::CoordinateZoom cz = m_mapWidget->map()->coordinateZoomForBounds(sw, ne, 0.0, 0.0);
+                        m_mapWidget->map()->setBearing(0.0);
+                        m_mapWidget->map()->setPitch(0.0);
+                        m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(cz.first.first, cz.first.second), cz.second);
+                    } else {
+                        double centerLat = (extent.southWest.latitude() + extent.northEast.latitude()) / 2.0;
+                        double centerLon = (extent.southWest.longitude() + extent.northEast.longitude()) / 2.0;
+                        m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(centerLat, centerLon), 12.0);
+                    }
                 }
             };
 
@@ -148,20 +184,46 @@ void MainWindow::setupMapView()
                 });
             }
             
-            // Connect style load to tactical layer population
+            // Connect style load to tactical layer population and track rendering
             connect(m_mapWidget->map(), &QMapLibre::Map::mapChanged, [this](QMapLibre::Map::MapChange change) {
                 if (change == QMapLibre::Map::MapChangeDidFinishLoadingStyle) {
+                    if (!m_trackAdapter && m_trackRepository) {
+                        m_trackAdapter = new GISApp::Core::Services::MapLibreTrackAdapter(m_mapWidget->map(), m_trackRepository, this);
+                        m_trackAdapter->setLayerManager(m_layerManager);
+                    } else if (m_trackAdapter) {
+                        m_trackAdapter->setMap(m_mapWidget->map());
+                        m_trackAdapter->setLayerManager(m_layerManager);
+                    }
+
+                    if (!m_areaOfViewAdapter && m_areaOfViewRepository) {
+                        m_areaOfViewAdapter = new GISApp::Core::Services::MapLibreAreaOfViewAdapter(m_mapWidget->map(), m_areaOfViewRepository, this);
+                    } else if (m_areaOfViewAdapter) {
+                        m_areaOfViewAdapter->setMap(m_mapWidget->map());
+                    }
+
+                    if (!m_genericEntityAdapter && m_genericEntityRepository) {
+                        m_genericEntityAdapter = new GISApp::Core::Services::MapLibreGenericEntityAdapter(m_mapWidget->map(), m_genericEntityRepository, this);
+                        m_genericEntityAdapter->setLayerManager(m_layerManager);
+                    } else if (m_genericEntityAdapter) {
+                        m_genericEntityAdapter->setMap(m_mapWidget->map());
+                        m_genericEntityAdapter->setLayerManager(m_layerManager);
+                    }
+
                     GISApp::Layers::TacticalLayerProvider p;
                     p.setupTacticalLayers(m_mapWidget->map());
                     p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
+
                     m_mapWidget->updateMap();
+                    QTimer::singleShot(200, this, &MainWindow::focusOnAreaOfView);
+                    QTimer::singleShot(600, this, &MainWindow::focusOnAreaOfView);
                 }
             });
 
             // Set Initial Offline Tactical Dark Style and Camera
             QString offlineStyle = QString("file://%1").arg(GISApp::Core::SystemConfigManager::instance().getOfflineStylePath());
             m_mapController->setStyle(offlineStyle);
-            m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(28.6139, 77.2090), 10.0);
+            QTimer::singleShot(200, this, &MainWindow::focusOnAreaOfView);
+            QTimer::singleShot(600, this, &MainWindow::focusOnAreaOfView);
         }
     });
     timer->start(50);
@@ -186,6 +248,8 @@ void MainWindow::setupMapView()
             m_toolManager, &GISApp::Controllers::ToolManager::handleMouseMove);
     connect(m_mapWidget, &GISApp::Map::MapLibreWidget::mouseReleased,
             m_toolManager, &GISApp::Controllers::ToolManager::handleMouseRelease);
+    connect(m_mapWidget, &GISApp::Map::MapLibreWidget::customContextMenuRequested,
+            this, &MainWindow::onMapContextMenuRequested);
 
     connect(m_zoomControls, &GISApp::UI::ZoomControlsWidget::zoomInRequested, [this]() {
         if (m_mapController) m_mapController->zoomIn();
@@ -194,9 +258,7 @@ void MainWindow::setupMapView()
         if (m_mapController) m_mapController->zoomOut();
     });
     connect(m_zoomControls, &GISApp::UI::ZoomControlsWidget::resetCenterRequested, [this]() {
-        if (m_mapController) {
-            m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(28.6139, 77.2090), 10.0);
-        }
+        focusOnAreaOfView();
     });
 }
 
@@ -332,6 +394,18 @@ void MainWindow::setupThemeMenu()
         );
     });
 
+    QMenu *entitiesMenu = menuBar()->addMenu(tr("&ENTITIES"));
+    QAction *viewTracksAction = entitiesMenu->addAction(tr("🎯 Tracks..."));
+    connect(viewTracksAction, &QAction::triggered, this, &MainWindow::onViewTracksTriggered);
+    QAction *viewAoVAction = entitiesMenu->addAction(tr("👁️ Area of View..."));
+    connect(viewAoVAction, &QAction::triggered, this, &MainWindow::onViewAreaOfViewTriggered);
+
+    QMenu *uploadMenu = menuBar()->addMenu(tr("&UPLOAD"));
+    QAction *uploadTracksAction = uploadMenu->addAction(tr("📥 Tracks (CSV)..."));
+    connect(uploadTracksAction, &QAction::triggered, this, &MainWindow::onUploadTracksTriggered);
+    QAction *uploadAoVAction = uploadMenu->addAction(tr("📥 Area of View (XML)..."));
+    connect(uploadAoVAction, &QAction::triggered, this, &MainWindow::onUploadAreaOfViewTriggered);
+
     QMenu *downloadMenu = menuBar()->addMenu(tr("&DOWNLOAD"));
     QAction *downloadSatAction = downloadMenu->addAction(tr("🌐 Download Google Sat Imagery..."));
     connect(downloadSatAction, &QAction::triggered, this, &MainWindow::onDownloadGoogleSatTriggered);
@@ -395,4 +469,401 @@ void MainWindow::onDistanceUpdated(double totalDistanceKm)
     if (m_tacticalStatusBar) {
         m_tacticalStatusBar->showMessage(QString("Measurement: %1 km").arg(totalDistanceKm, 0, 'f', 2));
     }
+}
+
+void MainWindow::onUploadTracksTriggered()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Select Tracks CSV File"),
+        QDir::homePath(),
+        tr("CSV Files (*.csv);;All Files (*)")
+    );
+
+    if (filePath.isEmpty()) return;
+
+    if (!m_trackRepository) {
+        qWarning() << "[MainWindow] Track repository is null.";
+        return;
+    }
+
+    GISApp::Core::Services::CsvTrackIngestor ingestor;
+    int imported = ingestor.ingest(filePath, *m_trackRepository);
+
+    if (imported >= 0) {
+        if (m_layerManager && !m_layerManager->findLayerByLayerId("tracks-circle-layer")) {
+            auto tacticalGroup = m_layerManager->findGroupByName("Tactical Operations");
+            if (!tacticalGroup) tacticalGroup = m_layerManager->addGroup("🛡️ Tactical Operations");
+
+            GISApp::Layers::LayerExtent indiaExtent{
+                GISApp::Core::Models::GeoCoordinate(8.4, 68.7),
+                GISApp::Core::Models::GeoCoordinate(37.6, 97.25)
+            };
+            auto tracksAdapterNode = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(
+                "tracks-circle-layer", m_mapWidget ? m_mapWidget->map() : nullptr, indiaExtent);
+            m_layerManager->addLayer("🎯 Tactical Tracks", tracksAdapterNode, tacticalGroup);
+        }
+
+        if (m_trackAdapter) {
+            m_trackAdapter->refreshFromRepository();
+        }
+
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Bulk Ingestion Complete",
+            QString("Successfully ingested %1 tracks into SQLite database & registered in Layer Tree.").arg(imported),
+            5000,
+            this
+        );
+    } else {
+        QMessageBox::critical(this, tr("Import Error"), tr("Failed to parse and import CSV file."));
+    }
+}
+
+void MainWindow::onViewTracksTriggered()
+{
+    if (!m_tracksDialog) {
+        m_tracksDialog = new GISApp::UI::Tracks::TracksTableDialog(
+            m_trackRepository,
+            m_layerManager,
+            m_mapWidget ? m_mapWidget->map() : nullptr,
+            m_mapController,
+            m_trackAdapter,
+            this
+        );
+        m_tracksDialog->setAttribute(Qt::WA_DeleteOnClose);
+        connect(m_tracksDialog, &QDialog::destroyed, [this]() { m_tracksDialog = nullptr; });
+        m_tracksDialog->show();
+    } else {
+        m_tracksDialog->show();
+        m_tracksDialog->raise();
+        m_tracksDialog->activateWindow();
+    }
+}
+
+
+
+void MainWindow::onUploadAreaOfViewTriggered()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Select Area of View XML File"),
+        QDir::homePath(),
+        tr("XML Files (*.xml);;All Files (*)")
+    );
+
+    if (filePath.isEmpty()) return;
+
+    if (!m_areaOfViewRepository) {
+        qWarning() << "[MainWindow] Area of View repository is null.";
+        return;
+    }
+
+    GISApp::Core::Services::XmlAreaOfViewIngestor ingestor(m_areaOfViewRepository, this);
+    bool ok = ingestor.parseAndSaveXmlFile(filePath);
+
+    if (ok) {
+        if (m_layerManager && !m_layerManager->findLayerByLayerId("area-of-view-fill-layer")) {
+            auto tacticalGroup = m_layerManager->findGroupByName("Tactical Operations");
+            if (!tacticalGroup) tacticalGroup = m_layerManager->addGroup("🛡️ Tactical Operations");
+
+            GISApp::Layers::LayerExtent indiaExtent{
+                GISApp::Core::Models::GeoCoordinate(8.4, 68.7),
+                GISApp::Core::Models::GeoCoordinate(37.6, 97.25)
+            };
+            auto aovAdapterNode = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(
+                "area-of-view-fill-layer", m_mapWidget ? m_mapWidget->map() : nullptr, indiaExtent);
+            m_layerManager->addLayer("👁️ Area of View", aovAdapterNode, tacticalGroup);
+        }
+
+        if (m_areaOfViewAdapter) {
+            m_areaOfViewAdapter->refreshFromRepository();
+        }
+        focusOnAreaOfView();
+
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Area of View XML Ingested",
+            QString("Successfully ingested Area of View polygon data from XML into SQLite database."),
+            5000,
+            this
+        );
+    } else {
+        QMessageBox::critical(this, tr("Import Error"), tr("Failed to parse and import Area of View XML file."));
+    }
+}
+
+void MainWindow::onViewAreaOfViewTriggered()
+{
+    auto dialog = new GISApp::UI::AreaOfView::AreaOfViewTableDialog(
+        m_areaOfViewRepository,
+        m_mapController,
+        m_areaOfViewAdapter,
+        this
+    );
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->show();
+}
+
+void MainWindow::focusOnAreaOfView()
+{
+    if (!m_areaOfViewRepository || !m_mapController) {
+        return;
+    }
+
+    auto records = m_areaOfViewRepository->getAll();
+    if (records.isEmpty()) {
+        m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(28.6139, 77.2090), 10.0);
+        return;
+    }
+
+    const auto &rec = records.last();
+    if (rec.points.isEmpty()) {
+        return;
+    }
+
+    double minLat = 90.0, maxLat = -90.0;
+    double minLon = 180.0, maxLon = -180.0;
+    for (const auto &pt : rec.points) {
+        if (pt.latitude < minLat) minLat = pt.latitude;
+        if (pt.latitude > maxLat) maxLat = pt.latitude;
+        if (pt.longitude < minLon) minLon = pt.longitude;
+        if (pt.longitude > maxLon) maxLon = pt.longitude;
+    }
+
+    GISApp::Layers::LayerExtent polyExtent{
+        GISApp::Core::Models::GeoCoordinate(minLat, minLon),
+        GISApp::Core::Models::GeoCoordinate(maxLat, maxLon)
+    };
+
+    if (m_layerManager) {
+        auto aovNode = m_layerManager->findLayerByLayerId("area-of-view-fill-layer");
+        if (aovNode && aovNode->adapter()) {
+            aovNode->adapter()->setExtent(polyExtent);
+        }
+    }
+
+    if (m_mapWidget && m_mapWidget->map()) {
+        QMapLibre::Coordinate sw(minLat, minLon);
+        QMapLibre::Coordinate ne(maxLat, maxLon);
+        QMapLibre::CoordinateZoom cz = m_mapWidget->map()->coordinateZoomForBounds(sw, ne, 0.0, 0.0);
+        m_mapWidget->map()->setBearing(0.0);
+        m_mapWidget->map()->setPitch(0.0);
+        m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(cz.first.first, cz.first.second), cz.second);
+        qDebug() << "[MainWindow] Focused map using MapLibre coordinateZoomForBounds:" << rec.name
+                 << "| Bounds: [" << minLat << "," << minLon << "] to [" << maxLat << "," << maxLon << "]"
+                 << "| Center:" << cz.first.first << cz.first.second << "| Exact Fit Zoom:" << cz.second;
+    } else {
+        double centerLat = (minLat + maxLat) / 2.0;
+        double centerLon = (minLon + maxLon) / 2.0;
+        m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(centerLat, centerLon), 12.0);
+    }
+}
+
+void MainWindow::onMapContextMenuRequested(const QPoint &globalPos, const QPoint &localPos, const GISApp::Core::Models::GeoCoordinate &coordinate)
+{
+    if (!m_mapWidget || !m_mapWidget->map()) return;
+
+    // 1. Spatial Hit-Test active tracks in repository
+    GISApp::Core::Repositories::TrackRepository trackRepo;
+    auto tracks = trackRepo.getAllTracks();
+
+    QVector<GISApp::Core::Models::TrackRecord> hitTracks;
+    const double clickPxX = localPos.x();
+    const double clickPxY = localPos.y();
+    const double tolerancePixels = 15.0; // 15-pixel click radius
+
+    for (const auto &tr : tracks) {
+        QPointF pt = m_mapWidget->map()->pixelForCoordinate({tr.trackLat, tr.trackLong});
+        double dx = pt.x() - clickPxX;
+        double dy = pt.y() - clickPxY;
+        double dist = std::hypot(dx, dy);
+        if (dist <= tolerancePixels) {
+            hitTracks.append(tr);
+        }
+    }
+
+    // 2. Build dark-themed QMenu
+    QMenu menu(this);
+    menu.setStyleSheet(
+        "QMenu { background-color: #0F172A; color: #F8FAFC; border: 1px solid #334155; border-radius: 6px; padding: 4px; }"
+        "QMenu::item { padding: 6px 20px; border-radius: 4px; font-size: 12px; }"
+        "QMenu::item:selected { background-color: #2563EB; color: #FFFFFF; }"
+        "QMenu::separator { height: 1px; background: #334155; margin: 4px 0px; }"
+        "QMenu::right-arrow { margin: 5px; }"
+    );
+
+    // Track Hit Resolution
+    if (hitTracks.size() == 1) {
+        const auto singleTrack = hitTracks.first();
+        QString trackTitle = singleTrack.trackName.isEmpty() ? QString("Track #%1").arg(singleTrack.trackId) : singleTrack.trackName;
+        
+        QAction *detailAct = menu.addAction(QString("🎯 Show Detail: %1").arg(trackTitle));
+        connect(detailAct, &QAction::triggered, [this, singleTrack]() {
+            showTrackDetailsDialog(singleTrack);
+        });
+
+        QAction *zoomAct = menu.addAction(QString("🔍 Zoom to %1").arg(trackTitle));
+        connect(zoomAct, &QAction::triggered, [this, singleTrack]() {
+            if (m_mapController) {
+                m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(singleTrack.trackLat, singleTrack.trackLong), 14.0);
+            }
+        });
+
+        menu.addSeparator();
+    }
+    else if (hitTracks.size() > 1) {
+        QMenu *subMenu = menu.addMenu(QString("🎯 Select Track / Show Details (%1 Overlapping) ▶").arg(hitTracks.size()));
+        subMenu->setStyleSheet(menu.styleSheet());
+
+        for (const auto &tr : hitTracks) {
+            QString name = tr.trackName.isEmpty() ? QString("Track #%1").arg(tr.trackId) : tr.trackName;
+            QString label = QString("✈️ %1  (Alt: %2m, Dir: %3°)").arg(name).arg(tr.trackHeight, 0, 'f', 0).arg(tr.trackDir, 0, 'f', 0);
+            QAction *trAct = subMenu->addAction(label);
+            connect(trAct, &QAction::triggered, [this, tr]() {
+                showTrackDetailsDialog(tr);
+            });
+        }
+
+        QAction *zoomClusterAct = menu.addAction(QString("🔍 Zoom to Track Cluster (%1 Entities)").arg(hitTracks.size()));
+        connect(zoomClusterAct, &QAction::triggered, [this, hitTracks]() {
+            double minLat = 90.0, maxLat = -90.0, minLon = 180.0, maxLon = -180.0;
+            for (const auto &tr : hitTracks) {
+                if (tr.trackLat < minLat) minLat = tr.trackLat;
+                if (tr.trackLat > maxLat) maxLat = tr.trackLat;
+                if (tr.trackLong < minLon) minLon = tr.trackLong;
+                if (tr.trackLong > maxLon) maxLon = tr.trackLong;
+            }
+            if (std::abs(maxLat - minLat) < 0.001) { minLat -= 0.005; maxLat += 0.005; }
+            if (std::abs(maxLon - minLon) < 0.001) { minLon -= 0.005; maxLon += 0.005; }
+            
+            QMapLibre::Coordinate sw(minLat, minLon);
+            QMapLibre::Coordinate ne(maxLat, maxLon);
+            auto cz = m_mapWidget->map()->coordinateZoomForBounds(sw, ne);
+            if (m_mapController) {
+                m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(cz.first.first, cz.first.second), cz.second);
+            }
+        });
+
+        menu.addSeparator();
+    }
+
+    // General Map Actions (Copy & Show Coordinates)
+    QString coordStr = QString("%1, %2")
+                           .arg(coordinate.latitude(), 0, 'f', 6)
+                           .arg(coordinate.longitude(), 0, 'f', 6);
+
+    QAction *copyAct = menu.addAction(QString("📋 Copy Coordinates (%1)").arg(coordStr));
+    connect(copyAct, &QAction::triggered, [this, coordStr]() {
+        QGuiApplication::clipboard()->setText(coordStr);
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Clipboard", QString("Coordinates copied to clipboard: %1").arg(coordStr));
+    });
+
+    QAction *showAct = menu.addAction("🗺️ Show Coordinates");
+    connect(showAct, &QAction::triggered, [this, coordinate]() {
+        showCoordinatesDialog(coordinate);
+    });
+
+    menu.addSeparator();
+
+    // EMS Generic Entity Context Actions
+    if (m_genericEntityRepository) {
+        auto allEntities = m_genericEntityRepository->findAll();
+        for (const auto &entity : allEntities) {
+            if (!entity || !entity->geometry()) continue;
+            auto pt = std::dynamic_pointer_cast<GISApp::Core::Models::PointGeometry>(entity->geometry());
+            if (pt) {
+                double dist = std::hypot(pt->coordinate().latitude - coordinate.latitude(), pt->coordinate().longitude - coordinate.longitude());
+                if (dist < 0.05) {
+                    QAction *editAct = menu.addAction(QString("✏️ Edit EMS Entity: %1").arg(entity->entityName()));
+                    connect(editAct, &QAction::triggered, [this, entity]() {
+                        GISApp::UI::Entities::UniversalEntityEditorDialog dlg(entity, this);
+                        if (dlg.exec() == QDialog::Accepted) {
+                            if (m_genericEntityRepository) {
+                                m_genericEntityRepository->updateEntity(entity);
+                                GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                                    "EMS Entity", QString("Updated entity: %1").arg(entity->entityName()));
+                            }
+                        }
+                    });
+
+                    QAction *delAct = menu.addAction(QString("🗑️ Delete EMS Entity: %1").arg(entity->entityName()));
+                    connect(delAct, &QAction::triggered, [this, entity]() {
+                        if (m_genericEntityRepository) {
+                            m_genericEntityRepository->removeEntity(entity->entityId());
+                            GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                                "EMS Entity", QString("Deleted entity: %1").arg(entity->entityName()));
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    QMenu *addEntityMenu = menu.addMenu("➕ Create Custom EMS Entity");
+    addEntityMenu->setStyleSheet(menu.styleSheet());
+
+    auto descriptors = GISApp::Core::Models::GisEntityRegistry::instance().registeredTypes();
+    for (const auto &desc : descriptors) {
+        QAction *actAdd = addEntityMenu->addAction(QString("%1 (%2)").arg(desc.displayName, desc.typeId));
+        connect(actAdd, &QAction::triggered, [this, desc, coordinate]() {
+            auto geom = std::make_shared<GISApp::Core::Models::PointGeometry>(coordinate.latitude(), coordinate.longitude());
+            auto entity = GISApp::Core::Models::GisEntityRegistry::instance().createEntity(desc.typeId, QString("New %1").arg(desc.displayName));
+            if (entity) {
+                entity->setGeometry(geom);
+                GISApp::UI::Entities::UniversalEntityEditorDialog dlg(entity, this);
+                if (dlg.exec() == QDialog::Accepted) {
+                    if (m_genericEntityRepository) {
+                        m_genericEntityRepository->addEntity(entity);
+                        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                            "EMS Entity", QString("Saved %1 entity: %2").arg(desc.displayName, entity->entityName()));
+                    }
+                }
+            }
+        });
+    }
+
+    menu.exec(globalPos);
+}
+
+void MainWindow::showTrackDetailsDialog(const GISApp::Core::Models::TrackRecord &track)
+{
+    auto dlg = new GISApp::UI::Tracks::TrackDetailDialog(track, this);
+    connect(dlg, &GISApp::UI::Tracks::TrackDetailDialog::zoomToTrackRequested,
+            [this](const GISApp::Core::Models::TrackRecord &tr) {
+                if (m_mapController) {
+                    m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(tr.trackLat, tr.trackLong), 14.0);
+                }
+            });
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+}
+
+void MainWindow::showCoordinatesDialog(const GISApp::Core::Models::GeoCoordinate &coordinate)
+{
+    auto formatDms = [](double val, bool isLat) {
+        char dir = isLat ? (val >= 0 ? 'N' : 'S') : (val >= 0 ? 'E' : 'W');
+        val = std::abs(val);
+        int deg = static_cast<int>(val);
+        double minVal = (val - deg) * 60.0;
+        int min = static_cast<int>(minVal);
+        double sec = (minVal - min) * 60.0;
+        return QString("%1° %2' %3\" %4").arg(deg).arg(min, 2, 10, QChar('0')).arg(sec, 5, 'f', 2, QChar('0')).arg(dir);
+    };
+
+    QString msg = QString("<b>Decimal Degrees:</b><br>%1, %2<br><br><b>DMS Format:</b><br>%3, %4")
+                      .arg(coordinate.latitude(), 0, 'f', 6)
+                      .arg(coordinate.longitude(), 0, 'f', 6)
+                      .arg(formatDms(coordinate.latitude(), true))
+                      .arg(formatDms(coordinate.longitude(), false));
+
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Map Coordinates");
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setText(msg);
+    msgBox.setStyleSheet(
+        "QMessageBox { background-color: #0F172A; color: #F8FAFC; }"
+        "QLabel { color: #F8FAFC; font-size: 13px; }"
+        "QPushButton { background-color: #2563EB; color: white; border-radius: 4px; padding: 6px 14px; font-weight: bold; }"
+    );
+    msgBox.exec();
 }

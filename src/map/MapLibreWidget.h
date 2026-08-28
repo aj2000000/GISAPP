@@ -37,6 +37,7 @@ signals:
     void mousePressed(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void mouseReleased(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void cameraChanged(double zoomLevel, double scaleDenominator, const GISApp::Core::Models::GeoCoordinate &center);
+    void customContextMenuRequested(const QPoint &globalPos, const QPoint &localPos, const GISApp::Core::Models::GeoCoordinate &coordinate);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;

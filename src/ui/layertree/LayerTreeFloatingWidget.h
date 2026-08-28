@@ -40,6 +40,8 @@ public:
 
 signals:
     void closed();
+    void ingestAreaOfViewRequested();
+    void ingestTracksRequested();
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -51,6 +53,9 @@ private:
     QPushButton *m_collapseButton;
     QPushButton *m_closeButton;
     LayerTreeView *m_treeView;
+    QWidget *m_buttonBar;
+    QPushButton *m_ingestAovBtn;
+    QPushButton *m_ingestTracksBtn;
     QVBoxLayout *m_mainLayout;
 
     QPoint m_dragPosition;

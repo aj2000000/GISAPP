@@ -41,12 +41,18 @@ template <> constexpr inline auto GISApp::UI::LayerTreeFloatingWidget::qt_create
     QtMocHelpers::StringRefStorage qt_stringData {
         "GISApp::UI::LayerTreeFloatingWidget",
         "closed",
-        ""
+        "",
+        "ingestAreaOfViewRequested",
+        "ingestTracksRequested"
     };
 
     QtMocHelpers::UintData qt_methods {
         // Signal 'closed'
         QtMocHelpers::SignalData<void()>(1, 2, QMC::AccessPublic, QMetaType::Void),
+        // Signal 'ingestAreaOfViewRequested'
+        QtMocHelpers::SignalData<void()>(3, 2, QMC::AccessPublic, QMetaType::Void),
+        // Signal 'ingestTracksRequested'
+        QtMocHelpers::SignalData<void()>(4, 2, QMC::AccessPublic, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -71,11 +77,17 @@ void GISApp::UI::LayerTreeFloatingWidget::qt_static_metacall(QObject *_o, QMetaO
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->closed(); break;
+        case 1: _t->ingestAreaOfViewRequested(); break;
+        case 2: _t->ingestTracksRequested(); break;
         default: ;
         }
     }
     if (_c == QMetaObject::IndexOfMethod) {
         if (QtMocHelpers::indexOfMethod<void (LayerTreeFloatingWidget::*)()>(_a, &LayerTreeFloatingWidget::closed, 0))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (LayerTreeFloatingWidget::*)()>(_a, &LayerTreeFloatingWidget::ingestAreaOfViewRequested, 1))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (LayerTreeFloatingWidget::*)()>(_a, &LayerTreeFloatingWidget::ingestTracksRequested, 2))
             return;
     }
 }
@@ -99,14 +111,14 @@ int GISApp::UI::LayerTreeFloatingWidget::qt_metacall(QMetaObject::Call _c, int _
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 3;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 1)
+        if (_id < 3)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 1;
+        _id -= 3;
     }
     return _id;
 }
@@ -115,5 +127,17 @@ int GISApp::UI::LayerTreeFloatingWidget::qt_metacall(QMetaObject::Call _c, int _
 void GISApp::UI::LayerTreeFloatingWidget::closed()
 {
     QMetaObject::activate(this, &staticMetaObject, 0, nullptr);
+}
+
+// SIGNAL 1
+void GISApp::UI::LayerTreeFloatingWidget::ingestAreaOfViewRequested()
+{
+    QMetaObject::activate(this, &staticMetaObject, 1, nullptr);
+}
+
+// SIGNAL 2
+void GISApp::UI::LayerTreeFloatingWidget::ingestTracksRequested()
+{
+    QMetaObject::activate(this, &staticMetaObject, 2, nullptr);
 }
 QT_WARNING_POP

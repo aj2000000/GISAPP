@@ -45,10 +45,12 @@ void GroupManagerDialog::setupUI()
     connect(m_btnClose, &QPushButton::clicked, this, &QDialog::accept);
 
     setStyleSheet(R"(
-        QDialog { background-color: #111827; color: #f3f4f6; }
+        QDialog, QMessageBox, QInputDialog { background-color: #111827; color: #f3f4f6; border: 1px solid #374151; border-radius: 8px; }
+        QLabel, QMessageBox QLabel, QInputDialog QLabel { color: #f3f4f6; font-size: 12px; font-weight: 500; }
         QListWidget { background-color: #1f2937; color: #ffffff; border: 1px solid #374151; border-radius: 4px; }
-        QPushButton { background-color: #374151; color: #ffffff; border-radius: 4px; padding: 6px; }
-        QPushButton:hover { background-color: #4b5563; }
+        QLineEdit { background-color: #1f2937; color: #ffffff; border: 1px solid #374151; border-radius: 4px; padding: 4px 8px; }
+        QPushButton, QMessageBox QPushButton, QInputDialog QPushButton { background-color: #374151; color: #ffffff; border-radius: 4px; padding: 6px 14px; font-weight: bold; min-width: 70px; }
+        QPushButton:hover, QMessageBox QPushButton:hover, QInputDialog QPushButton:hover { background-color: #4b5563; }
     )");
 }
 

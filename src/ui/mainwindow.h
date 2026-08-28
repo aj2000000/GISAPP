@@ -28,6 +28,7 @@
 #include "layers/TacticalLayerProvider.h"
 #include "ui/layertree/LayerTreeView.h"
 #include "ui/layertree/LayerTreeFloatingWidget.h"
+#include "core/models/TrackRecord.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -43,6 +44,19 @@ namespace GISApp::UI::Download {
 }
 namespace GISApp::UI::Tasks {
     class BackgroundTaskDialog;
+}
+namespace GISApp::Core::Repositories {
+    class TrackRepository;
+    class AreaOfViewRepository;
+    class GenericEntityRepository;
+}
+namespace GISApp::Core::Services {
+    class MapLibreTrackAdapter;
+    class MapLibreAreaOfViewAdapter;
+    class MapLibreGenericEntityAdapter;
+}
+namespace GISApp::UI::Tracks {
+    class TracksTableDialog;
 }
 
 class MainWindow : public QMainWindow {
@@ -61,8 +75,15 @@ private slots:
     void onMouseCoordinateChanged(const GISApp::Core::Models::GeoCoordinate &coordinate);
     void onDistanceUpdated(double totalDistanceKm);
     void onDownloadGoogleSatTriggered();
+    void onUploadTracksTriggered();
+    void onViewTracksTriggered();
+    void onUploadAreaOfViewTriggered();
+    void onViewAreaOfViewTriggered();
+    void onMapContextMenuRequested(const QPoint &globalPos, const QPoint &localPos, const GISApp::Core::Models::GeoCoordinate &coordinate);
 
 private:
+    void showTrackDetailsDialog(const GISApp::Core::Models::TrackRecord &track);
+    void showCoordinatesDialog(const GISApp::Core::Models::GeoCoordinate &coordinate);
     Ui::MainWindow *ui;
     
     // Core Engine Widgets & Controllers
@@ -86,6 +107,7 @@ private:
     void setupStatusBar();
     void setupThemeMenu();
     void updateOverlayPositions();
+    void focusOnAreaOfView();
 
     GISApp::Layers::LayerManager *m_layerManager{nullptr};
     GISApp::UI::LayerTreeFloatingWidget *m_layerFloatingPanel{nullptr};
@@ -95,6 +117,13 @@ private:
     GISApp::UI::Publishing::GroupManagerDialog *m_groupManagerDialog{nullptr};
     GISApp::UI::Download::DownloadSatImageryDialog *m_downloadSatDialog{nullptr};
     GISApp::UI::Tasks::BackgroundTaskDialog *m_backgroundTaskDialog{nullptr};
+    GISApp::Core::Repositories::TrackRepository *m_trackRepository{nullptr};
+    GISApp::Core::Services::MapLibreTrackAdapter *m_trackAdapter{nullptr};
+    GISApp::UI::Tracks::TracksTableDialog *m_tracksDialog{nullptr};
+    GISApp::Core::Repositories::AreaOfViewRepository *m_areaOfViewRepository{nullptr};
+    GISApp::Core::Services::MapLibreAreaOfViewAdapter *m_areaOfViewAdapter{nullptr};
+    GISApp::Core::Repositories::GenericEntityRepository *m_genericEntityRepository{nullptr};
+    GISApp::Core::Services::MapLibreGenericEntityAdapter *m_genericEntityAdapter{nullptr};
 };
 
 #endif // MAINWINDOW_H

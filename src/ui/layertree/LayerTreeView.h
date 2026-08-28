@@ -37,6 +37,16 @@ signals:
      */
     void zoomToExtentRequested(const GISApp::Layers::LayerExtent &extent);
 
+    /**
+     * @brief Signal emitted when user requests Area of View XML ingestion.
+     */
+    void ingestAreaOfViewRequested();
+
+    /**
+     * @brief Signal emitted when user requests Tactical Tracks CSV ingestion.
+     */
+    void ingestTracksRequested();
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
 
