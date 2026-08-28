@@ -27,7 +27,13 @@ public:
                  GISApp::Layers::LayerGroupNode *targetGroup,
                  GISApp::Layers::LayerManager *layerManager,
                  QMapLibre::Map *map,
-                 ProgressCallback progressCb = nullptr) override;
+                 ProgressCallback progressCb = nullptr,
+                 int minZoom = 0,
+                 int maxZoom = 22) override;
+
+    bool prepareInBackground(const QString &folderPath,
+                            const QString &layerName,
+                            ProgressCallback progressCb = nullptr) override;
 
     QString publisherType() const override { return "Vector (Shapefile / GeoJSON)"; }
     QString statusMessage() const override { return m_statusMessage; }

@@ -21,7 +21,9 @@
 
 #include "ui/publishing/PublishLayerDialog.h"
 #include "ui/publishing/GroupManagerDialog.h"
-
+#include "ui/tasks/BackgroundTaskDialog.h"
+#include "ui/download/DownloadSatImageryDialog.h"
+#include "core/SystemConfigManager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -51,6 +53,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
 void MainWindow::setupMapView()
 {
     QWidget *centralWidget = ui->centralwidget;
@@ -85,7 +88,6 @@ void MainWindow::setupMapView()
     m_rightToolPanel = new GISApp::UI::RightToolPanel(m_mapWidget);
     m_zoomControls = new GISApp::UI::ZoomControlsWidget(m_mapWidget);
     m_layerFloatingPanel = new GISApp::UI::LayerTreeFloatingWidget(m_mapWidget);
-
 
     // 4. Map Controller & Tools Setup
     m_mapController = new GISApp::Controllers::MapController(m_mapWidget, this);
@@ -149,21 +151,19 @@ void MainWindow::setupMapView()
             connect(m_mapWidget->map(), &QMapLibre::Map::mapChanged, [this](QMapLibre::Map::MapChange change) {
                 if (change == QMapLibre::Map::MapChangeDidFinishLoadingStyle) {
                     GISApp::Layers::TacticalLayerProvider p;
-                    // Add groups and empty layers
-                    p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
-                    // Add shapes and points
                     p.setupTacticalLayers(m_mapWidget->map());
+                    p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
                     m_mapWidget->updateMap();
                 }
             });
 
             // Set Initial Offline Tactical Dark Style and Camera
-            QString offlineStyle = QString("file://%1/config/offline_dark_style.json").arg(QDir::currentPath());
+            QString offlineStyle = QString("file://%1").arg(GISApp::Core::SystemConfigManager::instance().getOfflineStylePath());
             m_mapController->setStyle(offlineStyle);
             m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(28.6139, 77.2090), 10.0);
         }
     });
-    timer->start(50); // check every 50ms
+    timer->start(50);
 
     m_toolManager = new GISApp::Controllers::ToolManager(this);
     m_toolManager->registerDefaultTools(this);
@@ -172,6 +172,13 @@ void MainWindow::setupMapView()
 
     connect(m_mapWidget, &GISApp::Map::MapLibreWidget::mouseCoordinateChanged,
             this, &MainWindow::onMouseCoordinateChanged);
+    connect(m_mapWidget, &GISApp::Map::MapLibreWidget::cameraChanged,
+            [this](double zoomLevel, double scaleDenominator, const GISApp::Core::Models::GeoCoordinate &center) {
+                Q_UNUSED(center);
+                if (m_tacticalStatusBar) {
+                    m_tacticalStatusBar->updateZoomAndScale(zoomLevel, scaleDenominator);
+                }
+            });
     connect(m_mapWidget, &GISApp::Map::MapLibreWidget::mousePressed,
             m_toolManager, &GISApp::Controllers::ToolManager::handleMousePress);
     connect(m_mapWidget, &GISApp::Map::MapLibreWidget::mouseMoved,
@@ -195,14 +202,12 @@ void MainWindow::setupMapView()
 void MainWindow::updateOverlayPositions()
 {
     if (!m_mapWidget) return;
-    // Anchor Floating Layer Panel to Top-Left
     if (m_layerFloatingPanel) {
         m_layerFloatingPanel->adjustSize();
         m_layerFloatingPanel->move(16, 16);
         m_layerFloatingPanel->show();
         m_layerFloatingPanel->raise();
     }
-    // Anchor Right Tool Panel to Top-Right
     if (m_rightToolPanel) {
         m_rightToolPanel->adjustSize();
         int x = m_mapWidget->width() - m_rightToolPanel->width() - 16;
@@ -210,7 +215,6 @@ void MainWindow::updateOverlayPositions()
         m_rightToolPanel->move(x, y);
         m_rightToolPanel->raise();
     }
-    // Anchor Zoom Controls to Bottom-Left
     if (m_zoomControls) {
         m_zoomControls->adjustSize();
         int x = 16;
@@ -240,20 +244,8 @@ void MainWindow::showEvent(QShowEvent *event)
     updateOverlayPositions();
 }
 
-
 void MainWindow::setupToolBar()
 {
-    // // Simple top action toolbar for Strategy tools
-    // QToolBar *topToolBar = addToolBar(tr("Tactical Operations"));
-    // topToolBar->setMovable(false);
-
-    // QAction *measureAct = topToolBar->addAction(tr("📏 Measure Tool"));
-    // measureAct->setCheckable(true);
-    // connect(measureAct, &QAction::toggled, [this](bool checked) {
-    //     if (m_toolManager) {
-    //         m_toolManager->setActiveTool(checked ? "MeasureTool" : "PanTool");
-    //     }
-    // });
 }
 
 void MainWindow::setupStatusBar()
@@ -277,20 +269,54 @@ void MainWindow::setupThemeMenu()
     QAction *manageGroupsAction = layersMenu->addAction(tr("📁 Manage Layer Groups..."));
     connect(publishAction, &QAction::triggered, [this]() {
         if (m_mapWidget && m_mapWidget->map()) {
-            GISApp::UI::Publishing::PublishLayerDialog dialog(m_layerManager, m_mapWidget->map(), this);
-            dialog.exec();
+            if (!m_publishDialog) {
+                m_publishDialog = new GISApp::UI::Publishing::PublishLayerDialog(m_layerManager, m_mapWidget->map(), this);
+                m_publishDialog->setAttribute(Qt::WA_DeleteOnClose);
+                connect(m_publishDialog, &QDialog::destroyed, [this]() { m_publishDialog = nullptr; });
+                m_publishDialog->show();
+            } else {
+                m_publishDialog->show();
+                m_publishDialog->raise();
+                m_publishDialog->activateWindow();
+            }
         }
     });
     connect(manageGroupsAction, &QAction::triggered, [this]() {
         if (m_layerManager) {
-            GISApp::UI::Publishing::GroupManagerDialog dialog(m_layerManager, this);
-            dialog.exec();
+            if (!m_groupManagerDialog) {
+                m_groupManagerDialog = new GISApp::UI::Publishing::GroupManagerDialog(m_layerManager, this);
+                m_groupManagerDialog->setAttribute(Qt::WA_DeleteOnClose);
+                connect(m_groupManagerDialog, &QDialog::destroyed, [this]() { m_groupManagerDialog = nullptr; });
+                m_groupManagerDialog->show();
+            } else {
+                m_groupManagerDialog->show();
+                m_groupManagerDialog->raise();
+                m_groupManagerDialog->activateWindow();
+            }
         }
     });
 
+    QAction *bgTasksAction = toolsMenu->addAction(tr("⚙️ Background Spatial Tasks Monitor..."));
+    bgTasksAction->setShortcut(QKeySequence("Ctrl+B"));
+    connect(bgTasksAction, &QAction::triggered, [this]() {
+        if (!m_backgroundTaskDialog) {
+            m_backgroundTaskDialog = new GISApp::UI::Tasks::BackgroundTaskDialog(this);
+            m_backgroundTaskDialog->setAttribute(Qt::WA_DeleteOnClose);
+            connect(m_backgroundTaskDialog, &QDialog::destroyed, [this]() { m_backgroundTaskDialog = nullptr; });
+            m_backgroundTaskDialog->show();
+        } else {
+            m_backgroundTaskDialog->show();
+            m_backgroundTaskDialog->raise();
+            m_backgroundTaskDialog->activateWindow();
+        }
+    });
+
+    QMenu *downloadMenu = menuBar()->addMenu(tr("&DOWNLOAD"));
+    QAction *downloadSatAction = downloadMenu->addAction(tr("🌐 Download Google Sat Imagery..."));
+    connect(downloadSatAction, &QAction::triggered, this, &MainWindow::onDownloadGoogleSatTriggered);
+
     (void)fileMenu; (void)editMenu; (void)viewMenu; (void)toolsMenu; (void)windowMenu; (void)helpMenu;
 
-    // Add right terminal identifier label in menu bar
     QLabel *termLabel = new QLabel("PRECISION TERMINAL V2.4  ", this);
     termLabel->setStyleSheet("color: #6b7280; font-size: 11px; font-weight: bold;");
     menuBar()->setCornerWidget(termLabel, Qt::TopRightCorner);
@@ -322,6 +348,19 @@ void MainWindow::setupThemeMenu()
     }
 }
 
+void MainWindow::onDownloadGoogleSatTriggered()
+{
+    if (!m_downloadSatDialog) {
+        m_downloadSatDialog = new GISApp::UI::Download::DownloadSatImageryDialog(m_mapWidget, this);
+        m_downloadSatDialog->setAttribute(Qt::WA_DeleteOnClose);
+        connect(m_downloadSatDialog, &QDialog::destroyed, [this]() { m_downloadSatDialog = nullptr; });
+        m_downloadSatDialog->show();
+    } else {
+        m_downloadSatDialog->show();
+        m_downloadSatDialog->raise();
+        m_downloadSatDialog->activateWindow();
+    }
+}
 
 void MainWindow::onMouseCoordinateChanged(const GISApp::Core::Models::GeoCoordinate &coordinate)
 {
@@ -336,5 +375,3 @@ void MainWindow::onDistanceUpdated(double totalDistanceKm)
         m_tacticalStatusBar->showMessage(QString("Measurement: %1 km").arg(totalDistanceKm, 0, 'f', 2));
     }
 }
-
-

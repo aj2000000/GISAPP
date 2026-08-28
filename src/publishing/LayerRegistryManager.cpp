@@ -5,6 +5,7 @@
 
 #include "publishing/LayerRegistryManager.h"
 #include "publishing/LayerPublishingService.h"
+#include "core/SystemConfigManager.h"
 #include <QStandardPaths>
 
 namespace GISApp::Publishing {
@@ -19,12 +20,7 @@ LayerRegistryManager::LayerRegistryManager() {
 }
 
 QString LayerRegistryManager::registryFilePath() const {
-    QString configDir = QDir::currentPath() + "/config";
-    QDir dir(configDir);
-    if (!dir.exists()) {
-        dir.mkpath(".");
-    }
-    return configDir + "/published_layers.json";
+    return GISApp::Core::SystemConfigManager::instance().getPublishedLayersPath();
 }
 
 void LayerRegistryManager::loadFromDisk() {
@@ -66,6 +62,8 @@ void LayerRegistryManager::loadFromDisk() {
             meta.isVisible = obj.value("isVisible").toBool(true);
             meta.opacity = static_cast<float>(obj.value("opacity").toDouble(1.0));
             meta.orderIndex = obj.value("orderIndex").toInt(0);
+            meta.minZoom = obj.value("minZoom").toInt(0);
+            meta.maxZoom = obj.value("maxZoom").toInt(22);
 
             if (!meta.name.isEmpty() && (!meta.folderPath.isEmpty() || !meta.tilePath.isEmpty())) {
                 m_registry.append(meta);
@@ -92,12 +90,14 @@ void LayerRegistryManager::saveToDisk() {
         obj["name"] = meta.name;
         obj["type"] = (meta.type == LayerType::Vector) ? "Vector" : "Raster";
         obj["folderPath"] = meta.folderPath;
-        obj["tilePath"] = meta.tilePath.isEmpty() ? QString("/home/crl/aman/MAPDATA/%1").arg(QString(meta.name).toLower().replace(' ', '_')) : meta.tilePath;
+        obj["tilePath"] = meta.tilePath.isEmpty() ? QString("%1/MAPDATA/%2").arg(QDir::homePath()).arg(QString(meta.name).toLower().replace(' ', '_')) : meta.tilePath;
         obj["groupName"] = meta.groupName;
         obj["isTiled"] = meta.isTiled;
         obj["isVisible"] = meta.isVisible;
         obj["opacity"] = meta.opacity;
         obj["orderIndex"] = meta.orderIndex;
+        obj["minZoom"] = meta.minZoom;
+        obj["maxZoom"] = meta.maxZoom;
         layersArr.append(obj);
     }
     rootObj["layers"] = layersArr;
@@ -200,7 +200,9 @@ void LayerRegistryManager::unregisterGroup(const QString &groupName) {
 void LayerRegistryManager::registerPublishedLayer(LayerType type,
                                                   const QString &folderPath,
                                                   const QString &layerName,
-                                                  const QString &groupName)
+                                                  const QString &groupName,
+                                                  int minZoom,
+                                                  int maxZoom)
 {
     registerGroup(groupName);
 
@@ -210,6 +212,8 @@ void LayerRegistryManager::registerPublishedLayer(LayerType type,
             meta.type = type;
             meta.folderPath = folderPath;
             meta.groupName = groupName;
+            meta.minZoom = minZoom;
+            meta.maxZoom = maxZoom;
             saveToDisk();
             return;
         }
@@ -221,6 +225,8 @@ void LayerRegistryManager::registerPublishedLayer(LayerType type,
     meta.folderPath = folderPath;
     meta.groupName = groupName;
     meta.isVisible = true;
+    meta.minZoom = minZoom;
+    meta.maxZoom = maxZoom;
 
     m_registry.append(meta);
     saveToDisk();
@@ -317,8 +323,8 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
                 }
             }
 
-            qWarning() << "[LayerRegistry] Restoring saved layer:" << meta.name << "from" << meta.folderPath << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
-            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map);
+            qWarning() << "[LayerRegistry] Restoring saved layer:" << meta.name << "from" << meta.folderPath << "| Zoom:" << meta.minZoom << "-" << meta.maxZoom << "| Opacity:" << meta.opacity << "| Visible:" << meta.isVisible;
+            publishingService->publishLayer(meta.type, meta.folderPath, meta.name, targetGroup, layerManager, map, nullptr, meta.minZoom, meta.maxZoom);
 
             // Apply saved opacity & visibility to restored node
             if (layerManager->model()) {

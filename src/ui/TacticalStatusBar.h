@@ -47,6 +47,13 @@ public slots:
      */
     void updateScale(double scaleDenominator);
 
+    /**
+     * @brief Updates displayed zoom level and map scale denominator.
+     * @param zoomLevel Current camera zoom level (e.g. 10.5).
+     * @param scaleDenominator Scale value (e.g. 507210).
+     */
+    void updateZoomAndScale(double zoomLevel, double scaleDenominator);
+
 private:
     QLabel *m_infoLabel;  ///< Left metadata label (Spatial Reference & Scale)
     QLabel *m_coordLabel; ///< Right glowing 3D coordinate telemetry label

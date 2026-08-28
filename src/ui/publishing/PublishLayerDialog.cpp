@@ -16,6 +16,7 @@
 #include <QDir>
 #include <QGroupBox>
 #include <QCoreApplication>
+#include <QListView>
 
 namespace GISApp::UI::Publishing {
 
@@ -27,7 +28,7 @@ PublishLayerDialog::PublishLayerDialog(GISApp::Layers::LayerManager *layerManage
     , m_mapInstance(mapInstance)
 {
     setWindowTitle(tr("Publish Layer - Precision GIS"));
-    setMinimumSize(540, 620);
+    setMinimumSize(560, 680);
     setupUI();
     populateGroups();
 }
@@ -43,25 +44,28 @@ void PublishLayerDialog::setupUI()
     QVBoxLayout *typeLayout = new QVBoxLayout(boxType);
     typeLayout->setSpacing(8);
 
-    m_radioRaster = new QRadioButton(tr("Raster Map (Folder with GeoTIFF .tif files)"), boxType);
-    m_radioVector = new QRadioButton(tr("Vector Data (.geojson or .shp file set)"), boxType);
-    m_radioRaster->setChecked(true);
+    m_radioRasterFile = new QRadioButton(tr("📷 Single Raster GeoTIFF File (.tif, .tiff)"), boxType);
+    m_radioRasterFolder = new QRadioButton(tr("📁 Folder Mosaic (Folder with multiple GeoTIFF files)"), boxType);
+    m_radioVector = new QRadioButton(tr("📍 Vector Data (.geojson or .shp file set)"), boxType);
+    m_radioRasterFile->setChecked(true);
 
-    typeLayout->addWidget(m_radioRaster);
+    typeLayout->addWidget(m_radioRasterFile);
+    typeLayout->addWidget(m_radioRasterFolder);
     typeLayout->addWidget(m_radioVector);
     mainLayout->addWidget(boxType);
 
-    connect(m_radioRaster, &QRadioButton::toggled, this, &PublishLayerDialog::updateFilePreview);
+    connect(m_radioRasterFile, &QRadioButton::toggled, this, &PublishLayerDialog::updateFilePreview);
+    connect(m_radioRasterFolder, &QRadioButton::toggled, this, &PublishLayerDialog::updateFilePreview);
     connect(m_radioVector, &QRadioButton::toggled, this, &PublishLayerDialog::updateFilePreview);
 
     // ── 2. Folder Selection & Source Discovery Card ──────────────────
-    QGroupBox *boxSource = new QGroupBox(tr("2. Select Spatial Source Directory"), this);
+    QGroupBox *boxSource = new QGroupBox(tr("2. Select Spatial Source File or Directory"), this);
     QVBoxLayout *sourceLayout = new QVBoxLayout(boxSource);
     sourceLayout->setSpacing(10);
 
     QHBoxLayout *folderLayout = new QHBoxLayout();
     m_editFolderPath = new QLineEdit(boxSource);
-    m_editFolderPath->setPlaceholderText(tr("Select folder containing spatial layer files..."));
+    m_editFolderPath->setPlaceholderText(tr("Select single .tif file or folder containing spatial layer files..."));
     
     m_btnBrowse = new QPushButton(tr("📁 Browse..."), boxSource);
     m_btnBrowse->setCursor(Qt::PointingHandCursor);
@@ -75,15 +79,16 @@ void PublishLayerDialog::setupUI()
     sourceLayout->addWidget(lblPreview);
 
     m_listFilePreview = new QListWidget(boxSource);
-    m_listFilePreview->setMaximumHeight(120);
+    m_listFilePreview->setMaximumHeight(100);
     sourceLayout->addWidget(m_listFilePreview);
 
     mainLayout->addWidget(boxSource);
 
     connect(m_btnBrowse, &QPushButton::clicked, this, &PublishLayerDialog::onBrowseFolder);
+    connect(m_editFolderPath, &QLineEdit::textChanged, this, &PublishLayerDialog::updateFilePreview);
 
-    // ── 3. Layer Metadata & Group Assignment Card ───────────────────
-    QGroupBox *boxMeta = new QGroupBox(tr("3. Layer Properties & Tree Placement"), this);
+    // ── 3. Layer Properties, Group & Zoom Controls Card ─────────────
+    QGroupBox *boxMeta = new QGroupBox(tr("3. Layer Properties & Spatial Zoom Range"), this);
     QFormLayout *formLayout = new QFormLayout(boxMeta);
     formLayout->setSpacing(10);
 
@@ -93,6 +98,7 @@ void PublishLayerDialog::setupUI()
 
     QHBoxLayout *groupLayout = new QHBoxLayout();
     m_comboGroups = new QComboBox(boxMeta);
+    m_comboGroups->setView(new QListView(m_comboGroups));
     m_btnNewGroup = new QPushButton(tr("+ New Group"), boxMeta);
     m_btnNewGroup->setCursor(Qt::PointingHandCursor);
 
@@ -100,9 +106,33 @@ void PublishLayerDialog::setupUI()
     groupLayout->addWidget(m_btnNewGroup);
     formLayout->addRow(tr("Assign Group:"), groupLayout);
 
+    // Zoom Level Selection Layout
+    QHBoxLayout *zoomLayout = new QHBoxLayout();
+    m_spinMinZoom = new QSpinBox(boxMeta);
+    m_spinMinZoom->setRange(0, 24);
+    m_spinMinZoom->setValue(0);
+
+    m_spinMaxZoom = new QSpinBox(boxMeta);
+    m_spinMaxZoom->setRange(0, 24);
+    m_spinMaxZoom->setValue(22);
+
+    zoomLayout->addWidget(new QLabel(tr("Min Zoom:"), boxMeta));
+    zoomLayout->addWidget(m_spinMinZoom);
+    zoomLayout->addWidget(new QLabel(tr("Max Zoom:"), boxMeta));
+    zoomLayout->addWidget(m_spinMaxZoom);
+    zoomLayout->addStretch();
+
+    formLayout->addRow(tr("Pyramid Zoom:"), zoomLayout);
+
+    // Background Processing Checkbox
+    m_checkBackground = new QCheckBox(tr("⚙️ Run heavy tile generation in Background Thread"), boxMeta);
+    m_checkBackground->setToolTip(tr("Recommended for high Zoom levels (14-18+). Keeps the UI smooth and responsive."));
+    formLayout->addRow("", m_checkBackground);
+
     mainLayout->addWidget(boxMeta);
 
     connect(m_btnNewGroup, &QPushButton::clicked, this, &PublishLayerDialog::onCreateGroupClicked);
+    connect(m_spinMaxZoom, QOverload<int>::of(&QSpinBox::valueChanged), this, &PublishLayerDialog::onMaxZoomChanged);
 
     // ── 4. Progress Bar & Status Line ────────────────────────────────
     QVBoxLayout *progressLayout = new QVBoxLayout();
@@ -111,6 +141,7 @@ void PublishLayerDialog::setupUI()
     m_progressBar = new QProgressBar(this);
     m_progressBar->setRange(0, 100);
     m_progressBar->setValue(0);
+    m_progressBar->setFormat("%p% (%v/100)"); // Show explicit numeric percentage value
     m_progressBar->setTextVisible(true);
     progressLayout->addWidget(m_progressBar);
 
@@ -168,26 +199,23 @@ void PublishLayerDialog::setupUI()
             font-size: 12px;
         }
 
-        QRadioButton {
+        QRadioButton, QCheckBox {
             color: #f1f5f9;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             spacing: 8px;
-            padding: 4px;
+            padding: 2px;
         }
-        QRadioButton::indicator {
+        QRadioButton::indicator, QCheckBox::indicator {
             width: 16px;
             height: 16px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: 2px solid #64748b;
             background-color: #0f172a;
         }
-        QRadioButton::indicator:checked {
+        QRadioButton::indicator:checked, QCheckBox::indicator:checked {
             border: 2px solid #10b981;
             background-color: #10b981;
-        }
-        QRadioButton::indicator:hover {
-            border-color: #38bdf8;
         }
 
         QLineEdit {
@@ -195,16 +223,54 @@ void PublishLayerDialog::setupUI()
             border: 1px solid #334155;
             border-radius: 6px;
             color: #ffffff;
-            padding: 8px 12px;
+            padding: 6px 10px;
             font-size: 13px;
-            selection-background-color: #10b981;
         }
-        QLineEdit:focus {
-            border: 1px solid #10b981;
-            background-color: #020617;
+
+        QSpinBox {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #ffffff;
+            padding: 6px 24px 6px 10px;
+            font-size: 13px;
         }
-        QLineEdit::placeholder {
-            color: #64748b;
+        QSpinBox::up-button {
+            subcontrol-origin: border;
+            subcontrol-position: top right;
+            width: 20px;
+            border-left: 1px solid #334155;
+            border-bottom: 1px solid #334155;
+            background-color: #1e293b;
+            border-top-right-radius: 5px;
+        }
+        QSpinBox::up-button:hover {
+            background-color: #334155;
+        }
+        QSpinBox::up-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 5px solid #38bdf8;
+        }
+        QSpinBox::down-button {
+            subcontrol-origin: border;
+            subcontrol-position: bottom right;
+            width: 20px;
+            border-left: 1px solid #334155;
+            background-color: #1e293b;
+            border-bottom-right-radius: 5px;
+        }
+        QSpinBox::down-button:hover {
+            background-color: #334155;
+        }
+        QSpinBox::down-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid #38bdf8;
         }
 
         QListWidget {
@@ -213,16 +279,8 @@ void PublishLayerDialog::setupUI()
             border-radius: 6px;
             color: #cbd5e1;
             padding: 6px;
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-family: 'Cascadia Code', monospace;
             font-size: 11px;
-        }
-        QListWidget::item {
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        QListWidget::item:hover {
-            background-color: #1e293b;
-            color: #38bdf8;
         }
 
         QComboBox {
@@ -233,15 +291,45 @@ void PublishLayerDialog::setupUI()
             padding: 6px 12px;
             font-size: 13px;
         }
-        QComboBox:hover {
-            border-color: #38bdf8;
+        QComboBox::drop-down {
+            subcontrol-origin: padding;
+            subcontrol-position: top right;
+            width: 24px;
+            border-left: 1px solid #334155;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            background-color: #1e293b;
+        }
+        QComboBox::down-arrow {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #38bdf8;
         }
         QComboBox QAbstractItemView {
-            background-color: #0f172a;
+            background-color: #1e293b;
             color: #ffffff;
+            selection-background-color: #0284c7;
+            selection-color: #ffffff;
             border: 1px solid #334155;
-            selection-background-color: #10b981;
-            selection-color: #000000;
+            border-radius: 6px;
+            padding: 4px;
+            outline: 0;
+        }
+        QComboBox QAbstractItemView::item {
+            min-height: 28px;
+            padding: 4px 8px;
+            color: #ffffff;
+            background-color: #1e293b;
+        }
+        QComboBox QAbstractItemView::item:selected {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+        QComboBox QAbstractItemView::item:hover {
+            background-color: #0284c7;
+            color: #ffffff;
         }
 
         QProgressBar {
@@ -252,10 +340,10 @@ void PublishLayerDialog::setupUI()
             color: #f8fafc;
             font-weight: bold;
             font-size: 11px;
-            height: 22px;
+            height: 20px;
         }
         QProgressBar::chunk {
-            background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #10b981);
+            background-color: #10b981;
             border-radius: 5px;
         }
 
@@ -265,12 +353,7 @@ void PublishLayerDialog::setupUI()
             border: 1px solid #475569;
             border-radius: 6px;
             padding: 8px 16px;
-            font-size: 13px;
             font-weight: 600;
-        }
-        QPushButton:hover {
-            background-color: #475569;
-            border-color: #94a3b8;
         }
         QPushButton#btnPublish {
             background-color: #10b981;
@@ -283,6 +366,13 @@ void PublishLayerDialog::setupUI()
             color: #ffffff;
         }
     )");
+}
+
+void PublishLayerDialog::onMaxZoomChanged(int value)
+{
+    if (value >= 14) {
+        m_checkBackground->setChecked(true);
+    }
 }
 
 void PublishLayerDialog::populateGroups()
@@ -308,7 +398,36 @@ void PublishLayerDialog::populateGroups()
 
 void PublishLayerDialog::onBrowseFolder()
 {
-    if (m_radioVector->isChecked()) {
+    if (m_radioRasterFile->isChecked()) {
+        QString file = QFileDialog::getOpenFileName(
+            this,
+            tr("Select Single GeoTIFF Raster File"),
+            m_editFolderPath->text(),
+            tr("GeoTIFF Raster Files (*.tif *.tiff *.TIF *.TIFF);;Image Files (*.png *.jpg *.jpeg);;All Files (*)")
+        );
+        if (!file.isEmpty()) {
+            m_editFolderPath->setText(file);
+            updateFilePreview();
+            if (m_editLayerName->text().trimmed().isEmpty()) {
+                QFileInfo fi(file);
+                m_editLayerName->setText(fi.completeBaseName());
+            }
+        }
+    } else if (m_radioRasterFolder->isChecked()) {
+        QString folder = QFileDialog::getExistingDirectory(
+            this,
+            tr("Select GeoTIFF Raster Directory"),
+            m_editFolderPath->text()
+        );
+        if (!folder.isEmpty()) {
+            m_editFolderPath->setText(folder);
+            updateFilePreview();
+            if (m_editLayerName->text().trimmed().isEmpty()) {
+                QFileInfo fi(folder);
+                m_editLayerName->setText(fi.fileName());
+            }
+        }
+    } else {
         QString fileOrDir = QFileDialog::getOpenFileName(
             this,
             tr("Select Vector File (.geojson, .json, .shp)"),
@@ -326,19 +445,13 @@ void PublishLayerDialog::onBrowseFolder()
                 m_editLayerName->setText(fi.completeBaseName());
             }
         }
-    } else {
-        QString folder = QFileDialog::getExistingDirectory(this, tr("Select GeoTIFF Raster Directory"));
-        if (!folder.isEmpty()) {
-            m_editFolderPath->setText(folder);
-            updateFilePreview();
-        }
     }
 }
 
 void PublishLayerDialog::updateFilePreview()
 {
     m_listFilePreview->clear();
-    QString pathStr = m_editFolderPath->text();
+    QString pathStr = m_editFolderPath->text().trimmed();
     if (pathStr.isEmpty()) return;
 
     QFileInfo pathInfo(pathStr);
@@ -347,17 +460,19 @@ void PublishLayerDialog::updateFilePreview()
         return;
     }
 
-    QDir dir(pathStr);
-    QStringList filters;
-    if (m_radioRaster->isChecked()) {
-        filters << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF";
-    } else {
-        filters << "*.geojson" << "*.json" << "*.shp" << "*.dbf" << "*.prj" << "*.sld" << "*.shx";
-    }
+    if (pathInfo.isDir()) {
+        QDir dir(pathStr);
+        QStringList filters;
+        if (m_radioRasterFile->isChecked() || m_radioRasterFolder->isChecked()) {
+            filters << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF" << "*.png" << "*.jpg" << "*.jpeg";
+        } else {
+            filters << "*.geojson" << "*.json" << "*.shp" << "*.dbf" << "*.prj" << "*.sld" << "*.shx";
+        }
 
-    QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
-    for (const auto &file : files) {
-        m_listFilePreview->addItem("📄 " + file.fileName() + QString(" (%1 KB)").arg(file.size() / 1024));
+        QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
+        for (const auto &file : files) {
+            m_listFilePreview->addItem("📄 " + file.fileName() + QString(" (%1 KB)").arg(file.size() / 1024));
+        }
     }
 }
 
@@ -371,11 +486,25 @@ void PublishLayerDialog::onCreateGroupClicked()
 
 void PublishLayerDialog::onPublishClicked()
 {
-    QString folder = m_editFolderPath->text();
+    QString folder = m_editFolderPath->text().trimmed();
     QString name = m_editLayerName->text().trimmed();
+    int minZoom = m_spinMinZoom->value();
+    int maxZoom = m_spinMaxZoom->value();
+    bool runInBackground = m_checkBackground->isChecked();
 
     if (folder.isEmpty() || name.isEmpty()) {
-        QMessageBox::warning(this, tr("Validation Error"), tr("Please select a folder and specify a layer name."));
+        QMessageBox::warning(this, tr("Validation Error"), tr("Please select a file or folder and specify a layer name."));
+        return;
+    }
+
+    QFileInfo pathInfo(folder);
+    if (!pathInfo.exists()) {
+        QMessageBox::warning(this, tr("Validation Error"), tr("The selected file or folder path does not exist on disk."));
+        return;
+    }
+
+    if (minZoom > maxZoom) {
+        QMessageBox::warning(this, tr("Validation Error"), tr("Min Zoom level cannot be greater than Max Zoom level."));
         return;
     }
 
@@ -388,7 +517,7 @@ void PublishLayerDialog::onPublishClicked()
     m_lblStatus->setText(tr("Initializing spatial ingestion pipeline..."));
     QCoreApplication::processEvents();
 
-    GISApp::Publishing::LayerType type = m_radioRaster->isChecked() ?
+    GISApp::Publishing::LayerType type = (m_radioRasterFile->isChecked() || m_radioRasterFolder->isChecked()) ?
         GISApp::Publishing::LayerType::Raster : GISApp::Publishing::LayerType::Vector;
 
     auto progressCb = [this](int percent, const QString &statusText) {
@@ -397,7 +526,13 @@ void PublishLayerDialog::onPublishClicked()
         QCoreApplication::processEvents();
     };
 
-    bool success = m_publishingService.publishLayer(type, folder, name, targetGroup, m_layerManager, m_mapInstance, progressCb);
+    bool success = m_publishingService.publishLayer(type, folder, name, targetGroup, m_layerManager, m_mapInstance, progressCb, minZoom, maxZoom, runInBackground);
+
+    if (runInBackground) {
+        QMessageBox::information(this, tr("Background Task Queued"), tr("Tile generation has been queued in the Background Task Manager.\nYou can track progress via Tools -> Background Tasks."));
+        accept();
+        return;
+    }
 
     m_progressBar->setValue(100);
     m_lblStatus->setText(m_publishingService.lastStatusMessage());
@@ -408,7 +543,7 @@ void PublishLayerDialog::onPublishClicked()
 
     if (success) {
         QString groupName = targetGroup ? targetGroup->name() : "";
-        GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(type, folder, name, groupName);
+        GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(type, folder, name, groupName, minZoom, maxZoom);
         QMessageBox::information(this, tr("Success"), tr("Layer successfully published!"));
         accept();
     } else {

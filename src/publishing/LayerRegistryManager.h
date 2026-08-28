@@ -36,6 +36,8 @@ struct PublishedLayerMeta {
     bool isVisible{true};
     float opacity{1.0f};
     int orderIndex{0};
+    int minZoom{0};
+    int maxZoom{22};
 };
 
 /**
@@ -49,7 +51,9 @@ public:
     void registerPublishedLayer(LayerType type,
                                 const QString &folderPath,
                                 const QString &layerName,
-                                const QString &groupName);
+                                const QString &groupName,
+                                int minZoom = 0,
+                                int maxZoom = 22);
 
     void registerGroup(const QString &groupName);
     void unregisterLayer(const QString &layerName);

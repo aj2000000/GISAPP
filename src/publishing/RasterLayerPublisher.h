@@ -1,6 +1,6 @@
 /**
  * @file RasterLayerPublisher.h
- * @brief Concrete strategy for processing and stitching GeoTIFF raster maps.
+ * @brief Concrete strategy for multi-resolution GeoTIFF raster map rendering.
  * @author GIS System Architecture Team
  * @date 2026
  */
@@ -14,8 +14,7 @@ namespace GISApp::Publishing {
 
 /**
  * @class RasterLayerPublisher
- * @brief Ingests folders with multiple GeoTIFF (.tif) files, computes bounding mosaic extents,
- * and registers optimized raster tile sources in MapLibre Native.
+ * @brief Strategy handling GeoTIFF ingest, gdal2tiles XYZ generation, and MapLibre raster rendering.
  */
 class RasterLayerPublisher : public IPublisherStrategy {
 public:
@@ -27,9 +26,15 @@ public:
                  GISApp::Layers::LayerGroupNode *targetGroup,
                  GISApp::Layers::LayerManager *layerManager,
                  QMapLibre::Map *map,
-                 ProgressCallback progressCb = nullptr) override;
+                 ProgressCallback progressCb = nullptr,
+                 int minZoom = 0,
+                 int maxZoom = 22) override;
 
-    QString publisherType() const override { return "Raster (GeoTIFF Mosaicing)"; }
+    bool prepareInBackground(const QString &folderPath,
+                            const QString &layerName,
+                            ProgressCallback progressCb = nullptr) override;
+
+    QString publisherType() const override { return "Raster (GeoTIFF / VRT Mosaic)"; }
     QString statusMessage() const override { return m_statusMessage; }
 
 private:

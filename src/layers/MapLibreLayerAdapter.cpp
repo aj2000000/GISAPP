@@ -14,12 +14,14 @@ MapLibreLayerAdapter::MapLibreLayerAdapter(const QString &layerId,
                                            QMapLibre::Map *mapPointer, 
                                            const LayerExtent &defaultExtent,
                                            const QVariantMap &layerParams,
-                                           const QVariantMap &strokeParams)
+                                           const QVariantMap &strokeParams,
+                                           const QVariantMap &sourceParams)
     : m_layerId(layerId), 
       m_map(mapPointer), 
       m_extent(defaultExtent),
       m_layerParams(layerParams),
-      m_strokeParams(strokeParams)
+      m_strokeParams(strokeParams),
+      m_sourceParams(sourceParams)
 {
 }
 
@@ -31,6 +33,20 @@ void MapLibreLayerAdapter::setVisibility(bool visible) {
     m_visible = visible;
     if (!m_map) return;
 
+    // Demand-driven / Lazy initialization for remote online layers (e.g. Google Earth Satellite)
+    if (visible && !m_sourceParams.isEmpty()) {
+        QString sourceId = m_layerParams.value("source").toString();
+        if (sourceId.isEmpty()) sourceId = m_layerId + "-src";
+
+        if (!m_map->sourceExists(sourceId)) {
+            qWarning() << "[LayerAdapter] 🌐 Lazy-initializing remote source & layer on-demand for:" << m_layerId;
+            m_map->addSource(sourceId, m_sourceParams);
+            if (!m_layerParams.isEmpty() && !m_map->layerExists(m_layerId)) {
+                m_map->addLayer(m_layerId, m_layerParams);
+            }
+        }
+    }
+
     QString visString = visible ? QString("visible") : QString("none");
 
     if (m_layerId == "dark-matter-base") {
@@ -38,13 +54,15 @@ void MapLibreLayerAdapter::setVisibility(bool visible) {
         for (const QString &id : layers) {
             // Protect user-published custom layers from base map bulk toggling
             if (id != "air-zones-layer" && id != "radar-coverage" && 
-                !id.startsWith("raster-") && !id.startsWith("vector-")) {
+                !id.startsWith("raster-") && !id.startsWith("vector-") && id != "google-satellite-layer") {
                 m_map->setLayoutProperty(id, "visibility", visString);
             }
         }
     } else {
         qWarning() << "[LayerAdapter] Setting visibility for single layer:" << m_layerId << "->" << visString;
-        m_map->setLayoutProperty(m_layerId, "visibility", visString);
+        if (m_map->layerExists(m_layerId)) {
+            m_map->setLayoutProperty(m_layerId, "visibility", visString);
+        }
     }
 }
 

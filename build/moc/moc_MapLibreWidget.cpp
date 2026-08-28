@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'MapLibreWidget.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.1)
+** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.2)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -18,7 +18,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'MapLibreWidget.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.10.1. It"
+#error "This file was generated using the moc from 6.10.2. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -47,7 +47,11 @@ template <> constexpr inline auto GISApp::Map::MapLibreWidget::qt_create_metaobj
         "QMouseEvent*",
         "event",
         "mousePressed",
-        "mouseReleased"
+        "mouseReleased",
+        "cameraChanged",
+        "zoomLevel",
+        "scaleDenominator",
+        "center"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -66,6 +70,10 @@ template <> constexpr inline auto GISApp::Map::MapLibreWidget::qt_create_metaobj
         // Signal 'mouseReleased'
         QtMocHelpers::SignalData<void(QMouseEvent *, const GISApp::Core::Models::GeoCoordinate &)>(9, 2, QMC::AccessPublic, QMetaType::Void, {{
             { 0x80000000 | 6, 7 }, { 0x80000000 | 3, 4 },
+        }}),
+        // Signal 'cameraChanged'
+        QtMocHelpers::SignalData<void(double, double, const GISApp::Core::Models::GeoCoordinate &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::Double, 11 }, { QMetaType::Double, 12 }, { 0x80000000 | 3, 13 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -94,6 +102,7 @@ void GISApp::Map::MapLibreWidget::qt_static_metacall(QObject *_o, QMetaObject::C
         case 1: _t->mouseMoved((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[2]))); break;
         case 2: _t->mousePressed((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[2]))); break;
         case 3: _t->mouseReleased((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[2]))); break;
+        case 4: _t->cameraChanged((*reinterpret_cast<std::add_pointer_t<double>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<double>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[3]))); break;
         default: ;
         }
     }
@@ -105,6 +114,8 @@ void GISApp::Map::MapLibreWidget::qt_static_metacall(QObject *_o, QMetaObject::C
         if (QtMocHelpers::indexOfMethod<void (MapLibreWidget::*)(QMouseEvent * , const GISApp::Core::Models::GeoCoordinate & )>(_a, &MapLibreWidget::mousePressed, 2))
             return;
         if (QtMocHelpers::indexOfMethod<void (MapLibreWidget::*)(QMouseEvent * , const GISApp::Core::Models::GeoCoordinate & )>(_a, &MapLibreWidget::mouseReleased, 3))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (MapLibreWidget::*)(double , double , const GISApp::Core::Models::GeoCoordinate & )>(_a, &MapLibreWidget::cameraChanged, 4))
             return;
     }
 }
@@ -130,14 +141,14 @@ int GISApp::Map::MapLibreWidget::qt_metacall(QMetaObject::Call _c, int _id, void
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 5)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 5;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 4)
+        if (_id < 5)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 4;
+        _id -= 5;
     }
     return _id;
 }
@@ -164,5 +175,11 @@ void GISApp::Map::MapLibreWidget::mousePressed(QMouseEvent * _t1, const GISApp::
 void GISApp::Map::MapLibreWidget::mouseReleased(QMouseEvent * _t1, const GISApp::Core::Models::GeoCoordinate & _t2)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 3, nullptr, _t1, _t2);
+}
+
+// SIGNAL 4
+void GISApp::Map::MapLibreWidget::cameraChanged(double _t1, double _t2, const GISApp::Core::Models::GeoCoordinate & _t3)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 4, nullptr, _t1, _t2, _t3);
 }
 QT_WARNING_POP

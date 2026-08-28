@@ -4,6 +4,7 @@
  */
 
 #include "ui/TacticalStatusBar.h"
+#include <QLocale>
 
 namespace GISApp::UI {
 
@@ -12,7 +13,7 @@ TacticalStatusBar::TacticalStatusBar(QWidget *parent)
 {
     setSizeGripEnabled(false);
 
-    m_infoLabel = new QLabel("Coordinate System: WGS 84 / EPSG:4326 | Scale: 1:15,000,000", this);
+    m_infoLabel = new QLabel("Coordinate System: WGS 84 / EPSG:4326 | Zoom: 10.00 | Scale: 1:507,210", this);
     m_infoLabel->setObjectName("InfoLabel");
 
     m_coordLabel = new QLabel("Lat: --.----° N  Lon: --.----° E  Alt: 0.0 m", this);
@@ -44,8 +45,15 @@ void TacticalStatusBar::updateCoordinates(const GISApp::Core::Models::GeoCoordin
 
 void TacticalStatusBar::updateScale(double scaleDenominator)
 {
-    m_infoLabel->setText(QString("Coordinate System: WGS 84 / EPSG:4326 | Scale: 1:%1")
-                             .arg(static_cast<long long>(scaleDenominator)));
+    updateZoomAndScale(0.0, scaleDenominator);
+}
+
+void TacticalStatusBar::updateZoomAndScale(double zoomLevel, double scaleDenominator)
+{
+    QString formattedScale = QLocale::system().toString(static_cast<long long>(scaleDenominator));
+    m_infoLabel->setText(QString("Coordinate System: WGS 84 / EPSG:4326 | Zoom: %1 | Scale: 1:%2")
+                             .arg(zoomLevel, 0, 'f', 2)
+                             .arg(formattedScale));
 }
 
 } // namespace GISApp::UI

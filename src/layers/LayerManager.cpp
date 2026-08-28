@@ -5,6 +5,7 @@
 
 #include "layers/LayerManager.h"
 #include "publishing/LayerRegistryManager.h"
+#include "publishing/LocalTileServer.h"
 
 namespace GISApp::Layers {
 
@@ -138,6 +139,8 @@ void LayerManager::removeNode(LayerTreeNode *node) {
         QString layerName = node->name();
         m_model->removeNode(node);
         GISApp::Publishing::LayerRegistryManager::instance().unregisterLayer(layerName);
+        QString sanitizedId = QString("raster-%1").arg(qHash(layerName));
+        GISApp::Publishing::LocalTileServer::instance().unregisterLayer(sanitizedId);
     } else if (node->nodeType() == NodeType::Group) {
         LayerGroupNode *groupNode = static_cast<LayerGroupNode*>(node);
         QString groupName = node->name();

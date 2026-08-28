@@ -27,7 +27,8 @@ public:
                          QMapLibre::Map *mapPointer, 
                          const LayerExtent &defaultExtent = LayerExtent(),
                          const QVariantMap &layerParams = {},
-                         const QVariantMap &strokeParams = {});
+                         const QVariantMap &strokeParams = {},
+                         const QVariantMap &sourceParams = {});
 
     QString layerId() const override;
     void setVisibility(bool visible) override;
@@ -46,6 +47,7 @@ private:
     LayerExtent m_extent;
     QVariantMap m_layerParams;
     QVariantMap m_strokeParams;
+    QVariantMap m_sourceParams;
 };
 
 } // namespace GISApp::Layers

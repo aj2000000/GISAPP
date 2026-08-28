@@ -8,6 +8,8 @@
 #include "publishing/RasterLayerPublisher.h"
 #include "publishing/LocalTileServer.h"
 #include "layers/MapLibreLayerAdapter.h"
+#include "core/SystemConfigManager.h"
+#include <gdal_priv.h>
 
 #include <QDir>
 #include <QFileInfo>
@@ -20,8 +22,10 @@
 #include <QProcess>
 #include <QCoreApplication>
 #include <QtEndian>
+#include <QRegularExpression>
 #include <QDebug>
 #include <cmath>
+#include <algorithm>
 
 namespace GISApp::Publishing {
 
@@ -33,120 +37,108 @@ struct GeoTIFFBounds {
     bool isValid{false};
 };
 
-/**
- * @brief Parses binary GeoTIFF tags (ModelPixelScaleTag & ModelTiepointTag) to extract true WGS84 Lat/Lon bounds.
- */
 static GeoTIFFBounds extractGeoTIFFBounds(const QString &filePath, int imageWidth, int imageHeight) {
+    (void)imageWidth; (void)imageHeight;
     GeoTIFFBounds bounds;
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly)) return bounds;
+    GDALDataset *ds = static_cast<GDALDataset*>(GDALOpenShared(filePath.toUtf8().constData(), GA_ReadOnly));
+    if (ds) {
+        double gt[6];
+        if (ds->GetGeoTransform(gt) == CE_None) {
+            int w = ds->GetRasterXSize();
+            int h = ds->GetRasterYSize();
+            double minX = gt[0];
+            double maxX = gt[0] + gt[1] * w;
+            double maxY = gt[3];
+            double minY = gt[3] + gt[5] * h;
 
-    QByteArray header = file.read(8);
-    if (header.size() < 8) return bounds;
+            if (std::abs(minX) > 1000.0 || std::abs(minY) > 1000.0) {
+                // Mercator EPSG:3857 to WGS84 EPSG:4326 conversion
+                auto mercatorToLon = [](double x) { return x / 20037508.342789244 * 180.0; };
+                auto mercatorToLat = [](double y) {
+                    return (2.0 * std::atan(std::exp(y / 20037508.342789244 * M_PI)) - M_PI / 2.0) * (180.0 / M_PI);
+                };
+                bounds.minLon = mercatorToLon(minX);
+                bounds.maxLon = mercatorToLon(maxX);
+                bounds.maxLat = mercatorToLat(maxY);
+                bounds.minLat = mercatorToLat(minY);
+            } else {
+                bounds.minLon = minX;
+                bounds.maxLon = maxX;
+                bounds.maxLat = maxY;
+                bounds.minLat = minY;
+            }
 
-    bool isLittleEndian = (header.at(0) == 'I' && header.at(1) == 'I');
-    
-    auto read16 = [&](quint64 offset) -> quint16 {
-        file.seek(offset);
-        QByteArray b = file.read(2);
-        if (b.size() < 2) return 0;
-        quint16 val = *reinterpret_cast<const quint16*>(b.constData());
-        return isLittleEndian ? qFromLittleEndian(val) : qFromBigEndian(val);
-    };
-
-    auto read32 = [&](quint64 offset) -> quint32 {
-        file.seek(offset);
-        QByteArray b = file.read(4);
-        if (b.size() < 4) return 0;
-        quint32 val = *reinterpret_cast<const quint32*>(b.constData());
-        return isLittleEndian ? qFromLittleEndian(val) : qFromBigEndian(val);
-    };
-
-    auto readDouble = [&](quint64 offset) -> double {
-        file.seek(offset);
-        QByteArray b = file.read(8);
-        if (b.size() < 8) return 0.0;
-        quint64 val = *reinterpret_cast<const quint64*>(b.constData());
-        if (isLittleEndian) val = qFromLittleEndian(val);
-        else val = qFromBigEndian(val);
-        double res;
-        std::memcpy(&res, &val, sizeof(double));
-        return res;
-    };
-
-    quint32 ifdOffset = read32(4);
-    if (ifdOffset == 0) return bounds;
-
-    quint16 tagCount = read16(ifdOffset);
-    quint64 currentTagOffset = ifdOffset + 2;
-
-    double scaleX = 0, scaleY = 0;
-    double tieLon = 0, tieLat = 0;
-    bool hasScale = false, hasTie = false;
-
-    quint32 tiffWidth = imageWidth;
-    quint32 tiffHeight = imageHeight;
-
-    for (int i = 0; i < tagCount; ++i) {
-        quint16 tag = read16(currentTagOffset);
-        quint16 type = read16(currentTagOffset + 2);
-        quint32 count = read32(currentTagOffset + 4);
-        quint32 valueOffset = read32(currentTagOffset + 8);
-
-        if (tag == 256) { // ImageWidth
-            tiffWidth = (type == 3) ? (isLittleEndian ? (valueOffset & 0xFFFF) : (valueOffset >> 16)) : valueOffset;
-        } else if (tag == 257) { // ImageLength / ImageHeight
-            tiffHeight = (type == 3) ? (isLittleEndian ? (valueOffset & 0xFFFF) : (valueOffset >> 16)) : valueOffset;
-        } else if (tag == 33550 && count >= 2) { // ModelPixelScaleTag
-            scaleX = readDouble(valueOffset);
-            scaleY = readDouble(valueOffset + 8);
-            hasScale = true;
-        } else if (tag == 33922 && count >= 5) { // ModelTiepointTag
-            tieLon = readDouble(valueOffset + 24); // X (Longitude)
-            tieLat = readDouble(valueOffset + 32); // Y (Latitude)
-            hasTie = true;
-        }
-        currentTagOffset += 12;
-    }
-
-    if (tiffWidth == 0) tiffWidth = 1200;
-    if (tiffHeight == 0) tiffHeight = 1200;
-
-    // Default 0.25 degree grid step if scale tag is absent
-    if (hasTie && (!hasScale || scaleX == 0)) {
-        scaleX = 0.25 / tiffWidth;
-        scaleY = 0.25 / tiffHeight;
-        hasScale = true;
-    }
-
-    if (hasScale && hasTie && scaleX > 0 && scaleY > 0) {
-        // WGS84 Geographic Degrees (-180 to 180, -90 to 90)
-        if (tieLon >= -180.0 && tieLon <= 180.0 && tieLat >= -90.0 && tieLat <= 90.0) {
-            bounds.minLon = tieLon;
-            bounds.maxLat = tieLat;
-            bounds.maxLon = tieLon + (scaleX * tiffWidth);
-            bounds.minLat = tieLat - (scaleY * tiffHeight);
-            bounds.isValid = true;
-        } else if (std::abs(tieLon) > 1000.0 || std::abs(tieLat) > 1000.0) {
-            // Projected Web Mercator meters -> Convert to WGS84 Lat/Lon
-            auto mercatorToLon = [](double x) { return x / 6378137.0 * (180.0 / M_PI); };
-            auto mercatorToLat = [](double y) {
-                return (2.0 * std::atan(std::exp(y / 6378137.0)) - M_PI / 2.0) * (180.0 / M_PI);
-            };
-
-            double westM = tieLon;
-            double northM = tieLat;
-            double eastM = tieLon + (scaleX * tiffWidth);
-            double southM = tieLat - (scaleY * tiffHeight);
-
-            bounds.minLon = mercatorToLon(westM);
-            bounds.maxLat = mercatorToLat(northM);
-            bounds.maxLon = mercatorToLon(eastM);
-            bounds.minLat = mercatorToLat(southM);
+            if (bounds.minLon > bounds.maxLon) std::swap(bounds.minLon, bounds.maxLon);
+            if (bounds.minLat > bounds.maxLat) std::swap(bounds.minLat, bounds.maxLat);
             bounds.isValid = true;
         }
+        GDALClose(ds);
     }
     return bounds;
+}
+
+bool RasterLayerPublisher::prepareInBackground(const QString &folderPath,
+                                               const QString &layerName,
+                                               ProgressCallback progressCb)
+{
+    QFileInfo pathInfo(folderPath);
+    QFileInfoList fileList;
+    QString folderDir;
+
+    if (pathInfo.isFile()) {
+        fileList.append(pathInfo);
+        folderDir = pathInfo.absolutePath();
+    } else {
+        QDir dir(folderPath);
+        QStringList filters;
+        filters << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF" << "*.png" << "*.jpg" << "*.jpeg";
+        fileList = dir.entryInfoList(filters, QDir::Files);
+        folderDir = folderPath;
+    }
+
+    if (fileList.isEmpty()) {
+        m_statusMessage = "No raster map files (.tif/.tiff) found in selected file or directory path.";
+        return false;
+    }
+
+    LocalTileServer::instance().startServer(8088);
+
+    QString sanitizedLayerName = QString(layerName).toLower().replace(' ', '_');
+    QString mainLayerId = QString("raster-%1").arg(qHash(layerName));
+    QString tileOutputDir = QString("%1/MAPDATA/%2").arg(QDir::homePath()).arg(sanitizedLayerName);
+    QString vrtPath = QString("%1/%2.vrt").arg(GISApp::Core::SystemConfigManager::instance().getMapDataDir()).arg(sanitizedLayerName);
+
+    if (!QFile::exists(vrtPath)) {
+        if (progressCb) {
+            progressCb(20, QString("⚡ Off-thread Preparation: Generating VRT catalog for %1 GeoTIFF tiles...").arg(fileList.size()));
+        }
+
+        // 1. Build VRT Virtual Mosaic Catalog in background thread
+        QStringList vrtArgs;
+        vrtArgs << "-addalpha" << vrtPath;
+        for (const auto &fileInfo : fileList) {
+            vrtArgs << fileInfo.absoluteFilePath();
+        }
+        QProcess::execute("gdalbuildvrt", vrtArgs);
+
+        // 2. Build multi-scale internal pyramid overviews in background thread
+        if (progressCb) progressCb(60, "Building multi-scale VRT pyramid overviews off-thread...");
+        QStringList addoArgs;
+        addoArgs << "-r" << "average" << vrtPath << "2" << "4" << "8" << "16" << "32" << "64";
+        QProcess::execute("gdaladdo", addoArgs);
+    } else {
+        qWarning() << "[RasterPublisher] ⚡ Off-thread Restoration: Reusing existing VRT catalog at" << vrtPath;
+    }
+
+    // 3. Register VRT catalog and folders with LocalTileServer for instant on-the-fly streaming
+    LocalTileServer::instance().registerLayerVrtPath(mainLayerId, vrtPath);
+    LocalTileServer::instance().registerLayerFolder(mainLayerId, folderDir);
+    LocalTileServer::instance().registerLayerTilePath(mainLayerId, tileOutputDir);
+
+    if (progressCb) {
+        progressCb(90, QString("Completed off-thread spatial catalog preparation for '%1'.").arg(layerName));
+    }
+    return true;
 }
 
 bool RasterLayerPublisher::publish(const QString &folderPath,
@@ -154,36 +146,37 @@ bool RasterLayerPublisher::publish(const QString &folderPath,
                                    GISApp::Layers::LayerGroupNode *targetGroup,
                                    GISApp::Layers::LayerManager *layerManager,
                                    QMapLibre::Map *map,
-                                   ProgressCallback progressCb)
+                                   ProgressCallback progressCb,
+                                   int minZoom,
+                                   int maxZoom)
 {
     if (!map || !layerManager) {
         m_statusMessage = "Engine map or layer manager instance is invalid.";
         return false;
     }
 
-    QDir dir(folderPath);
-    QStringList filters;
-    filters << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF" << "*.png" << "*.jpg" << "*.jpeg";
-    QFileInfoList fileList = dir.entryInfoList(filters, QDir::Files);
+    QFileInfo pathInfo(folderPath);
+    QFileInfoList fileList;
+
+    if (pathInfo.isFile()) {
+        fileList.append(pathInfo);
+    } else {
+        QDir dir(folderPath);
+        QStringList filters;
+        filters << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF" << "*.png" << "*.jpg" << "*.jpeg";
+        fileList = dir.entryInfoList(filters, QDir::Files);
+    }
 
     if (fileList.isEmpty()) {
-        m_statusMessage = "No raster map files (.tif/.tiff) found in selected directory.";
+        m_statusMessage = "No raster map files (.tif/.tiff) found in selected file or directory path.";
         return false;
     }
 
-    // 1. Start Embedded HTTP Local Tile Web Service on Port 8088
     LocalTileServer::instance().startServer(8088);
 
     double overallMinLat = 90.0, overallMaxLat = -90.0;
     double overallMinLon = 180.0, overallMaxLon = -180.0;
 
-    QString sanitizedLayerName = QString(layerName).toLower().replace(' ', '_');
-    QString tileOutputDir = QString("/home/crl/aman/MAPDATA/%1").arg(sanitizedLayerName);
-    QString sampleTileFile = QString("%1/0/0/0.png").arg(tileOutputDir);
-
-    bool isPreTiled = QFile::exists(sampleTileFile);
-
-    // Fast-path header extraction for spatial bounds
     for (int i = 0; i < fileList.size(); ++i) {
         const QFileInfo &fileInfo = fileList.at(i);
         GeoTIFFBounds b = extractGeoTIFFBounds(fileInfo.absoluteFilePath(), 0, 0);
@@ -200,54 +193,26 @@ bool RasterLayerPublisher::publish(const QString &folderPath,
         overallMaxLon = std::max(overallMaxLon, east);
     }
 
+    QString sanitizedLayerName = QString(layerName).toLower().replace(' ', '_');
     QString mainLayerId = QString("raster-%1").arg(qHash(layerName));
+    QString tileOutputDir = QString("%1/MAPDATA/%2").arg(QDir::homePath()).arg(sanitizedLayerName);
+    QString vrtPath = QString("%1/%2.vrt").arg(GISApp::Core::SystemConfigManager::instance().getMapDataDir()).arg(sanitizedLayerName);
 
-    if (!isPreTiled) {
-        qWarning() << "[RasterPublisher] ⚙️ First-time Publish: No tile store found at" << sampleTileFile << ". Generating VRT & XYZ tiles...";
-        if (progressCb) {
-            progressCb(50, QString("Generating multi-resolution XYZ tile pyramid in %1...").arg(tileOutputDir));
-        }
-        QCoreApplication::processEvents();
-
-        // 1. Build VRT Mosaic
-        QString vrtPath = QString("/tmp/mosaic_%1.vrt").arg(mainLayerId);
-        QStringList vrtArgs;
-        vrtArgs << "-addalpha" << vrtPath;
-        for (const auto &fileInfo : fileList) {
-            vrtArgs << fileInfo.absoluteFilePath();
-        }
-        QProcess::execute("gdalbuildvrt", vrtArgs);
-
-        // 2. Generate XYZ static tile pyramid with gdal2tiles.py
-        QDir().mkpath(tileOutputDir);
-        QStringList gdal2tilesArgs;
-        gdal2tilesArgs << "--xyz" << "--processes=4" << "-z" << "0-14" << "-r" << "bilinear"
-                       << "-p" << "mercator" << vrtPath << tileOutputDir;
-        
-        qWarning() << "[RasterPublisher] Executing gdal2tiles.py to save tiles in:" << tileOutputDir;
-        int exitCode = QProcess::execute("gdal2tiles.py", gdal2tilesArgs);
-        if (exitCode == 0) {
-            qWarning() << "[RasterPublisher] Successfully generated XYZ tiles inside" << tileOutputDir;
-        } else {
-            qWarning() << "[RasterPublisher] Warning: gdal2tiles.py exited with code" << exitCode;
-        }
+    // If VRT does not exist yet (e.g. direct synchronous call), build it now
+    if (!QFile::exists(vrtPath)) {
+        prepareInBackground(folderPath, layerName, progressCb);
     } else {
-        qWarning() << "[RasterPublisher] ⚡ Fast Restoration: Pre-existing tile store found at" << tileOutputDir << ". Skipping transcoding & tiling completely!";
-        if (progressCb) {
-            progressCb(100, QString("Restored XYZ tiles instantly from %1").arg(tileOutputDir));
-        }
+        LocalTileServer::instance().registerLayerVrtPath(mainLayerId, vrtPath);
+        LocalTileServer::instance().registerLayerFolder(mainLayerId, pathInfo.isFile() ? pathInfo.absolutePath() : folderPath);
+        LocalTileServer::instance().registerLayerTilePath(mainLayerId, tileOutputDir);
     }
-
-    // Register folder & static tile path with LocalTileServer
-    LocalTileServer::instance().registerLayerFolder(mainLayerId, folderPath);
-    LocalTileServer::instance().registerLayerTilePath(mainLayerId, tileOutputDir);
 
     QVariantMap xyzSourceParams;
     xyzSourceParams["type"] = "raster";
     xyzSourceParams["tiles"] = QVariantList{ LocalTileServer::instance().getTileUrlTemplate(mainLayerId) };
     xyzSourceParams["tileSize"] = 256;
-    xyzSourceParams["minzoom"] = 0;
-    xyzSourceParams["maxzoom"] = 14;
+    xyzSourceParams["minzoom"] = minZoom;
+    xyzSourceParams["maxzoom"] = maxZoom;
 
     if (!map->sourceExists(mainLayerId + "-src")) {
         map->addSource(mainLayerId + "-src", xyzSourceParams);
@@ -267,23 +232,23 @@ bool RasterLayerPublisher::publish(const QString &folderPath,
         map->addLayer(mainLayerId, xyzLayerParams);
     }
 
-    // 5. Combined Geographic Bounding Extent
     GISApp::Layers::LayerExtent stitchedExtent{
         GISApp::Core::Models::GeoCoordinate(overallMinLat, overallMinLon),
         GISApp::Core::Models::GeoCoordinate(overallMaxLat, overallMaxLon)
     };
 
-    // 6. Register Adapter in Layer Tree
     auto adapter = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(mainLayerId, map, stitchedExtent, xyzLayerParams);
     GISApp::Layers::LayerNode* publishedNode = layerManager->addLayer(layerName, adapter, targetGroup);
 
-    // 7. Auto Pan Camera to Real DSM GeoTIFF Extent
     if (publishedNode) {
         layerManager->panToExtent(publishedNode);
     }
 
-    m_statusMessage = QString("Successfully published 2GB DSM raster layer '%1' with exact GeoTIFF Lat/Lon bounds.")
-                        .arg(layerName);
+    if (progressCb) {
+        progressCb(100, QString("⚡ Instant Raster Layer '%1' Published!").arg(layerName));
+    }
+
+    m_statusMessage = QString("Successfully published/restored raster layer '%1' instantly using Dynamic VRT Streaming.").arg(layerName);
     return true;
 }
 

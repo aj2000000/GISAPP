@@ -11,14 +11,14 @@
 #include <QObject>
 #include <memory>
 #include "publishing/IPublisherStrategy.h"
-#include "publishing/RasterLayerPublisher.h"
-#include "publishing/VectorLayerPublisher.h"
+#include "publishing/PublisherFactory.h"
 
 namespace GISApp::Publishing {
 
 /**
  * @class LayerPublishingService
  * @brief Service controller coordinating publishing strategy selection and execution.
+ * Uses PublisherFactory to adhere to Dependency Inversion (DIP) and Open/Closed Principle (OCP).
  */
 class LayerPublishingService : public QObject {
     Q_OBJECT
@@ -28,7 +28,7 @@ public:
     ~LayerPublishingService() override = default;
 
     /**
-     * @brief Publishes layer using specified strategy type.
+     * @brief Publishes layer using specified strategy type, zoom controls, and optional background thread.
      */
     bool publishLayer(LayerType type,
                       const QString &folderPath,
@@ -36,16 +36,17 @@ public:
                       GISApp::Layers::LayerGroupNode *targetGroup,
                       GISApp::Layers::LayerManager *layerManager,
                       QMapLibre::Map *map,
-                      ProgressCallback progressCb = nullptr);
+                      ProgressCallback progressCb = nullptr,
+                      int minZoom = 0,
+                      int maxZoom = 22,
+                      bool runInBackground = false);
 
     QString lastStatusMessage() const;
 
 private:
-    RasterLayerPublisher m_rasterPublisher;
-    VectorLayerPublisher m_vectorPublisher;
     QString m_lastStatus;
 };
 
 } // namespace GISApp::Publishing
 
-#endif // LAYERPUBLISHER SERVICE_H
+#endif // LAYERPUBLISHERSERVICE_H

@@ -16,6 +16,8 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QLabel>
+#include <QSpinBox>
+#include <QCheckBox>
 #include "layers/LayerManager.h"
 #include "publishing/LayerPublishingService.h"
 
@@ -39,6 +41,7 @@ private slots:
     void onPublishClicked();
     void updateFilePreview();
     void onCreateGroupClicked();
+    void onMaxZoomChanged(int value);
 
 private:
     void setupUI();
@@ -48,7 +51,8 @@ private:
     QMapLibre::Map *m_mapInstance;
     GISApp::Publishing::LayerPublishingService m_publishingService;
 
-    QRadioButton *m_radioRaster;
+    QRadioButton *m_radioRasterFile;
+    QRadioButton *m_radioRasterFolder;
     QRadioButton *m_radioVector;
     QLineEdit *m_editFolderPath;
     QPushButton *m_btnBrowse;
@@ -56,6 +60,11 @@ private:
     QLineEdit *m_editLayerName;
     QComboBox *m_comboGroups;
     QPushButton *m_btnNewGroup;
+
+    QSpinBox *m_spinMinZoom;
+    QSpinBox *m_spinMaxZoom;
+    QCheckBox *m_checkBackground;
+
     QProgressBar *m_progressBar;
     QLabel *m_lblStatus;
     QPushButton *m_btnPublish;

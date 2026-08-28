@@ -109,6 +109,7 @@ void TacticalLayerProvider::setupTacticalLayers(QMapLibre::Map *map)
 
 void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLibre::Map *map, GISApp::Controllers::MapController *mapController)
 {
+    Q_UNUSED(mapController);
     if (!layerManager || !map) {
         qWarning() << "[TacticalLayerProvider] populateLayerTree failed: layerManager or map is null";
         return;
@@ -120,9 +121,16 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
     }
     qWarning() << "[TacticalLayerProvider] populateLayerTree executing...";
 
+    auto googleGroup = layerManager->addGroup("🌐 Google Imagery");
     auto rasterGroup = layerManager->addGroup("🗺️ Raster Imagery & DSM");
+    (void)rasterGroup;
     auto tacticalGroup = layerManager->addGroup("🛡️ Tactical Operations");
     auto intelligenceGroup = layerManager->addGroup("📡 Signals & Sensors");
+
+    LayerExtent globalExtent{
+        GISApp::Core::Models::GeoCoordinate(-85.0, -180.0),
+        GISApp::Core::Models::GeoCoordinate(85.0, 180.0)
+    };
 
     LayerExtent indiaExtent{
         GISApp::Core::Models::GeoCoordinate(8.4, 68.7),
@@ -133,6 +141,39 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
         GISApp::Core::Models::GeoCoordinate(28.40, 76.85),
         GISApp::Core::Models::GeoCoordinate(28.88, 77.40)
     };
+
+    // 1. Google Earth Satellite (Hybrid - Satellite + Labels & Roads)
+    QVariantMap googleSourceParams;
+    googleSourceParams["type"] = "raster";
+    googleSourceParams["tiles"] = QVariantList{
+        "https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        "https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        "https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+    };
+    googleSourceParams["tileSize"] = 256;
+    googleSourceParams["minzoom"] = 0;
+    googleSourceParams["maxzoom"] = 20;
+
+    QVariantMap googleLayerParams;
+    googleLayerParams["id"] = "google-satellite-layer";
+    googleLayerParams["type"] = "raster";
+    googleLayerParams["source"] = "google-satellite-src";
+
+    QVariantMap googlePaintMap;
+    googlePaintMap["raster-opacity"] = 1.0;
+    googlePaintMap["raster-fade-duration"] = 100;
+    googleLayerParams["paint"] = googlePaintMap;
+
+    auto googleAdapter = std::make_shared<MapLibreLayerAdapter>(
+        "google-satellite-layer", map, globalExtent, googleLayerParams, QVariantMap(), googleSourceParams);
+
+    // Initial state: Hidden & Lazy-Loaded (no network tile calls on startup)
+    googleAdapter->setVisibility(false);
+    auto googleNode = layerManager->addLayer("Google Earth Satellite", googleAdapter, googleGroup);
+    if (googleNode) {
+        layerManager->setVisibility(googleNode, false);
+    }
 
     auto airZoneAdapter = std::make_shared<MapLibreLayerAdapter>(
         "air-zones-layer", map, ncrExtent);

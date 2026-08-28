@@ -1,55 +1,50 @@
 {
     "groups": [
-        "vectorData",
-        "🗺️ Raster Imagery & DSM",
+        "📍 Custom Vector Layers",
         "🛡️ Tactical Operations",
         "📡 Signals & Sensors",
-        "WorldMap"
+        "🗺️ Raster Imagery & DSM",
+        "🌐 Google Imagery"
     ],
     "layers": [
         {
-            "folderPath": "/home/crl/aman/MAPDATA/SampleShapeFile/roads.shp",
-            "groupName": "vectorData",
+            "folderPath": "/home/aman/aman/MAPDATA/WorldMap/worldgeo.json",
+            "groupName": "📍 Custom Vector Layers",
             "isTiled": true,
             "isVisible": true,
-            "name": "roads",
-            "opacity": 1,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "worldgeo",
+            "opacity": 0.10000000149011612,
             "orderIndex": 0,
-            "tilePath": "/home/crl/aman/MAPDATA/roads",
+            "tilePath": "/home/aman/MAPDATA/worldgeo",
             "type": "Vector"
         },
         {
-            "folderPath": "/home/crl/aman/MAPDATA/Bambooshapefile/bamboo.shp",
-            "groupName": "vectorData",
-            "isTiled": true,
-            "isVisible": true,
-            "name": "bamboo",
-            "opacity": 1,
-            "orderIndex": 1,
-            "tilePath": "/home/crl/aman/MAPDATA/bamboo",
-            "type": "Vector"
-        },
-        {
-            "folderPath": "/home/crl/aman/map/DSM",
+            "folderPath": "/home/aman/aman/MAPDATA/baseTiff",
             "groupName": "🗺️ Raster Imagery & DSM",
             "isTiled": true,
-            "isVisible": true,
-            "name": "DSM50K",
+            "isVisible": false,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "base",
             "opacity": 1,
-            "orderIndex": 2,
-            "tilePath": "/home/crl/aman/MAPDATA/dsm50k",
+            "orderIndex": 3,
+            "tilePath": "/home/aman/MAPDATA/base",
             "type": "Raster"
         },
         {
-            "folderPath": "/home/crl/aman/MAPDATA/WorldMap/countries_world.geojson",
-            "groupName": "WorldMap",
+            "folderPath": "/home/aman/MAPDATA/d1/Google_Sat_Downloaded.tif",
+            "groupName": "🗺️ Raster Imagery & DSM",
             "isTiled": true,
             "isVisible": true,
-            "name": "countries_world",
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "Google_Sat_Downloaded",
             "opacity": 1,
-            "orderIndex": 5,
-            "tilePath": "/home/crl/aman/MAPDATA/countries_world",
-            "type": "Vector"
+            "orderIndex": 0,
+            "tilePath": "/home/aman/MAPDATA/google_sat_downloaded",
+            "type": "Raster"
         }
     ]
 }

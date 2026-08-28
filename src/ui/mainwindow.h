@@ -34,6 +34,17 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+namespace GISApp::UI::Publishing {
+    class PublishLayerDialog;
+    class GroupManagerDialog;
+}
+namespace GISApp::UI::Download {
+    class DownloadSatImageryDialog;
+}
+namespace GISApp::UI::Tasks {
+    class BackgroundTaskDialog;
+}
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
@@ -49,6 +60,7 @@ protected:
 private slots:
     void onMouseCoordinateChanged(const GISApp::Core::Models::GeoCoordinate &coordinate);
     void onDistanceUpdated(double totalDistanceKm);
+    void onDownloadGoogleSatTriggered();
 
 private:
     Ui::MainWindow *ui;
@@ -77,6 +89,12 @@ private:
 
     GISApp::Layers::LayerManager *m_layerManager{nullptr};
     GISApp::UI::LayerTreeFloatingWidget *m_layerFloatingPanel{nullptr};
+
+    // Modeless Dialog Instances
+    GISApp::UI::Publishing::PublishLayerDialog *m_publishDialog{nullptr};
+    GISApp::UI::Publishing::GroupManagerDialog *m_groupManagerDialog{nullptr};
+    GISApp::UI::Download::DownloadSatImageryDialog *m_downloadSatDialog{nullptr};
+    GISApp::UI::Tasks::BackgroundTaskDialog *m_backgroundTaskDialog{nullptr};
 };
 
 #endif // MAINWINDOW_H

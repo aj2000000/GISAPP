@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'TacticalStatusBar.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.1)
+** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.2)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -19,7 +19,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'TacticalStatusBar.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.10.1. It"
+#error "This file was generated using the moc from 6.10.2. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -45,7 +45,9 @@ template <> constexpr inline auto GISApp::UI::TacticalStatusBar::qt_create_metao
         "GISApp::Core::Models::GeoCoordinate",
         "coord",
         "updateScale",
-        "scaleDenominator"
+        "scaleDenominator",
+        "updateZoomAndScale",
+        "zoomLevel"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -56,6 +58,10 @@ template <> constexpr inline auto GISApp::UI::TacticalStatusBar::qt_create_metao
         // Slot 'updateScale'
         QtMocHelpers::SlotData<void(double)>(5, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::Double, 6 },
+        }}),
+        // Slot 'updateZoomAndScale'
+        QtMocHelpers::SlotData<void(double, double)>(7, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::Double, 8 }, { QMetaType::Double, 6 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -82,6 +88,7 @@ void GISApp::UI::TacticalStatusBar::qt_static_metacall(QObject *_o, QMetaObject:
         switch (_id) {
         case 0: _t->updateCoordinates((*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[1]))); break;
         case 1: _t->updateScale((*reinterpret_cast<std::add_pointer_t<double>>(_a[1]))); break;
+        case 2: _t->updateZoomAndScale((*reinterpret_cast<std::add_pointer_t<double>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<double>>(_a[2]))); break;
         default: ;
         }
     }
@@ -106,14 +113,14 @@ int GISApp::UI::TacticalStatusBar::qt_metacall(QMetaObject::Call _c, int _id, vo
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 2)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 2;
+        _id -= 3;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 2)
+        if (_id < 3)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 2;
+        _id -= 3;
     }
     return _id;
 }

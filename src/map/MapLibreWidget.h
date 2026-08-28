@@ -36,12 +36,15 @@ signals:
     void mouseMoved(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void mousePressed(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void mouseReleased(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
+    void cameraChanged(double zoomLevel, double scaleDenominator, const GISApp::Core::Models::GeoCoordinate &center);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private:
+    void emitCameraChanged();
+
     QMapLibre::MapWidget *m_mapWidget;
     OverlayWidget *m_overlayWidget;
 };

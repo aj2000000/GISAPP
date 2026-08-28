@@ -1,0 +1,10 @@
+{
+    "mapDataDir": "$HOME/MAPDATA",
+    "vectorTilesDir": "$HOME/MAPDATA/VectorTiles",
+    "tileServerHost": "127.0.0.1",
+    "tileServerPort": 8088,
+    "defaultMinZoom": 0,
+    "defaultMaxZoom": 16,
+    "offlineStylePath": "config/offline_dark_style.json",
+    "publishedLayersPath": "config/published_layers.json"
+}

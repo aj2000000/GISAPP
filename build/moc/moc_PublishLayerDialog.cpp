@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'PublishLayerDialog.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.1)
+** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.2)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -19,7 +19,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'PublishLayerDialog.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.10.1. It"
+#error "This file was generated using the moc from 6.10.2. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -44,7 +44,9 @@ template <> constexpr inline auto GISApp::UI::Publishing::PublishLayerDialog::qt
         "",
         "onPublishClicked",
         "updateFilePreview",
-        "onCreateGroupClicked"
+        "onCreateGroupClicked",
+        "onMaxZoomChanged",
+        "value"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -56,6 +58,10 @@ template <> constexpr inline auto GISApp::UI::Publishing::PublishLayerDialog::qt
         QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onCreateGroupClicked'
         QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onMaxZoomChanged'
+        QtMocHelpers::SlotData<void(int)>(6, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 7 },
+        }}),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -83,10 +89,10 @@ void GISApp::UI::Publishing::PublishLayerDialog::qt_static_metacall(QObject *_o,
         case 1: _t->onPublishClicked(); break;
         case 2: _t->updateFilePreview(); break;
         case 3: _t->onCreateGroupClicked(); break;
+        case 4: _t->onMaxZoomChanged((*reinterpret_cast<std::add_pointer_t<int>>(_a[1]))); break;
         default: ;
         }
     }
-    (void)_a;
 }
 
 const QMetaObject *GISApp::UI::Publishing::PublishLayerDialog::metaObject() const
@@ -108,14 +114,14 @@ int GISApp::UI::Publishing::PublishLayerDialog::qt_metacall(QMetaObject::Call _c
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 5)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 5;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 4)
+        if (_id < 5)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 4;
+        _id -= 5;
     }
     return _id;
 }

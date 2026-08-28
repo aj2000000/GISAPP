@@ -1,9 +1,12 @@
 /**
  * @file LocalTileServer.cpp
- * @brief Dynamic XYZ Tile Streaming Server using Web Mercator tile cropping.
+ * @brief Dynamic XYZ Tile Streaming Server using Native C++ GDAL Dataset In-Memory Sampling & Bounded LRU Cache.
  */
 
 #include "publishing/LocalTileServer.h"
+#include "core/SystemConfigManager.h"
+#include <gdal_priv.h>
+#include <cpl_conv.h>
 #include <QBuffer>
 #include <QDir>
 #include <QFileInfo>
@@ -13,6 +16,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QThread>
+#include <QMutexLocker>
 #include <QDebug>
 #include <cmath>
 
@@ -23,9 +27,75 @@ LocalTileServer& LocalTileServer::instance() {
     return server;
 }
 
-LocalTileServer::LocalTileServer(QObject *parent) : QTcpServer(parent) {}
+LocalTileServer::LocalTileServer(QObject *parent) : QTcpServer(parent) {
+    GDALAllRegister();
+}
+
+LocalTileServer::~LocalTileServer() {
+    clearCache();
+}
+
+void LocalTileServer::clearCache() {
+    QMutexLocker locker(&m_mutex);
+    for (auto dsHandle : m_gdalDatasets) {
+        if (dsHandle) {
+            GDALClose(static_cast<GDALDataset*>(dsHandle));
+        }
+    }
+    m_gdalDatasets.clear();
+    m_tileCache.clear();
+    m_cacheKeyOrder.clear();
+}
+
+void LocalTileServer::unregisterLayer(const QString &layerId) {
+    QMutexLocker locker(&m_mutex);
+    if (m_vrtPaths.contains(layerId)) {
+        QString vrtPath = m_vrtPaths.take(layerId);
+        if (m_gdalDatasets.contains(vrtPath)) {
+            GDALDatasetH dsHandle = m_gdalDatasets.take(vrtPath);
+            if (dsHandle) {
+                GDALClose(static_cast<GDALDataset*>(dsHandle));
+            }
+        }
+    }
+    m_layerFolders.remove(layerId);
+    m_tilePaths.remove(layerId);
+    m_vectorMbtilesPaths.remove(layerId);
+
+    // Evict cache entries starting with layerId
+    QList<QString> keysToRemove;
+    for (auto it = m_tileCache.keyBegin(); it != m_tileCache.keyEnd(); ++it) {
+        if (it->startsWith(layerId)) {
+            keysToRemove.append(*it);
+        }
+    }
+    for (const auto &k : keysToRemove) {
+        m_tileCache.remove(k);
+        m_cacheKeyOrder.removeAll(k);
+    }
+}
+
+void LocalTileServer::putTileCache(const QString &key, const QByteArray &data) {
+    QMutexLocker locker(&m_mutex);
+    if (m_tileCache.contains(key)) {
+        m_tileCache[key] = data;
+        return;
+    }
+    while (m_cacheKeyOrder.size() >= MAX_CACHE_ENTRIES) {
+        QString oldestKey = m_cacheKeyOrder.dequeue();
+        m_tileCache.remove(oldestKey);
+    }
+    m_tileCache[key] = data;
+    m_cacheKeyOrder.enqueue(key);
+}
+
+QByteArray LocalTileServer::getTileCache(const QString &key) {
+    QMutexLocker locker(&m_mutex);
+    return m_tileCache.value(key);
+}
 
 bool LocalTileServer::startServer(quint16 port) {
+    QMutexLocker locker(&m_mutex);
     if (isListening()) return true;
     m_port = port;
     bool ok = listen(QHostAddress::LocalHost, m_port);
@@ -40,22 +110,51 @@ void LocalTileServer::registerLayerTexture(const QString &layerId, const QImage 
     QBuffer buffer(&bytes);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG");
-    m_tileCache[layerId] = bytes;
+    putTileCache(layerId, bytes);
 }
 
 QString LocalTileServer::getLayerUrl(const QString &layerId) const {
+    QMutexLocker locker(&m_mutex);
     return QString("http://127.0.0.1:%1/raster/%2.png").arg(m_port).arg(layerId);
 }
 
-void LocalTileServer::registerLayerFolder(const QString &layerId, const QString &folderPath) {
-    m_layerFolders[layerId] = folderPath;
+void LocalTileServer::registerLayerVrtPath(const QString &layerId, const QString &vrtPath) {
+    QMutexLocker locker(&m_mutex);
+    if (QFile::exists(vrtPath)) {
+        m_vrtPaths[layerId] = vrtPath;
+        qWarning() << "[LocalTileServer] 🗺️ Registered VRT catalog path:" << vrtPath << "for layer:" << layerId;
+    }
+}
 
-    // Automatically build VRT virtual mosaic catalog for all GeoTIFF tiles in folder
-    QString vrtPath = QString("/tmp/mosaic_%1.vrt").arg(layerId);
+void LocalTileServer::registerLayerFolder(const QString &layerId, const QString &folderPath) {
+    {
+        QMutexLocker locker(&m_mutex);
+        m_layerFolders[layerId] = folderPath;
+
+        if (m_vrtPaths.contains(layerId) && QFile::exists(m_vrtPaths[layerId])) {
+            qWarning() << "[LocalTileServer] ⚡ Fast Startup: Using pre-registered VRT catalog at:" << m_vrtPaths[layerId];
+            return;
+        }
+
+        // Check if VRT catalog already exists in MAPDATA directory or /tmp
+        QString vrtPath = QString("%1/MAPDATA/%2.vrt").arg(QDir::homePath()).arg(layerId);
+        if (!QFile::exists(vrtPath)) {
+            vrtPath = QString("/tmp/mosaic_%1.vrt").arg(layerId);
+        }
+
+        if (QFile::exists(vrtPath)) {
+            m_vrtPaths[layerId] = vrtPath;
+            qWarning() << "[LocalTileServer] ⚡ Fast Startup: Reusing existing VRT catalog at:" << vrtPath;
+            return;
+        }
+    }
+
+    // Automatically build VRT virtual mosaic catalog for all GeoTIFF tiles in folder if missing
     QDir dir(folderPath);
-    QFileInfoList tifs = dir.entryInfoList(QStringList() << "*.tif" << "*.tiff", QDir::Files);
+    QFileInfoList tifs = dir.entryInfoList(QStringList() << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF", QDir::Files);
 
     if (!tifs.isEmpty()) {
+        QString vrtPath = QString("%1/MAPDATA/%2.vrt").arg(QDir::homePath()).arg(layerId);
         QStringList args;
         args << "-addalpha" << vrtPath;
         for (const auto &tif : tifs) {
@@ -63,8 +162,15 @@ void LocalTileServer::registerLayerFolder(const QString &layerId, const QString 
         }
         int exitCode = QProcess::execute("gdalbuildvrt", args);
         if (exitCode == 0) {
+            QMutexLocker locker(&m_mutex);
             m_vrtPaths[layerId] = vrtPath;
-            qWarning() << "[LocalTileServer] Successfully created VRT mosaic catalog:" << vrtPath << "for" << tifs.size() << "GeoTIFF tiles.";
+
+            // Build internal multi-scale resolution overviews for instant sampling
+            QStringList addoArgs;
+            addoArgs << "-r" << "average" << vrtPath << "2" << "4" << "8" << "16" << "32" << "64";
+            QProcess::execute("gdaladdo", addoArgs);
+
+            qWarning() << "[LocalTileServer] Successfully created VRT mosaic catalog & overviews:" << vrtPath << "for" << tifs.size() << "GeoTIFF tiles.";
         } else {
             qWarning() << "[LocalTileServer] Warning: gdalbuildvrt failed for layer" << layerId;
         }
@@ -72,20 +178,24 @@ void LocalTileServer::registerLayerFolder(const QString &layerId, const QString 
 }
 
 void LocalTileServer::registerLayerTilePath(const QString &layerId, const QString &tilePath) {
+    QMutexLocker locker(&m_mutex);
     m_tilePaths[layerId] = tilePath;
     qWarning() << "[LocalTileServer] Registered pre-tiled static disk store:" << tilePath << "for layer:" << layerId;
 }
 
 QString LocalTileServer::getTileUrlTemplate(const QString &layerId) const {
+    QMutexLocker locker(&m_mutex);
     return QString("http://127.0.0.1:%1/tiles/%2/{z}/{x}/{y}.png").arg(m_port).arg(layerId);
 }
 
 void LocalTileServer::registerVectorMbtiles(const QString &layerId, const QString &mbtilesPath) {
+    QMutexLocker locker(&m_mutex);
     m_vectorMbtilesPaths[layerId] = mbtilesPath;
     qWarning() << "[LocalTileServer] 📦 Registered Vector MBTiles store:" << mbtilesPath << "for layer:" << layerId;
 }
 
 QString LocalTileServer::getVectorUrlTemplate(const QString &layerId) const {
+    QMutexLocker locker(&m_mutex);
     return QString("http://127.0.0.1:%1/vector/%2/{z}/{x}/{y}.pbf").arg(m_port).arg(layerId);
 }
 
@@ -148,6 +258,135 @@ static QByteArray getTransparentTilePNG() {
     return transparentPngData;
 }
 
+QByteArray LocalTileServer::renderNativeGdalTile(const QString &vrtPath, double west, double north, double east, double south) {
+    if (!QFile::exists(vrtPath)) return getTransparentTilePNG();
+
+    GDALDataset *ds = nullptr;
+    {
+        QMutexLocker locker(&m_mutex);
+        if (m_gdalDatasets.contains(vrtPath)) {
+            ds = static_cast<GDALDataset*>(m_gdalDatasets.value(vrtPath));
+        } else {
+            ds = static_cast<GDALDataset*>(GDALOpenShared(vrtPath.toUtf8().constData(), GA_ReadOnly));
+            if (ds) {
+                m_gdalDatasets[vrtPath] = ds;
+            }
+        }
+    }
+
+    if (!ds) return getTransparentTilePNG();
+
+    double gt[6];
+    if (ds->GetGeoTransform(gt) != CE_None) {
+        return getTransparentTilePNG();
+    }
+
+    double invGt[6];
+    if (!GDALInvGeoTransform(gt, invGt)) {
+        return getTransparentTilePNG();
+    }
+
+    int dsW = ds->GetRasterXSize();
+    int dsH = ds->GetRasterYSize();
+
+    // Dataset Geographic Bounds (WGS84 or Mercator)
+    double dsMinX = gt[0];
+    double dsMaxX = gt[0] + gt[1] * dsW;
+    double dsMaxY = gt[3];
+    double dsMinY = gt[3] + gt[5] * dsH; // gt[5] is negative
+
+    if (dsMinX > dsMaxX) std::swap(dsMinX, dsMaxX);
+    if (dsMinY > dsMaxY) std::swap(dsMinY, dsMaxY);
+
+    // Geographic Intersection of Requested Tile [west, east, south, north] and Dataset [dsMinX, dsMaxX, dsMinY, dsMaxY]
+    double interMinX = std::max(west, dsMinX);
+    double interMaxX = std::min(east, dsMaxX);
+    double interMinY = std::max(south, dsMinY);
+    double interMaxY = std::min(north, dsMaxY);
+
+    if (interMinX >= interMaxX || interMinY >= interMaxY) {
+        // Tile does not intersect dataset at all!
+        return getTransparentTilePNG();
+    }
+
+    // 1. Compute Dataset Pixel Coordinates for the Intersection Window
+    double startXDouble, startYDouble, endXDouble, endYDouble;
+    GDALApplyGeoTransform(invGt, interMinX, interMaxY, &startXDouble, &startYDouble);
+    GDALApplyGeoTransform(invGt, interMaxX, interMinY, &endXDouble, &endYDouble);
+
+    int srcX = std::clamp(static_cast<int>(std::floor(startXDouble)), 0, dsW - 1);
+    int srcY = std::clamp(static_cast<int>(std::floor(startYDouble)), 0, dsH - 1);
+    int endX = std::clamp(static_cast<int>(std::ceil(endXDouble)), 1, dsW);
+    int endY = std::clamp(static_cast<int>(std::ceil(endYDouble)), 1, dsH);
+
+    int srcW = std::max(1, endX - srcX);
+    int srcH = std::max(1, endY - srcY);
+
+    // 2. Compute Output Sub-pixel Rectangle inside the 256x256 Output Tile
+    double tileW = east - west;
+    double tileH = north - south; // positive
+
+    int dstX = std::clamp(static_cast<int>(std::floor(256.0 * (interMinX - west) / tileW)), 0, 255);
+    int dstY = std::clamp(static_cast<int>(std::floor(256.0 * (north - interMaxY) / tileH)), 0, 255);
+    int dstXEnd = std::clamp(static_cast<int>(std::ceil(256.0 * (interMaxX - west) / tileW)), dstX + 1, 256);
+    int dstYEnd = std::clamp(static_cast<int>(std::ceil(256.0 * (north - interMinY) / tileH)), dstY + 1, 256);
+
+    int dstW = dstXEnd - dstX;
+    int dstH = dstYEnd - dstY;
+
+    if (dstW <= 0 || dstH <= 0) {
+        return getTransparentTilePNG();
+    }
+
+    int bandCount = ds->GetRasterCount();
+    if (bandCount < 1) return getTransparentTilePNG();
+
+    // 3. Read dataset sub-window into temp buffer of size dstW x dstH
+    QByteArray tempBuffer(dstW * dstH * 4, 0);
+    GByte *pTemp = reinterpret_cast<GByte*>(tempBuffer.data());
+
+    int bandMap[4] = {1, 2, 3, 4};
+    int readBands = std::min(bandCount, 4);
+
+    CPLErr err = ds->RasterIO(GF_Read, srcX, srcY, srcW, srcH,
+                              pTemp, dstW, dstH, GDT_Byte,
+                              readBands, bandMap,
+                              4, dstW * 4, 1);
+
+    if (err != CE_None) {
+        return getTransparentTilePNG();
+    }
+
+    // 4. Create transparent 256x256 QImage and place tempBuffer at (dstX, dstY)
+    QImage img(256, 256, QImage::Format_RGBA8888);
+    img.fill(Qt::transparent);
+
+    for (int subY = 0; subY < dstH; ++subY) {
+        int targetY = dstY + subY;
+        if (targetY >= 256) break;
+
+        QRgb *line = reinterpret_cast<QRgb*>(img.scanLine(targetY));
+        for (int subX = 0; subX < dstW; ++subX) {
+            int targetX = dstX + subX;
+            if (targetX >= 256) break;
+
+            int idx = (subY * dstW + subX) * 4;
+            uchar r = pTemp[idx];
+            uchar g = (readBands >= 2) ? pTemp[idx + 1] : r;
+            uchar b = (readBands >= 3) ? pTemp[idx + 2] : r;
+            uchar a = (readBands >= 4) ? pTemp[idx + 3] : 255;
+
+            line[targetX] = qRgba(r, g, b, a);
+        }
+    }
+
+    QByteArray pngBytes;
+    QBuffer buf(&pngBytes);
+    buf.open(QIODevice::WriteOnly);
+    img.save(&buf, "PNG");
+    return pngBytes;
+}
+
 void LocalTileServer::incomingConnection(qintptr socketDescriptor) {
     QTcpSocket *socket = new QTcpSocket(this);
     socket->setSocketDescriptor(socketDescriptor);
@@ -169,9 +408,13 @@ void LocalTileServer::incomingConnection(qintptr socketDescriptor) {
                 int x = parts[2].toInt();
                 int y = parts[3].section('.', 0, 0).toInt();
 
-                QString mbtilesPath = m_vectorMbtilesPaths.value(layerId);
+                QString mbtilesPath;
+                {
+                    QMutexLocker locker(&m_mutex);
+                    mbtilesPath = m_vectorMbtilesPaths.value(layerId);
+                }
                 if (mbtilesPath.isEmpty()) {
-                    mbtilesPath = QString("/home/crl/aman/MAPDATA/mbtiles/%1.mbtiles").arg(layerId);
+                    mbtilesPath = QString("%1/VectorTiles/%2.mbtiles").arg(GISApp::Core::SystemConfigManager::instance().getMapDataDir()).arg(layerId);
                 }
 
                 QByteArray pbfData = getVectorTileData(mbtilesPath, z, x, y);
@@ -208,19 +451,18 @@ void LocalTileServer::incomingConnection(qintptr socketDescriptor) {
                 int x = parts[2].toInt();
                 int y = parts[3].section('.', 0, 0).toInt();
 
-                qWarning().noquote() << QString("[LocalTileServer] 🌐 Incoming HTTP XYZ Tile Request -> Layer: %1 | Zoom z: %2 | Tile x: %3 | Tile y: %4")
-                                        .arg(layerId).arg(z).arg(x).arg(y);
-
                 QString cacheKey = QString("%1_%2_%3_%4").arg(layerId).arg(z).arg(x).arg(y);
 
-                QByteArray body;
-                if (m_tileCache.contains(cacheKey)) {
-                    body = m_tileCache.value(cacheKey);
-                } else {
-                    // 1. Check static pre-tiled PNG store (/home/crl/aman/MAPDATA/{layerName}/{z}/{x}/{y}.png)
-                    QString tileDir = m_tilePaths.value(layerId);
+                QByteArray body = getTileCache(cacheKey);
+                if (body.isEmpty()) {
+                    // 1. Check static pre-tiled PNG store ($HOME/MAPDATA/{layerName}/{z}/{x}/{y}.png)
+                    QString tileDir;
+                    {
+                        QMutexLocker locker(&m_mutex);
+                        tileDir = m_tilePaths.value(layerId);
+                    }
                     if (tileDir.isEmpty()) {
-                        tileDir = QString("/home/crl/aman/MAPDATA/%1").arg(layerId);
+                        tileDir = QString("%1/%2").arg(GISApp::Core::SystemConfigManager::instance().getMapDataDir()).arg(layerId);
                     }
 
                     QString staticPngFile = QString("%1/%2/%3/%4.png").arg(tileDir).arg(z).arg(x).arg(y);
@@ -229,40 +471,36 @@ void LocalTileServer::incomingConnection(qintptr socketDescriptor) {
                         if (file.open(QIODevice::ReadOnly)) {
                             body = file.readAll();
                             file.close();
-                            m_tileCache[cacheKey] = body;
+                            putTileCache(cacheKey, body);
                         }
-                    } else if (z > 14 && (m_vrtPaths.contains(layerId) || QFile::exists(QString("/tmp/mosaic_%1.vrt").arg(layerId)))) {
-                        // Deep zoom (> 14): Dynamic crop from VRT catalog for high resolution details!
+                    } else {
+                        // 2. Native C++ GDAL In-Memory Tile Rendering
                         double west, north, east, south;
                         tileToLatLonBounds(z, x, y, west, north, east, south);
 
-                        QString vrtPath = m_vrtPaths.value(layerId);
+                        QString vrtPath;
+                        bool hasTilePath = false;
+                        {
+                            QMutexLocker locker(&m_mutex);
+                            vrtPath = m_vrtPaths.value(layerId);
+                            hasTilePath = m_tilePaths.contains(layerId);
+                        }
                         if (vrtPath.isEmpty() || !QFile::exists(vrtPath)) {
+                            vrtPath = QString("%1/%2.vrt").arg(GISApp::Core::SystemConfigManager::instance().getMapDataDir()).arg(layerId);
+                        }
+                        if (!QFile::exists(vrtPath)) {
                             vrtPath = QString("/tmp/mosaic_%1.vrt").arg(layerId);
                         }
 
                         if (QFile::exists(vrtPath)) {
-                            QString tempPng = QString("/tmp/tile_%1.png").arg(cacheKey);
-
-                            QStringList args;
-                            args << "-projwin" << QString::number(west, 'f', 6) << QString::number(north, 'f', 6)
-                                 << QString::number(east, 'f', 6) << QString::number(south, 'f', 6)
-                                 << "-outsize" << "256" << "256" << "-of" << "PNG"
-                                 << vrtPath << tempPng;
-
-                            QProcess::execute("gdal_translate", args);
-
-                            QFile pngFile(tempPng);
-                            if (pngFile.open(QIODevice::ReadOnly)) {
-                                body = pngFile.readAll();
-                                pngFile.close();
-                                m_tileCache[cacheKey] = body;
+                            body = renderNativeGdalTile(vrtPath, west, north, east, south);
+                            if (!body.isEmpty()) {
+                                putTileCache(cacheKey, body);
                             }
+                        } else if (hasTilePath || QDir(tileDir).exists()) {
+                            body = getTransparentTilePNG();
+                            putTileCache(cacheKey, body);
                         }
-                    } else if (m_tilePaths.contains(layerId) || QDir(tileDir).exists()) {
-                        // Pre-tiled store exists: missing tile means it is outside raster bounds -> Instant transparent PNG!
-                        body = getTransparentTilePNG();
-                        m_tileCache[cacheKey] = body;
                     }
                 }
 
@@ -289,7 +527,7 @@ void LocalTileServer::incomingConnection(qintptr socketDescriptor) {
             }
         }
 
-        QByteArray body = m_tileCache.value(layerId);
+        QByteArray body = getTileCache(layerId);
         QByteArray response;
 
         if (!body.isEmpty()) {
