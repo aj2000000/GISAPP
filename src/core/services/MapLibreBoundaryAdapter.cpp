@@ -98,13 +98,14 @@ void MapLibreBoundaryAdapter::ensureLayersCreated(const QByteArray &geoJsonData)
         dataToUse = R"({"type":"FeatureCollection","features":[]})";
     }
 
+    QVariantMap sourceParams;
+    sourceParams["type"] = "geojson";
+    sourceParams["data"] = dataToUse;
+
     // 1. Add / Update Source
     if (m_map->sourceExists("boundary-geojson-source")) {
-        m_map->setProperty("boundary-geojson-source", "data", QString::fromUtf8(dataToUse));
+        m_map->updateSource("boundary-geojson-source", sourceParams);
     } else {
-        QVariantMap sourceParams;
-        sourceParams["type"] = "geojson";
-        sourceParams["data"] = dataToUse;
         m_map->addSource("boundary-geojson-source", sourceParams);
     }
 
