@@ -53,7 +53,6 @@ public:
 
 private slots:
     void onClearDatabaseClicked();
-    void onImportCsvClicked();
     void onAddToLayerTreeClicked();
     void onZoomToSelectedClicked();
     void onDeleteSelectedClicked();
@@ -87,7 +86,6 @@ private:
     QPushButton *m_addToLayerTreeBtn{nullptr};
     QPushButton *m_zoomToSelectedBtn{nullptr};
     QPushButton *m_deleteSelectedBtn{nullptr};
-    QPushButton *m_importBtn{nullptr};
     QPushButton *m_clearBtn{nullptr};
     QPushButton *m_refreshBtn{nullptr};
 };

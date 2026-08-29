@@ -34,7 +34,6 @@
 #include "core/database/DatabaseManager.h"
 #include "core/repositories/TrackRepository.h"
 #include "core/services/MapLibreTrackAdapter.h"
-#include "core/services/CsvTrackIngestor.h"
 #include "ui/tracks/TracksTableDialog.h"
 #include "ui/tracks/TrackDetailDialog.h"
 #include "core/repositories/AreaOfViewRepository.h"
@@ -47,6 +46,12 @@
 #include "core/repositories/GenericEntityRepository.h"
 #include "core/services/MapLibreGenericEntityAdapter.h"
 #include "ui/entities/UniversalEntityEditorDialog.h"
+#include "core/Udp/mediatorclass.h"
+#include "core/Udp/handlers/UdpTrackMessageHandler.h"
+#include "core/services/XmlTrackIngestor.h"
+#include "core/services/CsvBoundaryIngestor.h"
+#include "core/services/MapLibreBoundaryAdapter.h"
+#include "ui/boundary/BoundaryTableDialog.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -71,6 +76,16 @@ MainWindow::MainWindow(QWidget *parent)
     m_areaOfViewRepository = new GISApp::Core::Repositories::AreaOfViewRepository(this);
     m_genericEntityRepository = new GISApp::Core::Repositories::GenericEntityRepository(this);
     
+    // Initialize UDP Subsystem & Listener Thread
+    m_udpMediator = new MediatorClass(this);
+
+
+    // Create and Register Track Message Handler (ID: 613)
+    if (m_trackRepository && m_udpMediator->dispatcher()) {
+        auto trackHandler = std::make_shared<GISApp::Core::Udp::Handlers::UdpTrackMessageHandler>(m_trackRepository);
+        m_udpMediator->dispatcher()->registerHandler(trackHandler);
+    }
+
     // 1. Initialize Layout and Overlay Components
     setupMapView();
     setupToolBar();
@@ -208,6 +223,14 @@ void MainWindow::setupMapView()
                         m_genericEntityAdapter->setMap(m_mapWidget->map());
                         m_genericEntityAdapter->setLayerManager(m_layerManager);
                     }
+
+                    if (!m_boundaryAdapter) {
+                        m_boundaryAdapter = new GISApp::Core::Services::MapLibreBoundaryAdapter(m_mapWidget->map(), this);
+                    } else {
+                        m_boundaryAdapter->setMap(m_mapWidget->map());
+                    }
+                    m_userBoundaries = m_boundaryAdapter->loadSavedBoundaries();
+                    m_boundaryAdapter->setBoundaries(m_userBoundaries);
 
                     GISApp::Layers::TacticalLayerProvider p;
                     p.setupTacticalLayers(m_mapWidget->map());
@@ -399,12 +422,16 @@ void MainWindow::setupThemeMenu()
     connect(viewTracksAction, &QAction::triggered, this, &MainWindow::onViewTracksTriggered);
     QAction *viewAoVAction = entitiesMenu->addAction(tr("👁️ Area of View..."));
     connect(viewAoVAction, &QAction::triggered, this, &MainWindow::onViewAreaOfViewTriggered);
+    QAction *viewBoundaryAction = entitiesMenu->addAction(tr("🇮🇳 National Boundary..."));
+    connect(viewBoundaryAction, &QAction::triggered, this, &MainWindow::onViewBoundaryTriggered);
 
     QMenu *uploadMenu = menuBar()->addMenu(tr("&UPLOAD"));
-    QAction *uploadTracksAction = uploadMenu->addAction(tr("📥 Tracks (CSV)..."));
+    QAction *uploadTracksAction = uploadMenu->addAction(tr("📥 Tracks (XML)..."));
     connect(uploadTracksAction, &QAction::triggered, this, &MainWindow::onUploadTracksTriggered);
     QAction *uploadAoVAction = uploadMenu->addAction(tr("📥 Area of View (XML)..."));
     connect(uploadAoVAction, &QAction::triggered, this, &MainWindow::onUploadAreaOfViewTriggered);
+    QAction *uploadBoundaryAction = uploadMenu->addAction(tr("📥 National Boundary (CSV)..."));
+    connect(uploadBoundaryAction, &QAction::triggered, this, &MainWindow::onUploadBoundaryTriggered);
 
     QMenu *downloadMenu = menuBar()->addMenu(tr("&DOWNLOAD"));
     QAction *downloadSatAction = downloadMenu->addAction(tr("🌐 Download Google Sat Imagery..."));
@@ -475,26 +502,21 @@ void MainWindow::onUploadTracksTriggered()
 {
     QString filePath = QFileDialog::getOpenFileName(
         this,
-        tr("Select Tracks CSV File"),
+        tr("Select Tracks XML File"),
         QDir::homePath(),
-        tr("CSV Files (*.csv);;All Files (*)")
-    );
-
+        tr("XML Files (*.xml);;All Files (*)")
+        );
     if (filePath.isEmpty()) return;
-
     if (!m_trackRepository) {
         qWarning() << "[MainWindow] Track repository is null.";
         return;
     }
-
-    GISApp::Core::Services::CsvTrackIngestor ingestor;
+    GISApp::Core::Services::XmlTrackIngestor ingestor;
     int imported = ingestor.ingest(filePath, *m_trackRepository);
-
     if (imported >= 0) {
         if (m_layerManager && !m_layerManager->findLayerByLayerId("tracks-circle-layer")) {
             auto tacticalGroup = m_layerManager->findGroupByName("Tactical Operations");
             if (!tacticalGroup) tacticalGroup = m_layerManager->addGroup("🛡️ Tactical Operations");
-
             GISApp::Layers::LayerExtent indiaExtent{
                 GISApp::Core::Models::GeoCoordinate(8.4, 68.7),
                 GISApp::Core::Models::GeoCoordinate(37.6, 97.25)
@@ -503,19 +525,17 @@ void MainWindow::onUploadTracksTriggered()
                 "tracks-circle-layer", m_mapWidget ? m_mapWidget->map() : nullptr, indiaExtent);
             m_layerManager->addLayer("🎯 Tactical Tracks", tracksAdapterNode, tacticalGroup);
         }
-
         if (m_trackAdapter) {
             m_trackAdapter->refreshFromRepository();
         }
-
         GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
-            "Bulk Ingestion Complete",
-            QString("Successfully ingested %1 tracks into SQLite database & registered in Layer Tree.").arg(imported),
+            "XML Ingestion Complete",
+            QString("Successfully imported %1 dynamic tracks from XML into SQLite database.").arg(imported),
             5000,
             this
-        );
+            );
     } else {
-        QMessageBox::critical(this, tr("Import Error"), tr("Failed to parse and import CSV file."));
+        QMessageBox::critical(this, tr("Import Error"), tr("Failed to parse and import Tracks XML file."));
     }
 }
 
@@ -601,6 +621,80 @@ void MainWindow::onViewAreaOfViewTriggered()
     );
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->show();
+}
+
+void MainWindow::onUploadBoundaryTriggered()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Select National Boundary CSV File"),
+        QDir::homePath(),
+        tr("CSV Files (*.csv);;All Files (*)")
+    );
+
+    if (filePath.isEmpty()) return;
+
+    GISApp::Core::Services::CsvBoundaryIngestor ingestor;
+    auto boundaries = ingestor.ingestCsv(filePath);
+
+    if (!boundaries.isEmpty()) {
+        m_userBoundaries = boundaries;
+        if (!m_boundaryAdapter && m_mapWidget && m_mapWidget->map()) {
+            m_boundaryAdapter = new GISApp::Core::Services::MapLibreBoundaryAdapter(m_mapWidget->map(), this);
+        }
+        if (m_boundaryAdapter) {
+            m_boundaryAdapter->setBoundaries(m_userBoundaries);
+        }
+        if (m_boundaryDialog) {
+            m_boundaryDialog->setBoundaries(m_userBoundaries);
+        }
+
+        if (m_mapController && !boundaries.first().points.isEmpty()) {
+            double minLat = 90.0, maxLat = -90.0;
+            double minLon = 180.0, maxLon = -180.0;
+            for (const auto &pt : boundaries.first().points) {
+                if (pt.latitude < minLat) minLat = pt.latitude;
+                if (pt.latitude > maxLat) maxLat = pt.latitude;
+                if (pt.longitude < minLon) minLon = pt.longitude;
+                if (pt.longitude > maxLon) maxLon = pt.longitude;
+            }
+            double centerLat = (minLat + maxLat) / 2.0;
+            double centerLon = (minLon + maxLon) / 2.0;
+            m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(centerLat, centerLon), 6.5);
+        }
+
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Boundary CSV Ingested",
+            QString("Successfully loaded %1 boundary line features with Green/Saffron dual stroke.").arg(boundaries.size()),
+            5000,
+            this
+        );
+    } else {
+        QMessageBox::critical(this, tr("Import Error"), tr("Failed to parse and import Boundary CSV file."));
+    }
+}
+
+void MainWindow::onViewBoundaryTriggered()
+{
+    if (!m_boundaryDialog) {
+        m_boundaryDialog = new GISApp::UI::Boundary::BoundaryTableDialog(
+            m_userBoundaries,
+            m_mapController,
+            m_boundaryAdapter,
+            this
+        );
+        m_boundaryDialog->setAttribute(Qt::WA_DeleteOnClose);
+        connect(m_boundaryDialog, &QDialog::destroyed, [this]() { m_boundaryDialog = nullptr; });
+        connect(m_boundaryDialog, &GISApp::UI::Boundary::BoundaryTableDialog::boundaryCleared, [this]() {
+            m_userBoundaries.clear();
+        });
+        m_boundaryDialog->show();
+    } else {
+        m_boundaryDialog->setBoundaries(m_userBoundaries);
+        m_boundaryDialog->show();
+        m_boundaryDialog->raise();
+        m_boundaryDialog->activateWindow();
+    }
 }
 
 void MainWindow::focusOnAreaOfView()

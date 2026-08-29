@@ -1,10 +1,10 @@
 /**
  * @file TrackDetailDialog.cpp
  * @brief Implementation of tactical track detail and technical telemetry dialog.
- * @date 2026
  */
 
 #include "TrackDetailDialog.h"
+#include "fieldkeyvaluemapper.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -22,8 +22,8 @@ TrackDetailDialog::TrackDetailDialog(const GISApp::Core::Models::TrackRecord &tr
     setWindowTitle(QString("Track Details — #%1 (%2)")
                        .arg(m_track.trackId)
                        .arg(m_track.trackName.isEmpty() ? "Unnamed Target" : m_track.trackName));
-    setMinimumWidth(450);
-    resize(480, 520);
+    setMinimumWidth(500);
+    resize(520, 640);
     setupStyle();
     setupUi();
 }
@@ -46,7 +46,7 @@ void TrackDetailDialog::setupStyle()
 void TrackDetailDialog::setupUi()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(12);
+    mainLayout->setSpacing(10);
     mainLayout->setContentsMargins(16, 16, 16, 16);
 
     // Header Card
@@ -54,7 +54,7 @@ void TrackDetailDialog::setupUi()
     headerFrame->setStyleSheet("QFrame { background-color: #1E293B; border-radius: 8px; border: 1px solid #334155; padding: 10px; }");
     QHBoxLayout *headerLayout = new QHBoxLayout(headerFrame);
 
-    QLabel *iconLabel = new QLabel("✈️", this);
+    QLabel *iconLabel = new QLabel("🎯", this);
     iconLabel->setStyleSheet("font-size: 28px; padding-right: 8px;");
     headerLayout->addWidget(iconLabel);
 
@@ -63,18 +63,13 @@ void TrackDetailDialog::setupUi()
     QLabel *titleLabel = new QLabel(name, this);
     titleLabel->setStyleSheet("font-size: 16px; font-weight: bold; color: #F8FAFC;");
 
-    QString identityStr;
-    switch (m_track.trackIdentity) {
-        case 1: identityStr = "Friendly"; break;
-        case 2: identityStr = "Hostile"; break;
-        case 3: identityStr = "Neutral"; break;
-        default: identityStr = "Pending / Unknown"; break;
-    }
+    QString identityStr = FieldKeyValueMapper::instance().trackIdentityMapping(m_track.trackIdentity);
+    QString systemTypeStr = FieldKeyValueMapper::instance().systemTrackTypeMapping(m_track.trackSystemType);
 
-    QLabel *subTitleLabel = new QLabel(QString("ID: %1 | Identity: %2 | Type Code: %3")
+    QLabel *subTitleLabel = new QLabel(QString("Track ID: %1 | Identity: %2 | System Type: %3")
                                            .arg(m_track.trackId)
                                            .arg(identityStr)
-                                           .arg(m_track.trackType), this);
+                                           .arg(systemTypeStr), this);
     subTitleLabel->setStyleSheet("font-size: 11px; color: #38BDF8;");
 
     headerTextLayout->addWidget(titleLabel);
@@ -84,12 +79,10 @@ void TrackDetailDialog::setupUi()
 
     mainLayout->addWidget(headerFrame);
 
-    // Group 1: Geographic Position
-    QGroupBox *geoGroup = new QGroupBox("Geographic Positioning", this);
+    // Group 1: Geographic Position & Kinematics
+    QGroupBox *geoGroup = new QGroupBox("Geographic Position & Kinematics", this);
     QFormLayout *geoLayout = new QFormLayout(geoGroup);
-    geoLayout->setLabelAlignment(Qt::AlignLeft);
-    geoLayout->setFormAlignment(Qt::AlignLeft);
-    geoLayout->setSpacing(8);
+    geoLayout->setSpacing(6);
 
     auto formatDms = [](double val, bool isLat) {
         char dir = isLat ? (val >= 0 ? 'N' : 'S') : (val >= 0 ? 'E' : 'W');
@@ -101,43 +94,44 @@ void TrackDetailDialog::setupUi()
         return QString("%1° %2' %3\" %4").arg(deg).arg(min, 2, 10, QChar('0')).arg(sec, 5, 'f', 2, QChar('0')).arg(dir);
     };
 
-    auto addRow = [geoLayout](const QString &label, const QString &valStr) {
+    auto addRow = [](QFormLayout *layout, const QString &label, const QString &valStr) {
         QLabel *lbl = new QLabel(label);
         QLabel *val = new QLabel(valStr);
         val->setObjectName("ValLabel");
-        geoLayout->addRow(lbl, val);
+        layout->addRow(lbl, val);
     };
 
-    addRow("Latitude:", QString("%1°  (%2)").arg(m_track.trackLat, 0, 'f', 6).arg(formatDms(m_track.trackLat, true)));
-    addRow("Longitude:", QString("%1°  (%2)").arg(m_track.trackLong, 0, 'f', 6).arg(formatDms(m_track.trackLong, false)));
+    addRow(geoLayout, "Latitude:", QString("%1° (%2)").arg(m_track.trackLat, 0, 'f', 6).arg(formatDms(m_track.trackLat, true)));
+    addRow(geoLayout, "Longitude:", QString("%1° (%2)").arg(m_track.trackLong, 0, 'f', 6).arg(formatDms(m_track.trackLong, false)));
+    addRow(geoLayout, "Altitude / Height:", QString("%1 m (%2 ft)").arg(m_track.trackHeight, 0, 'f', 1).arg(m_track.trackHeight * 3.28084, 0, 'f', 0));
+    addRow(geoLayout, "Heading / Bearing:", QString("%1°").arg(m_track.trackDir, 0, 'f', 1));
 
     mainLayout->addWidget(geoGroup);
 
-    // Group 2: Technical Telemetry & Kinematics
-    QGroupBox *telemGroup = new QGroupBox("Technical Telemetry & Dynamics", this);
-    QFormLayout *telemLayout = new QFormLayout(telemGroup);
-    telemLayout->setSpacing(8);
+    // Group 2: Tactical Attributes & Classification
+    QGroupBox *attrGroup = new QGroupBox("Tactical Attributes & Classification", this);
+    QFormLayout *attrLayout = new QFormLayout(attrGroup);
+    attrLayout->setSpacing(6);
 
-    auto addTelemRow = [telemLayout](const QString &label, const QString &valStr) {
-        QLabel *lbl = new QLabel(label);
-        QLabel *val = new QLabel(valStr);
-        val->setObjectName("ValLabel");
-        telemLayout->addRow(lbl, val);
-    };
+    addRow(attrLayout, "Type / SubType:", QString("Type: %1 | SubType: %2").arg(m_track.trackType).arg(m_track.trackSubType));
+    addRow(attrLayout, "Class / Strength:", QString("Class: %1 | Force Count: %2").arg(m_track.trackClass).arg(m_track.trackStrength));
+    addRow(attrLayout, "Activity Type / SubType:", QString("ActType: %1 | SubType: %2").arg(m_track.trackActType).arg(m_track.trackActSubType));
+    addRow(attrLayout, "Activity Classification:", QString::number(m_track.trackActClass));
+    addRow(attrLayout, "Sensor / System Type:", FieldKeyValueMapper::instance().systemTrackTypeMapping(m_track.trackSystemType));
 
-    addTelemRow("Altitude / Height:", QString("%1 m (%2 ft)").arg(m_track.trackHeight, 0, 'f', 1).arg(m_track.trackHeight * 3.28084, 0, 'f', 0));
-    addTelemRow("Bearing / Direction:", QString("%1°").arg(m_track.trackDir, 0, 'f', 1));
-    addTelemRow("Plot Type:", QString::number(m_track.trackPlotType));
-    addTelemRow("Internal No:", QString::number(m_track.intNo));
+    mainLayout->addWidget(attrGroup);
 
-    if (!m_track.trackSources.isEmpty()) {
-        addTelemRow("Sources:", m_track.trackSources);
-    }
-    if (!m_track.trackRemarks.isEmpty()) {
-        addTelemRow("Remarks:", m_track.trackRemarks);
-    }
+    // Group 3: Sources & Remarks
+    QGroupBox *metaGroup = new QGroupBox("Telemetry Metadata", this);
+    QFormLayout *metaLayout = new QFormLayout(metaGroup);
+    metaLayout->setSpacing(6);
 
-    mainLayout->addWidget(telemGroup);
+    addRow(metaLayout, "Report Date & Time:", m_track.trackReportTime.isEmpty() ? "N/A" : m_track.trackReportTime);
+    addRow(metaLayout, "Data Sources:", m_track.trackSources.isEmpty() ? "N/A" : m_track.trackSources);
+    addRow(metaLayout, "Symbol Icon Key:", m_track.trackImage.isEmpty() ? "Default" : m_track.trackImage);
+    addRow(metaLayout, "Remarks:", m_track.trackRemarks.isEmpty() ? "None" : m_track.trackRemarks);
+
+    mainLayout->addWidget(metaGroup);
     mainLayout->addStretch();
 
     // Dialog Button Bar

@@ -1,8 +1,6 @@
 /**
  * @file SystemConfigManager.cpp
  * @brief Implementation of SystemConfigManager for loading system settings.
- * @author GIS System Architecture Team
- * @date 2026
  */
 
 #include "core/SystemConfigManager.h"
@@ -65,6 +63,10 @@ bool SystemConfigManager::loadConfig(const QString &configFilePath) {
         qWarning() << "[SystemConfig] Config file not found at" << m_configFilePath << ". Using defaults.";
         m_mapDataDir = QString("%1/MAPDATA").arg(QDir::homePath());
         m_vectorTilesDir = QString("%1/MAPDATA/VectorTiles").arg(QDir::homePath());
+        m_databasePath = QString("%1/MAPDATA/gis_app_database.sqlite").arg(QDir::homePath());
+        m_udpListenPort = 8540;
+        m_udpSendPort = 8541;
+        m_aesSecretKey = "BrahmaxisGIS2026TacticalAesKey256";
         m_tileServerHost = "127.0.0.1";
         m_tileServerPort = 8088;
         m_defaultMinZoom = 0;
@@ -86,6 +88,10 @@ bool SystemConfigManager::loadConfig(const QString &configFilePath) {
     QJsonObject obj = doc.object();
     m_mapDataDir = resolvePath(obj.value("mapDataDir").toString("$HOME/MAPDATA"));
     m_vectorTilesDir = resolvePath(obj.value("vectorTilesDir").toString("$HOME/MAPDATA/VectorTiles"));
+    m_databasePath = resolvePath(obj.value("databasePath").toString("$HOME/MAPDATA/gis_app_database.sqlite"));
+    m_udpListenPort = obj.value("udpListenPort").toInt(8540);
+    m_udpSendPort = obj.value("udpSendPort").toInt(8541);
+    m_aesSecretKey = obj.value("aesSecretKey").toString("BrahmaxisGIS2026TacticalAesKey256");
     m_tileServerHost = obj.value("tileServerHost").toString("127.0.0.1");
     m_tileServerPort = obj.value("tileServerPort").toInt(8088);
     m_defaultMinZoom = obj.value("defaultMinZoom").toInt(0);
@@ -97,7 +103,10 @@ bool SystemConfigManager::loadConfig(const QString &configFilePath) {
     QDir().mkpath(m_mapDataDir);
     QDir().mkpath(m_vectorTilesDir);
 
-    qWarning() << "[SystemConfig] Successfully loaded configuration. MapDataDir:" << m_mapDataDir;
+    qDebug() << "[SystemConfig] Loaded configuration successfully."
+             << "UDP Recv Port:" << m_udpListenPort 
+             << "| UDP Send Port:" << m_udpSendPort 
+             << "| Database:" << m_databasePath;
     return true;
 }
 
@@ -105,6 +114,10 @@ bool SystemConfigManager::saveConfig() {
     QJsonObject obj;
     obj["mapDataDir"] = "$HOME/MAPDATA";
     obj["vectorTilesDir"] = "$HOME/MAPDATA/VectorTiles";
+    obj["databasePath"] = "$HOME/MAPDATA/gis_app_database.sqlite";
+    obj["udpListenPort"] = m_udpListenPort;
+    obj["udpSendPort"] = m_udpSendPort;
+    obj["aesSecretKey"] = m_aesSecretKey;
     obj["tileServerHost"] = m_tileServerHost;
     obj["tileServerPort"] = m_tileServerPort;
     obj["defaultMinZoom"] = m_defaultMinZoom;
@@ -125,6 +138,10 @@ bool SystemConfigManager::saveConfig() {
 
 QString SystemConfigManager::getMapDataDir() const { return m_mapDataDir; }
 QString SystemConfigManager::getVectorTilesDir() const { return m_vectorTilesDir; }
+QString SystemConfigManager::getDatabasePath() const { return m_databasePath; }
+int SystemConfigManager::getUdpListenPort() const { return m_udpListenPort; }
+int SystemConfigManager::getUdpSendPort() const { return m_udpSendPort; }
+QString SystemConfigManager::getAesSecretKey() const { return m_aesSecretKey; }
 QString SystemConfigManager::getTileServerHost() const { return m_tileServerHost; }
 int SystemConfigManager::getTileServerPort() const { return m_tileServerPort; }
 int SystemConfigManager::getDefaultMinZoom() const { return m_defaultMinZoom; }

@@ -71,15 +71,19 @@ void MapLibreTrackAdapter::ensureLayersCreated()
         layerParams["type"] = "circle";
         layerParams["source"] = "tracks-geojson-source";
 
+        QVariantList getColorExpr;
+        getColorExpr << "get" << "color";
+
         QVariantMap paintMap;
-        paintMap["circle-color"] = "rgba(0, 255, 255, 0.95)";
+        paintMap["circle-color"] = getColorExpr;
         paintMap["circle-radius"] = 9.0;
-        paintMap["circle-stroke-color"] = "#ffffff";
+        paintMap["circle-stroke-color"] = "#FFFFFF";
         paintMap["circle-stroke-width"] = 2.5;
         layerParams["paint"] = paintMap;
 
         m_map->addLayer("tracks-circle-layer", layerParams);
     }
+
 
     m_layersCreated = true;
 }
@@ -152,14 +156,27 @@ void MapLibreTrackAdapter::refreshFromRepository()
     }
 
     if (m_map) {
-        m_layersCreated = false;
+        QVariantMap geojsonVariant = featureCollection.toVariantMap();
+
         if (m_map->layerExists("tracks-circle-layer")) {
             m_map->removeLayer("tracks-circle-layer");
         }
         if (m_map->sourceExists("tracks-geojson-source")) {
             m_map->removeSource("tracks-geojson-source");
         }
+
+        QVariantMap sourceParams;
+        sourceParams["type"] = "geojson";
+        sourceParams["data"] = rawGeoJson.toUtf8();
+        m_map->addSource("tracks-geojson-source", sourceParams);
+
         ensureLayersCreated();
+
+        // Force MapLibre to stack tracks-circle-layer at top of Z-order above raster/basemap layers
+        if (m_layerManager) {
+            m_layerManager->syncRenderOrder();
+        }
+
         m_map->triggerRepaint();
         qDebug() << "[MapLibreTrackAdapter] Real-time updated MapLibre GeoJSON layer with" << tracks.size() << "tracks.";
     }

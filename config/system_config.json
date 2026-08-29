@@ -1,6 +1,10 @@
 {
     "mapDataDir": "$HOME/MAPDATA",
     "vectorTilesDir": "$HOME/MAPDATA/VectorTiles",
+    "databasePath": "$HOME/MAPDATA/gis_app_database.sqlite",
+    "udpListenPort": 8540,
+    "udpSendPort": 8541,
+    "aesSecretKey": "BrahmaxisGIS2026TacticalAesKey256",
     "tileServerHost": "127.0.0.1",
     "tileServerPort": 8088,
     "defaultMinZoom": 0,

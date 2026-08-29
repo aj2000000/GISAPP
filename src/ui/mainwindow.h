@@ -15,6 +15,7 @@
 #include "controllers/ToolManager.h"
 #include "tools/MeasureTool.h"
 #include "core/models/GeoCoordinate.h"
+#include "core/models/BoundaryRecord.h"
 
 // Tactical UI Widgets & Theme Engine
 #include "ui/ThemeManager.h"
@@ -54,11 +55,15 @@ namespace GISApp::Core::Services {
     class MapLibreTrackAdapter;
     class MapLibreAreaOfViewAdapter;
     class MapLibreGenericEntityAdapter;
+    class MapLibreBoundaryAdapter;
 }
 namespace GISApp::UI::Tracks {
     class TracksTableDialog;
 }
-
+namespace GISApp::UI::Boundary {
+    class BoundaryTableDialog;
+}
+class MediatorClass;
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
@@ -79,6 +84,8 @@ private slots:
     void onViewTracksTriggered();
     void onUploadAreaOfViewTriggered();
     void onViewAreaOfViewTriggered();
+    void onUploadBoundaryTriggered();
+    void onViewBoundaryTriggered();
     void onMapContextMenuRequested(const QPoint &globalPos, const QPoint &localPos, const GISApp::Core::Models::GeoCoordinate &coordinate);
 
 private:
@@ -124,6 +131,12 @@ private:
     GISApp::Core::Services::MapLibreAreaOfViewAdapter *m_areaOfViewAdapter{nullptr};
     GISApp::Core::Repositories::GenericEntityRepository *m_genericEntityRepository{nullptr};
     GISApp::Core::Services::MapLibreGenericEntityAdapter *m_genericEntityAdapter{nullptr};
+    GISApp::Core::Services::MapLibreBoundaryAdapter *m_boundaryAdapter{nullptr};
+    GISApp::UI::Boundary::BoundaryTableDialog *m_boundaryDialog{nullptr};
+    QVector<GISApp::Core::Models::BoundaryRecord> m_userBoundaries;
+
+
+    MediatorClass *m_udpMediator{nullptr};
 };
 
 #endif // MAINWINDOW_H

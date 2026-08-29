@@ -161,17 +161,22 @@ void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
             sourceParams["data"] = QString("file://%1").arg(geojsonPath);
             m_map->addSource("tracks-geojson-source", sourceParams);
         }
-
         if (m_layerParams.isEmpty()) {
             m_layerParams["id"] = "tracks-circle-layer";
             m_layerParams["type"] = "circle";
             m_layerParams["source"] = "tracks-geojson-source";
+            
+            QVariantList getColorExpr;
+            getColorExpr << "get" << "color";
+
             QVariantMap paintMap;
-            paintMap["circle-color"] = "rgba(0, 230, 255, 0.85)";
-            paintMap["circle-radius"] = 7.0;
-            paintMap["circle-stroke-color"] = "#ffffff";
-            paintMap["circle-stroke-width"] = 2.0;
+            paintMap["circle-color"] = getColorExpr;
+            paintMap["circle-radius"] = 9.0;
+            paintMap["circle-stroke-color"] = "#FFFFFF";
+            paintMap["circle-stroke-width"] = 2.5;
             m_layerParams["paint"] = paintMap;
+
+
         }
     }
 
@@ -280,7 +285,5 @@ void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
         }
     }
 }
-
-
 
 } // namespace GISApp::Layers

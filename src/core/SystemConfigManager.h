@@ -1,8 +1,6 @@
 /**
  * @file SystemConfigManager.h
  * @brief Singleton manager for loading, saving, and expanding system configuration settings.
- * @author GIS System Architecture Team
- * @date 2026
  */
 
 #ifndef SYSTEMCONFIGMANAGER_H
@@ -24,6 +22,10 @@ public:
 
     QString getMapDataDir() const;
     QString getVectorTilesDir() const;
+    QString getDatabasePath() const;
+    int getUdpListenPort() const;
+    int getUdpSendPort() const;
+    QString getAesSecretKey() const;
     QString getTileServerHost() const;
     int getTileServerPort() const;
     int getDefaultMinZoom() const;
@@ -43,6 +45,10 @@ private:
     QString m_configFilePath;
     QString m_mapDataDir;
     QString m_vectorTilesDir;
+    QString m_databasePath;
+    int m_udpListenPort{8540};
+    int m_udpSendPort{8541};
+    QString m_aesSecretKey;
     QString m_tileServerHost;
     int m_tileServerPort{8088};
     int m_defaultMinZoom{0};

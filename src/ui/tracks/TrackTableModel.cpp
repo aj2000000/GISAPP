@@ -1,4 +1,5 @@
 #include "TrackTableModel.h"
+#include "fieldkeyvaluemapper.h"
 
 namespace GISApp::UI::Tracks {
 
@@ -6,10 +7,10 @@ TrackTableModel::TrackTableModel(Core::Repositories::ITrackRepository *repositor
     : QAbstractTableModel(parent), m_repository(repository)
 {
     m_headers = {
-        "ID", "Name", "Plot Type", "Int No", "Latitude", "Longitude", "Height", "Heading (°)",
+        "ID", "Name", "Latitude", "Longitude", "Height", "Heading (°)",
         "Identity", "Type", "Sub-Type", "Class", "Strength",
         "Act Type", "Act Sub-Type", "Act Class", "System Type",
-        "Sources", "Image", "Remarks"
+        "Sources", "Image", "Remarks", "Report Time"
     };
 
     if (m_repository) {
@@ -54,30 +55,29 @@ QVariant TrackTableModel::data(const QModelIndex &index, int role) const
         switch (index.column()) {
             case 0: return track.trackId;
             case 1: return track.trackName;
-            case 2: return track.trackPlotType;
-            case 3: return track.intNo;
-            case 4: return QString::number(track.trackLat, 'f', 6);
-            case 5: return QString::number(track.trackLong, 'f', 6);
-            case 6: return track.trackHeight;
-            case 7: return QString::number(track.trackDir, 'f', 1);
-            case 8: return track.trackIdentity;
-            case 9: return track.trackType;
-            case 10: return track.trackSubType;
-            case 11: return track.trackClass;
-            case 12: return track.trackStrength;
-            case 13: return track.trackActType;
-            case 14: return track.trackActSubType;
-            case 15: return track.trackActClass;
-            case 16: return track.trackSystemType;
-            case 17: return track.trackSources;
-            case 18: return track.trackImage;
-            case 19: return track.trackRemarks;
+            case 2: return QString::number(track.trackLat, 'f', 6);
+            case 3: return QString::number(track.trackLong, 'f', 6);
+            case 4: return track.trackHeight;
+            case 5: return QString::number(track.trackDir, 'f', 1);
+            case 6: return FieldKeyValueMapper::instance().trackIdentityMapping(track.trackIdentity);
+            case 7: return track.trackType;
+            case 8: return track.trackSubType;
+            case 9: return track.trackClass;
+            case 10: return track.trackStrength;
+            case 11: return track.trackActType;
+            case 12: return track.trackActSubType;
+            case 13: return track.trackActClass;
+            case 14: return FieldKeyValueMapper::instance().systemTrackTypeMapping(track.trackSystemType);
+            case 15: return track.trackSources;
+            case 16: return track.trackImage;
+            case 17: return track.trackRemarks;
+            case 18: return track.trackReportTime;
             default: return QVariant();
         }
     }
 
     if (role == Qt::TextAlignmentRole) {
-        if (index.column() == 1 || index.column() == 17 || index.column() == 18 || index.column() == 19) {
+        if (index.column() == 1 || index.column() >= 15) {
             return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
         }
         return static_cast<int>(Qt::AlignCenter);
@@ -105,4 +105,3 @@ Core::Models::TrackRecord TrackTableModel::getTrackAt(int row) const
 }
 
 } // namespace GISApp::UI::Tracks
-

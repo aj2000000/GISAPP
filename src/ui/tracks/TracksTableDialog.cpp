@@ -1,10 +1,11 @@
 #include "TracksTableDialog.h"
-#include "../../core/services/CsvTrackIngestor.h"
 #include "../../core/services/MapLibreTrackAdapter.h"
 #include "../../core/notifications/NotificationManager.h"
 #include "../../layers/LayerManager.h"
 #include "../../layers/MapLibreLayerAdapter.h"
 #include "../../controllers/MapController.h"
+#include "../../core/services/XmlTrackIngestor.h"
+
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -115,7 +116,6 @@ void TracksTableDialog::setupUi()
     // 4. Bottom Action Bar
     QHBoxLayout *actionLayout = new QHBoxLayout();
 
-    m_importBtn = new QPushButton("📥 Upload CSV...", this);
     m_addToLayerTreeBtn = new QPushButton("➕ Add to Layer Tree", this);
     m_zoomToSelectedBtn = new QPushButton("🎯 Zoom to Selected", this);
     m_deleteSelectedBtn = new QPushButton("🗑️ Delete Selected", this);
@@ -123,7 +123,6 @@ void TracksTableDialog::setupUi()
     m_refreshBtn = new QPushButton("🔄 Refresh", this);
     QPushButton *closeBtn = new QPushButton("Close", this);
 
-    connect(m_importBtn, &QPushButton::clicked, this, &TracksTableDialog::onImportCsvClicked);
     connect(m_addToLayerTreeBtn, &QPushButton::clicked, this, &TracksTableDialog::onAddToLayerTreeClicked);
     connect(m_zoomToSelectedBtn, &QPushButton::clicked, this, &TracksTableDialog::onZoomToSelectedClicked);
     connect(m_deleteSelectedBtn, &QPushButton::clicked, this, &TracksTableDialog::onDeleteSelectedClicked);
@@ -131,7 +130,7 @@ void TracksTableDialog::setupUi()
     connect(m_refreshBtn, &QPushButton::clicked, this, &TracksTableDialog::onRefreshClicked);
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
 
-    actionLayout->addWidget(m_importBtn);
+
     actionLayout->addWidget(m_addToLayerTreeBtn);
     actionLayout->addWidget(m_zoomToSelectedBtn);
     actionLayout->addWidget(m_deleteSelectedBtn);
@@ -491,43 +490,7 @@ void TracksTableDialog::onRefreshClicked()
     updateCountAndLayerStatus();
 }
 
-void TracksTableDialog::onImportCsvClicked()
-{
-    QString filePath = QFileDialog::getOpenFileName(
-        this,
-        tr("Select Tracks CSV File"),
-        QDir::homePath(),
-        tr("CSV Files (*.csv);;All Files (*)")
-    );
 
-    if (filePath.isEmpty()) return;
-
-    Core::Services::CsvTrackIngestor ingestor;
-    int imported = ingestor.ingest(filePath, *m_repository);
-
-    if (imported >= 0) {
-        // Automatically ensure layer is in layer tree when tracks are uploaded
-        ensureTracksLayerInTree();
-
-        if (m_tableModel) {
-            m_tableModel->reloadData();
-        }
-
-        if (m_trackAdapter) {
-            m_trackAdapter->refreshFromRepository();
-        }
-
-        Core::Notifications::NotificationManager::instance()->notifyFlash(
-            "Bulk Ingestion Complete",
-            QString("Successfully ingested %1 tracks into SQLite database.").arg(imported),
-            5000,
-            this
-        );
-        updateCountAndLayerStatus();
-    } else {
-        QMessageBox::critical(this, tr("Import Error"), tr("Failed to parse and import CSV file."));
-    }
-}
 
 void TracksTableDialog::onClearDatabaseClicked()
 {

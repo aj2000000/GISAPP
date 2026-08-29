@@ -4,10 +4,11 @@
         <Name>Northern Surveillance Sector Alpha</Name>
         <NPoints>4</NPoints>
         <Points>
-            <Point><Latitude>28.7651</Latitude><Longitude>76.9421</Longitude><Height>100.0</Height></Point>
-            <Point><Latitude>28.7430</Latitude><Longitude>77.5771</Longitude><Height>120.0</Height></Point>
-                        <Point><Latitude>28.4101</Latitude><Longitude>77.5213</Longitude><Height>90.0</Height></Point>
-            <Point><Latitude>28.3796</Latitude><Longitude>76.9642</Longitude><Height>110.0</Height></Point>
+            <Point><Latitude>32.9288</Latitude><Longitude>73.1444</Longitude><Height>100.0</Height></Point>
+            <Point><Latitude>32.9153</Latitude><Longitude>75.3349</Longitude><Height>120.0</Height></Point>
+            <Point><Latitude>32.2832</Latitude><Longitude>75.3349</Longitude><Height>110.0</Height></Point>
+            <Point><Latitude>32.1389</Latitude><Longitude>73.0625</Longitude><Height>90.0</Height></Point>
+
 
         </Points>
     </Polygon>

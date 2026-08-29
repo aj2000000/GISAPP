@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'TracksTableDialog.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.2)
+** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -19,7 +19,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'TracksTableDialog.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.10.2. It"
+#error "This file was generated using the moc from 6.10.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -42,7 +42,6 @@ template <> constexpr inline auto GISApp::UI::Tracks::TracksTableDialog::qt_crea
         "GISApp::UI::Tracks::TracksTableDialog",
         "onClearDatabaseClicked",
         "",
-        "onImportCsvClicked",
         "onAddToLayerTreeClicked",
         "onZoomToSelectedClicked",
         "onDeleteSelectedClicked",
@@ -58,26 +57,24 @@ template <> constexpr inline auto GISApp::UI::Tracks::TracksTableDialog::qt_crea
     QtMocHelpers::UintData qt_methods {
         // Slot 'onClearDatabaseClicked'
         QtMocHelpers::SlotData<void()>(1, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'onImportCsvClicked'
-        QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onAddToLayerTreeClicked'
-        QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onZoomToSelectedClicked'
-        QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onDeleteSelectedClicked'
-        QtMocHelpers::SlotData<void()>(6, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onRefreshClicked'
-        QtMocHelpers::SlotData<void()>(7, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(6, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onSearchTextChanged'
-        QtMocHelpers::SlotData<void(const QString &)>(8, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QString, 9 },
+        QtMocHelpers::SlotData<void(const QString &)>(7, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 8 },
         }}),
         // Slot 'onTableDoubleClicked'
-        QtMocHelpers::SlotData<void(const QModelIndex &)>(10, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { 0x80000000 | 11, 12 },
+        QtMocHelpers::SlotData<void(const QModelIndex &)>(9, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 10, 11 },
         }}),
         // Slot 'updateCountAndLayerStatus'
-        QtMocHelpers::SlotData<void()>(13, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(12, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -102,14 +99,13 @@ void GISApp::UI::Tracks::TracksTableDialog::qt_static_metacall(QObject *_o, QMet
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->onClearDatabaseClicked(); break;
-        case 1: _t->onImportCsvClicked(); break;
-        case 2: _t->onAddToLayerTreeClicked(); break;
-        case 3: _t->onZoomToSelectedClicked(); break;
-        case 4: _t->onDeleteSelectedClicked(); break;
-        case 5: _t->onRefreshClicked(); break;
-        case 6: _t->onSearchTextChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 7: _t->onTableDoubleClicked((*reinterpret_cast<std::add_pointer_t<QModelIndex>>(_a[1]))); break;
-        case 8: _t->updateCountAndLayerStatus(); break;
+        case 1: _t->onAddToLayerTreeClicked(); break;
+        case 2: _t->onZoomToSelectedClicked(); break;
+        case 3: _t->onDeleteSelectedClicked(); break;
+        case 4: _t->onRefreshClicked(); break;
+        case 5: _t->onSearchTextChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 6: _t->onTableDoubleClicked((*reinterpret_cast<std::add_pointer_t<QModelIndex>>(_a[1]))); break;
+        case 7: _t->updateCountAndLayerStatus(); break;
         default: ;
         }
     }
@@ -134,14 +130,14 @@ int GISApp::UI::Tracks::TracksTableDialog::qt_metacall(QMetaObject::Call _c, int
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 9)
+        if (_id < 8)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 9;
+        _id -= 8;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 9)
+        if (_id < 8)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 9;
+        _id -= 8;
     }
     return _id;
 }

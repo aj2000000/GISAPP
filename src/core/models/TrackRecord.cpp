@@ -20,6 +20,7 @@ EntityRenderStyle TrackRecord::renderStyle() const
     return style;
 }
 
+
 QJsonObject TrackRecord::toGeoJsonFeature() const
 {
     QJsonObject feature;
@@ -34,13 +35,16 @@ QJsonObject TrackRecord::toGeoJsonFeature() const
     QJsonObject props;
     props["id"] = trackId;
     props["name"] = trackName;
-    props["plotType"] = trackPlotType;
-    props["intNo"] = intNo;
     props["lat"] = trackLat;
     props["long"] = trackLong;
     props["height"] = trackHeight;
     props["heading"] = trackDir;
     props["identity"] = trackIdentity;
+    QString colorStr = "#F59E0B";
+    if (trackIdentity == 1) colorStr = "#EF4444";      // Hostile -> Red
+    else if (trackIdentity == 2) colorStr = "#3B82F6"; // Friendly -> Blue
+    else if (trackIdentity == 3) colorStr = "#10B981"; // Neutral -> Green
+    props["color"] = colorStr;
     props["type"] = trackType;
     props["subType"] = trackSubType;
     props["class"] = trackClass;
@@ -52,9 +56,11 @@ QJsonObject TrackRecord::toGeoJsonFeature() const
     props["sources"] = trackSources;
     props["image"] = trackImage;
     props["remarks"] = trackRemarks;
+    props["reportTime"] = trackReportTime;
 
     feature["properties"] = props;
     return feature;
 }
+
 
 } // namespace GISApp::Core::Models

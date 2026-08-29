@@ -1,11 +1,3 @@
-/**
- * @file TrackRecord.h
- * @brief Concrete domain model representing a Track Entity derived from IGisEntity.
- * Contains all 18 specified schema fields.
- * @author GIS System Architecture Team
- * @date 2026
- */
-
 #ifndef TRACKRECORD_H
 #define TRACKRECORD_H
 
@@ -29,11 +21,9 @@ public:
     EntityRenderStyle renderStyle() const override;
     QJsonObject toGeoJsonFeature() const override;
 
-    // All 20 Domain Schema Fields
+    // 19 Standard Tactical Domain Schema Fields
     int trackId{0};
     QString trackName;
-    double trackPlotType{1.0};
-    int intNo{0};
     double trackLat{0.0};
     double trackLong{0.0};
     double trackHeight{0.0};
@@ -50,6 +40,7 @@ public:
     QString trackSources;
     QString trackImage;
     QString trackRemarks;
+    QString trackReportTime;
 };
 
 } // namespace GISApp::Core::Models

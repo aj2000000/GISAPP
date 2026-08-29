@@ -15,32 +15,26 @@ QSqlDatabase TrackRepository::db() const
 {
     return Database::DatabaseManager::instance()->database();
 }
-
 bool TrackRepository::insertOrUpdateTrack(const Models::TrackRecord &track)
 {
     QSqlDatabase database = db();
-    if (!database.isOpen()) {
-        qWarning() << "[TrackRepository] Database connection is not open.";
-        return false;
-    }
+    if (!database.isOpen()) return false;
 
     QSqlQuery query(database);
     query.prepare(R"(
         INSERT INTO TRACKS (
-            TRACK_ID, TRACK_NAME, TRACK_PLOT_TYPE, INT_NO, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR,
+            TRACK_ID, TRACK_NAME, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR,
             TRACK_IDENTITY, TRACK_TYPE, TRACK_SUB_TYPE, TRACK_CLASS, TRACK_STRENGTH,
             TRACK_ACT_TYPE, TRACK_ACT_SUB_TYPE, TRACK_ACT_CLASS, TRACK_SYSTEM_TYPE,
-            TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS
+            TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS, TRACK_REPORT_TIME
         ) VALUES (
-            :id, :name, :plot_type, :int_no, :lat, :long, :height, :dir,
+            :id, :name, :lat, :long, :height, :dir,
             :identity, :type, :sub_type, :class, :strength,
             :act_type, :act_sub_type, :act_class, :system_type,
-            :sources, :image, :remarks
+            :sources, :image, :remarks, :report_time
         )
         ON CONFLICT(TRACK_ID) DO UPDATE SET
             TRACK_NAME = excluded.TRACK_NAME,
-            TRACK_PLOT_TYPE = excluded.TRACK_PLOT_TYPE,
-            INT_NO = excluded.INT_NO,
             TRACK_LAT = excluded.TRACK_LAT,
             TRACK_LONG = excluded.TRACK_LONG,
             TRACK_HEIGHT = excluded.TRACK_HEIGHT,
@@ -56,13 +50,12 @@ bool TrackRepository::insertOrUpdateTrack(const Models::TrackRecord &track)
             TRACK_SYSTEM_TYPE = excluded.TRACK_SYSTEM_TYPE,
             TRACK_SOURCES = excluded.TRACK_SOURCES,
             TRACK_IMAGE = excluded.TRACK_IMAGE,
-            TRACK_REMARKS = excluded.TRACK_REMARKS;
+            TRACK_REMARKS = excluded.TRACK_REMARKS,
+            TRACK_REPORT_TIME = excluded.TRACK_REPORT_TIME;
     )");
 
     query.bindValue(":id", track.trackId);
     query.bindValue(":name", track.trackName);
-    query.bindValue(":plot_type", track.trackPlotType);
-    query.bindValue(":int_no", track.intNo);
     query.bindValue(":lat", track.trackLat);
     query.bindValue(":long", track.trackLong);
     query.bindValue(":height", track.trackHeight);
@@ -79,6 +72,7 @@ bool TrackRepository::insertOrUpdateTrack(const Models::TrackRecord &track)
     query.bindValue(":sources", track.trackSources);
     query.bindValue(":image", track.trackImage);
     query.bindValue(":remarks", track.trackRemarks);
+    query.bindValue(":report_time", track.trackReportTime);
 
     if (!query.exec()) {
         qCritical() << "[TrackRepository] Error inserting track:" << query.lastError().text();
@@ -88,6 +82,7 @@ bool TrackRepository::insertOrUpdateTrack(const Models::TrackRecord &track)
     emit tracksUpdated();
     return true;
 }
+
 
 bool TrackRepository::insertBatch(const QVector<Models::TrackRecord> &tracks)
 {
@@ -106,20 +101,18 @@ bool TrackRepository::insertBatch(const QVector<Models::TrackRecord> &tracks)
     QSqlQuery query(database);
     query.prepare(R"(
         INSERT INTO TRACKS (
-            TRACK_ID, TRACK_NAME, TRACK_PLOT_TYPE, INT_NO, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR,
+            TRACK_ID, TRACK_NAME, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR,
             TRACK_IDENTITY, TRACK_TYPE, TRACK_SUB_TYPE, TRACK_CLASS, TRACK_STRENGTH,
             TRACK_ACT_TYPE, TRACK_ACT_SUB_TYPE, TRACK_ACT_CLASS, TRACK_SYSTEM_TYPE,
-            TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS
+            TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS, TRACK_REPORT_TIME
         ) VALUES (
-            :id, :name, :plot_type, :int_no, :lat, :long, :height, :dir,
+            :id, :name, :lat, :long, :height, :dir,
             :identity, :type, :sub_type, :class, :strength,
             :act_type, :act_sub_type, :act_class, :system_type,
-            :sources, :image, :remarks
+            :sources, :image, :remarks, :report_time
         )
         ON CONFLICT(TRACK_ID) DO UPDATE SET
             TRACK_NAME = excluded.TRACK_NAME,
-            TRACK_PLOT_TYPE = excluded.TRACK_PLOT_TYPE,
-            INT_NO = excluded.INT_NO,
             TRACK_LAT = excluded.TRACK_LAT,
             TRACK_LONG = excluded.TRACK_LONG,
             TRACK_HEIGHT = excluded.TRACK_HEIGHT,
@@ -135,14 +128,13 @@ bool TrackRepository::insertBatch(const QVector<Models::TrackRecord> &tracks)
             TRACK_SYSTEM_TYPE = excluded.TRACK_SYSTEM_TYPE,
             TRACK_SOURCES = excluded.TRACK_SOURCES,
             TRACK_IMAGE = excluded.TRACK_IMAGE,
-            TRACK_REMARKS = excluded.TRACK_REMARKS;
+            TRACK_REMARKS = excluded.TRACK_REMARKS,
+            TRACK_REPORT_TIME = excluded.TRACK_REPORT_TIME;
     )");
 
     for (const auto &track : tracks) {
         query.bindValue(":id", track.trackId);
         query.bindValue(":name", track.trackName);
-        query.bindValue(":plot_type", track.trackPlotType);
-        query.bindValue(":int_no", track.intNo);
         query.bindValue(":lat", track.trackLat);
         query.bindValue(":long", track.trackLong);
         query.bindValue(":height", track.trackHeight);
@@ -159,6 +151,8 @@ bool TrackRepository::insertBatch(const QVector<Models::TrackRecord> &tracks)
         query.bindValue(":sources", track.trackSources);
         query.bindValue(":image", track.trackImage);
         query.bindValue(":remarks", track.trackRemarks);
+        query.bindValue(":report_time", track.trackReportTime);
+
 
         if (!query.exec()) {
             qCritical() << "[TrackRepository] Batch row error:" << query.lastError().text();
@@ -181,39 +175,37 @@ QVector<Models::TrackRecord> TrackRepository::getAllTracks() const
 {
     QVector<Models::TrackRecord> result;
     QSqlDatabase database = db();
-    if (!database.isOpen()) {
-        return result;
-    }
+    if (!database.isOpen()) return result;
 
-    QSqlQuery query("SELECT TRACK_ID, TRACK_NAME, TRACK_PLOT_TYPE, INT_NO, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR, TRACK_IDENTITY, TRACK_TYPE, TRACK_SUB_TYPE, TRACK_CLASS, TRACK_STRENGTH, TRACK_ACT_TYPE, TRACK_ACT_SUB_TYPE, TRACK_ACT_CLASS, TRACK_SYSTEM_TYPE, TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS FROM TRACKS ORDER BY TRACK_ID ASC", database);
+    QSqlQuery query("SELECT TRACK_ID, TRACK_NAME, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR, TRACK_IDENTITY, TRACK_TYPE, TRACK_SUB_TYPE, TRACK_CLASS, TRACK_STRENGTH, TRACK_ACT_TYPE, TRACK_ACT_SUB_TYPE, TRACK_ACT_CLASS, TRACK_SYSTEM_TYPE, TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS, TRACK_REPORT_TIME FROM TRACKS ORDER BY TRACK_ID ASC", database);
 
     while (query.next()) {
         Models::TrackRecord track;
-        track.trackId = query.value(0).toInt();
-        track.trackName = query.value(1).toString();
-        track.trackPlotType = query.value(2).toDouble();
-        track.intNo = query.value(3).toInt();
-        track.trackLat = query.value(4).toDouble();
-        track.trackLong = query.value(5).toDouble();
-        track.trackHeight = query.value(6).toDouble();
-        track.trackDir = query.value(7).toDouble();
-        track.trackIdentity = query.value(8).toInt();
-        track.trackType = query.value(9).toInt();
-        track.trackSubType = query.value(10).toInt();
-        track.trackClass = query.value(11).toInt();
-        track.trackStrength = query.value(12).toInt();
-        track.trackActType = query.value(13).toInt();
-        track.trackActSubType = query.value(14).toInt();
-        track.trackActClass = query.value(15).toInt();
-        track.trackSystemType = query.value(16).toInt();
-        track.trackSources = query.value(17).toString();
-        track.trackImage = query.value(18).toString();
-        track.trackRemarks = query.value(19).toString();
+        track.trackId         = query.value(0).toInt();
+        track.trackName       = query.value(1).toString();
+        track.trackLat        = query.value(2).toDouble();
+        track.trackLong       = query.value(3).toDouble();
+        track.trackHeight     = query.value(4).toDouble();
+        track.trackDir        = query.value(5).toDouble();
+        track.trackIdentity   = query.value(6).toInt();
+        track.trackType       = query.value(7).toInt();
+        track.trackSubType    = query.value(8).toInt();
+        track.trackClass      = query.value(9).toInt();
+        track.trackStrength   = query.value(10).toInt();
+        track.trackActType    = query.value(11).toInt();
+        track.trackActSubType = query.value(12).toInt();
+        track.trackActClass   = query.value(13).toInt();
+        track.trackSystemType = query.value(14).toInt();
+        track.trackSources    = query.value(15).toString();
+        track.trackImage      = query.value(16).toString();
+        track.trackRemarks    = query.value(17).toString();
+        track.trackReportTime = query.value(18).toString();
         result.append(track);
     }
 
     return result;
 }
+
 
 std::optional<Models::TrackRecord> TrackRepository::getTrackById(int trackId) const
 {
@@ -222,34 +214,34 @@ std::optional<Models::TrackRecord> TrackRepository::getTrackById(int trackId) co
         return std::nullopt;
     }
 
-    QSqlQuery query(database);
-    query.prepare("SELECT TRACK_ID, TRACK_NAME, TRACK_PLOT_TYPE, INT_NO, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR, TRACK_IDENTITY, TRACK_TYPE, TRACK_SUB_TYPE, TRACK_CLASS, TRACK_STRENGTH, TRACK_ACT_TYPE, TRACK_ACT_SUB_TYPE, TRACK_ACT_CLASS, TRACK_SYSTEM_TYPE, TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS FROM TRACKS WHERE TRACK_ID = :id");
+        QSqlQuery query(database);
+    query.prepare("SELECT TRACK_ID, TRACK_NAME, TRACK_LAT, TRACK_LONG, TRACK_HEIGHT, TRACK_DIR, TRACK_IDENTITY, TRACK_TYPE, TRACK_SUB_TYPE, TRACK_CLASS, TRACK_STRENGTH, TRACK_ACT_TYPE, TRACK_ACT_SUB_TYPE, TRACK_ACT_CLASS, TRACK_SYSTEM_TYPE, TRACK_SOURCES, TRACK_IMAGE, TRACK_REMARKS, TRACK_REPORT_TIME FROM TRACKS WHERE TRACK_ID = :id");
     query.bindValue(":id", trackId);
 
     if (query.exec() && query.next()) {
         Models::TrackRecord track;
-        track.trackId = query.value(0).toInt();
-        track.trackName = query.value(1).toString();
-        track.trackPlotType = query.value(2).toDouble();
-        track.intNo = query.value(3).toInt();
-        track.trackLat = query.value(4).toDouble();
-        track.trackLong = query.value(5).toDouble();
-        track.trackHeight = query.value(6).toDouble();
-        track.trackDir = query.value(7).toDouble();
-        track.trackIdentity = query.value(8).toInt();
-        track.trackType = query.value(9).toInt();
-        track.trackSubType = query.value(10).toInt();
-        track.trackClass = query.value(11).toInt();
-        track.trackStrength = query.value(12).toInt();
-        track.trackActType = query.value(13).toInt();
-        track.trackActSubType = query.value(14).toInt();
-        track.trackActClass = query.value(15).toInt();
-        track.trackSystemType = query.value(16).toInt();
-        track.trackSources = query.value(17).toString();
-        track.trackImage = query.value(18).toString();
-        track.trackRemarks = query.value(19).toString();
+        track.trackId         = query.value(0).toInt();
+        track.trackName       = query.value(1).toString();
+        track.trackLat        = query.value(2).toDouble();
+        track.trackLong       = query.value(3).toDouble();
+        track.trackHeight     = query.value(4).toDouble();
+        track.trackDir        = query.value(5).toDouble();
+        track.trackIdentity   = query.value(6).toInt();
+        track.trackType       = query.value(7).toInt();
+        track.trackSubType    = query.value(8).toInt();
+        track.trackClass      = query.value(9).toInt();
+        track.trackStrength   = query.value(10).toInt();
+        track.trackActType    = query.value(11).toInt();
+        track.trackActSubType = query.value(12).toInt();
+        track.trackActClass   = query.value(13).toInt();
+        track.trackSystemType = query.value(14).toInt();
+        track.trackSources    = query.value(15).toString();
+        track.trackImage      = query.value(16).toString();
+        track.trackRemarks    = query.value(17).toString();
+        track.trackReportTime = query.value(18).toString();
         return track;
     }
+
 
     return std::nullopt;
 }

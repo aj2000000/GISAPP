@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tracks>
+    <!-- Track 1: Air Target (Friendly Fighter Aircraft) -->
+    <track>
+        <trackId>101</trackId>
+        <trackName>SU30-MKI-ALPHA</trackName>
+        <trackLat>32.763</trackLat>
+        <trackLong>73.3886</trackLong>
+        <trackHeight>11500.5</trackHeight>
+        <trackDir>135.0</trackDir>
+        <trackIdentity>1</trackIdentity> <!-- 1=Hostile, 2=Friendly, 3=Neutral, 0=Unknown -->
+        <trackType>1</trackType>     <!-- 1=Air, 2=Surface, 3=Land -->
+        <trackSubType>12</trackSubType>
+        <trackClass>3</trackClass>
+        <trackStrength>2</trackStrength>
+        <trackActType>10</trackActType>
+        <trackActSubType>102</trackActSubType>
+        <trackActClass>1</trackActClass>
+        <trackSystemType>5</trackSystemType>
+        <trackSources>PRIMARY_RADAR_01, ADS-B_WEST</trackSources>
+        <trackImage>fighter_jet_symbol</trackImage>
+        <trackReportTime>2026-08-29 14:55:00</trackReportTime>
+        <trackRemarks>Combat Air Patrol over Sector 4 - All systems operational</trackRemarks>
+    </track>
+
+    <!-- Track 2: Naval Surface Target (Hostile Destroyer) -->
+    <track>
+        <trackId>102</trackId>
+        <trackName>DEST-BETA-HOSTILE</trackName>
+        <trackLat>32.5720</trackLat>
+        <trackLong>73.4050</trackLong>
+        <trackHeight>0.0</trackHeight>
+        <trackDir>270.5</trackDir>
+        <trackIdentity>1</trackIdentity> <!-- Hostile -->
+        <trackType>2</trackType>     <!-- Surface -->
+        <trackSubType>25</trackSubType>
+        <trackClass>4</trackClass>
+        <trackStrength>1</trackStrength>
+        <trackActType>20</trackActType>
+        <trackActSubType>204</trackActSubType>
+        <trackActClass>2</trackActClass>
+        <trackSystemType>8</trackSystemType>
+        <trackSources>COASTAL_SURVEILLANCE_RADAR_03</trackSources>
+        <trackImage>destroyer_symbol</trackImage>
+        <trackReportTime>2026-08-29 14:56:10</trackReportTime>
+        <trackRemarks>High speed transit westward towards EEZ line</trackRemarks>
+    </track>
+
+    <!-- Track 3: Land Target (Neutral Logistics Convoy) -->
+    <track>
+        <trackId>103</trackId>
+        <trackName>CONVOY-GAMMA-NEUTRAL</trackName>
+        <trackLat>32.5912</trackLat>
+        <trackLong>73.7109</trackLong>
+        <trackHeight>1580.0</trackHeight>
+        <trackDir>45.0</trackDir>
+        <trackIdentity>1</trackIdentity> <!-- Neutral -->
+        <trackType>3</trackType>     <!-- Land -->
+        <trackSubType>31</trackSubType>
+        <trackClass>1</trackClass>
+        <trackStrength>12</trackStrength>
+        <trackActType>30</trackActType>
+        <trackActSubType>301</trackActSubType>
+        <trackActClass>1</trackActClass>
+        <trackSystemType>3</trackSystemType>
+        <trackSources>SATELLITE_OPTICAL_SENSORS</trackSources>
+        <trackImage>convoy_truck_symbol</trackImage>
+        <trackReportTime>2026-08-29 14:57:00</trackReportTime>
+        <trackRemarks>Civilian supply movement along Highway NH-44</trackRemarks>
+    </track>
+        <track>
+        <trackId>104</trackId>
+        <trackName>OWN TRACK</trackName>
+        <trackLat>32.7397</trackLat>
+        <trackLong>75.0280</trackLong>
+        <trackHeight>1580.0</trackHeight>
+        <trackDir>45.0</trackDir>
+        <trackIdentity>2</trackIdentity> <!-- Neutral -->
+        <trackType>3</trackType>     <!-- Land -->
+        <trackSubType>31</trackSubType>
+        <trackClass>1</trackClass>
+        <trackStrength>12</trackStrength>
+        <trackActType>30</trackActType>
+        <trackActSubType>301</trackActSubType>
+        <trackActClass>1</trackActClass>
+        <trackSystemType>3</trackSystemType>
+        <trackSources>SATELLITE_OPTICAL_SENSORS</trackSources>
+        <trackImage>convoy_truck_symbol</trackImage>
+        <trackReportTime>2026-08-29 14:57:00</trackReportTime>
+        <trackRemarks>OWN movement along Highway NH-44</trackRemarks>
+    </track>
+</tracks>
+

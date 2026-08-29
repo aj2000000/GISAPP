@@ -365,7 +365,7 @@ QByteArray LocalTileServer::renderNativeGdalTile(const QString &vrtPath, double 
         int targetY = dstY + subY;
         if (targetY >= 256) break;
 
-        QRgb *line = reinterpret_cast<QRgb*>(img.scanLine(targetY));
+        uchar *line = img.scanLine(targetY);
         for (int subX = 0; subX < dstW; ++subX) {
             int targetX = dstX + subX;
             if (targetX >= 256) break;
@@ -376,7 +376,11 @@ QByteArray LocalTileServer::renderNativeGdalTile(const QString &vrtPath, double 
             uchar b = (readBands >= 3) ? pTemp[idx + 2] : r;
             uchar a = (readBands >= 4) ? pTemp[idx + 3] : 255;
 
-            line[targetX] = qRgba(r, g, b, a);
+            uchar *pixel = line + (targetX * 4);
+            pixel[0] = r;
+            pixel[1] = g;
+            pixel[2] = b;
+            pixel[3] = a;
         }
     }
 

@@ -4,6 +4,7 @@
 #include <QSqlError>
 #include <QDebug>
 #include <QStandardPaths>
+#include "SystemConfigManager.h" 
 
 namespace GISApp::Core::Database {
 
@@ -36,14 +37,8 @@ bool DatabaseManager::initialize(const QString &dbPath)
 
     QString finalDbPath = dbPath;
     if (finalDbPath.isEmpty()) {
-        QString mapDataDir = QDir::homePath() + "/MAPDATA";
-        QDir dir;
-        if (!dir.exists(mapDataDir)) {
-            dir.mkpath(mapDataDir);
-        }
-        finalDbPath = mapDataDir + "/gis_app_database.sqlite";
+        finalDbPath = GISApp::Core::SystemConfigManager::instance().getDatabasePath();
     }
-
     qDebug() << "[DatabaseManager] Initializing SQLite database at:" << finalDbPath;
 
     m_db = QSqlDatabase::addDatabase("QSQLITE", "GISAppConnection");
@@ -87,33 +82,27 @@ bool DatabaseManager::createSchema()
 {
     QSqlQuery query(m_db);
 
-    // Schema Check: If table exists but lacks TRACK_PLOT_TYPE or INT_NO column, upgrade it
+    // Schema Check: If table lacks TRACK_REPORT_TIME column, upgrade schema
     if (query.exec("PRAGMA table_info(TRACKS);")) {
-        bool hasPlotType = false;
-        bool sourcesIsText = false;
+        bool hasReportTime = false;
         while (query.next()) {
             QString name = query.value(1).toString();
-            QString type = query.value(2).toString();
-            if (name.compare("TRACK_PLOT_TYPE", Qt::CaseInsensitive) == 0) {
-                hasPlotType = true;
-            }
-            if (name.compare("TRACK_SOURCES", Qt::CaseInsensitive) == 0 && type.compare("TEXT", Qt::CaseInsensitive) == 0) {
-                sourcesIsText = true;
+            if (name.compare("TRACK_REPORT_TIME", Qt::CaseInsensitive) == 0) {
+                hasReportTime = true;
             }
         }
-        if (!hasPlotType || !sourcesIsText) {
-            qDebug() << "[DatabaseManager] Existing TRACKS schema outdated. Upgrading to 20-column schema...";
+        if (!hasReportTime) {
+            qDebug() << "[DatabaseManager] Existing TRACKS schema outdated. Upgrading schema...";
             QSqlQuery dropQuery(m_db);
             dropQuery.exec("DROP TABLE IF EXISTS TRACKS;");
         }
     }
 
+
     const QString createTracksDdl = R"(
-        CREATE TABLE IF NOT EXISTS TRACKS (
+            CREATE TABLE IF NOT EXISTS TRACKS (
             TRACK_ID INTEGER PRIMARY KEY,
             TRACK_NAME TEXT,
-            TRACK_PLOT_TYPE REAL,
-            INT_NO INTEGER,
             TRACK_LAT REAL,
             TRACK_LONG REAL,
             TRACK_HEIGHT REAL,
@@ -129,8 +118,10 @@ bool DatabaseManager::createSchema()
             TRACK_SYSTEM_TYPE INTEGER,
             TRACK_SOURCES TEXT,
             TRACK_IMAGE TEXT,
-            TRACK_REMARKS TEXT
+            TRACK_REMARKS TEXT,
+            TRACK_REPORT_TIME TEXT
         );
+
     )";
 
     if (!query.exec(createTracksDdl)) {

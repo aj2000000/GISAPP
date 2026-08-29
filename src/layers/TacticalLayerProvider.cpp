@@ -11,6 +11,8 @@
 #include "publishing/LayerPublishingService.h"
 #include "core/repositories/TrackRepository.h"
 #include "core/repositories/AreaOfViewRepository.h"
+#include "core/services/CsvBoundaryIngestor.h"
+#include "core/services/MapLibreBoundaryAdapter.h"
 
 namespace GISApp {
 namespace Layers {
@@ -281,6 +283,34 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
     auto radarCoverageAdapter = std::make_shared<MapLibreLayerAdapter>(
         "radar-coverage", map, indiaExtent);
     layerManager->addLayer("Primary Radar Coverage", radarCoverageAdapter, intelligenceGroup);
+
+    // 5. National Boundary Polyline (Outer Green Stroke, Inner Saffron Stroke)
+    auto boundaryAdapter = new Core::Services::MapLibreBoundaryAdapter(map, this);
+    boundaryAdapter->setBoundaries({});
+
+    QVariantMap boundaryOuterParams;
+    boundaryOuterParams["id"] = "boundary-outer-line-layer";
+    boundaryOuterParams["type"] = "line";
+    boundaryOuterParams["source"] = "boundary-geojson-source";
+
+    QVariantMap boundaryOuterPaint;
+    boundaryOuterPaint["line-color"] = "#16A34A";
+    boundaryOuterPaint["line-width"] = 6.0;
+    boundaryOuterParams["paint"] = boundaryOuterPaint;
+
+    QVariantMap boundaryInnerParams;
+    boundaryInnerParams["id"] = "boundary-inner-line-layer";
+    boundaryInnerParams["type"] = "line";
+    boundaryInnerParams["source"] = "boundary-geojson-source";
+
+    QVariantMap boundaryInnerPaint;
+    boundaryInnerPaint["line-color"] = "#FF7700";
+    boundaryInnerPaint["line-width"] = 3.0;
+    boundaryInnerParams["paint"] = boundaryInnerPaint;
+
+    auto boundaryLayerAdapter = std::make_shared<MapLibreLayerAdapter>(
+        "boundary-outer-line-layer", map, indiaExtent, boundaryOuterParams, boundaryInnerParams);
+    layerManager->addLayer("🇮🇳 Boundary Lines", boundaryLayerAdapter, tacticalGroup);
 
     // Auto-restore custom published layers asynchronously after main UI window finishes rendering
     QTimer::singleShot(150, [layerManager, map]() {
