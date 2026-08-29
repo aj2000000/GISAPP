@@ -71,6 +71,20 @@ public:
     bool moveDown(LayerTreeNode *node);
 
     /**
+     * @brief Enter a bulk update mode to pause Z-stack syncing and disk saving.
+     */
+    void beginBulkUpdate();
+
+    /**
+     * @brief Exit bulk update mode and flush pending syncs to MapLibre and Disk.
+     */
+    void endBulkUpdate();
+
+    bool isBulkUpdateActive() const { return m_bulkUpdateActive; }
+    void requestRenderSync();
+    void requestRegistrySync();
+
+    /**
      * @brief Synchronize MapLibre engine Z-stack with the UI tree list order.
      */
     void syncRenderOrder();
@@ -104,6 +118,11 @@ signals:
 
 private:
     LayerTreeModel *m_model;
+
+    // Bulk Update State
+    bool m_bulkUpdateActive = false;
+    bool m_pendingRenderSync = false;
+    bool m_pendingRegistrySync = false;
 };
 
 } // namespace GISApp::Layers

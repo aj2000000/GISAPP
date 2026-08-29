@@ -137,6 +137,7 @@ private:
 
 
     MediatorClass *m_udpMediator{nullptr};
+    QTimer *m_styleDebounceTimer{nullptr};
 };
 
 #endif // MAINWINDOW_H

@@ -31,7 +31,7 @@ LayerGroupNode* LayerManager::addGroup(const QString &groupName, LayerGroupNode 
     m_model->endNodeInsert();
 
     GISApp::Publishing::LayerRegistryManager::instance().registerGroup(groupName);
-    GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+    requestRegistrySync();
 
     return rawPtr;
 }
@@ -47,8 +47,8 @@ LayerNode* LayerManager::addLayer(const QString &layerName, std::shared_ptr<ILay
     targetParent->addChild(std::move(newLayer));
     
     m_model->endNodeInsert();
-    syncRenderOrder();
-    GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+    requestRenderSync();
+    requestRegistrySync();
     return rawPtr;
 }
 
@@ -56,7 +56,7 @@ void LayerManager::setVisibility(LayerTreeNode *node, bool visible) {
     if (node) {
         node->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
         emit m_model->layoutChanged();
-        GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+        requestRegistrySync();
     }
 }
 
@@ -64,7 +64,7 @@ void LayerManager::setOpacity(LayerTreeNode *node, float opacity) {
     if (node) {
         node->setOpacity(opacity);
         emit m_model->layoutChanged();
-        GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+        requestRegistrySync();
     }
 }
 
@@ -84,6 +84,10 @@ static void collectLayerAdapters(LayerTreeNode *node, std::vector<std::shared_pt
 }
 
 void LayerManager::syncRenderOrder() {
+    if (m_bulkUpdateActive) {
+        m_pendingRenderSync = true;
+        return;
+    }
     if (!m_model || !m_model->rootNode()) return;
     std::vector<std::shared_ptr<ILayerAdapter>> adapters;
     collectLayerAdapters(m_model->rootNode(), adapters);
@@ -102,8 +106,8 @@ bool LayerManager::moveUp(LayerTreeNode *node) {
     QModelIndex idx = m_model->indexFromNode(node);
     bool res = m_model->moveNodeUp(idx);
     if (res) {
-        syncRenderOrder();
-        GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+        requestRenderSync();
+        requestRegistrySync();
     }
     return res;
 }
@@ -113,8 +117,8 @@ bool LayerManager::moveDown(LayerTreeNode *node) {
     QModelIndex idx = m_model->indexFromNode(node);
     bool res = m_model->moveNodeDown(idx);
     if (res) {
-        syncRenderOrder();
-        GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+        requestRenderSync();
+        requestRegistrySync();
     }
     return res;
 }
@@ -198,6 +202,38 @@ LayerNode* LayerManager::findLayerByLayerId(const QString &layerId) const {
 LayerGroupNode* LayerManager::findGroupByName(const QString &groupName) const {
     if (!m_model || !m_model->rootNode()) return nullptr;
     return recursiveFindGroup(m_model->rootNode(), groupName);
+}
+
+void LayerManager::beginBulkUpdate() {
+    m_bulkUpdateActive = true;
+}
+
+void LayerManager::endBulkUpdate() {
+    m_bulkUpdateActive = false;
+    if (m_pendingRenderSync) {
+        syncRenderOrder();
+        m_pendingRenderSync = false;
+    }
+    if (m_pendingRegistrySync) {
+        GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+        m_pendingRegistrySync = false;
+    }
+}
+
+void LayerManager::requestRenderSync() {
+    if (m_bulkUpdateActive) {
+        m_pendingRenderSync = true;
+    } else {
+        syncRenderOrder();
+    }
+}
+
+void LayerManager::requestRegistrySync() {
+    if (m_bulkUpdateActive) {
+        m_pendingRegistrySync = true;
+    } else {
+        GISApp::Publishing::LayerRegistryManager::instance().syncTreeState(this);
+    }
 }
 
 } // namespace GISApp::Layers

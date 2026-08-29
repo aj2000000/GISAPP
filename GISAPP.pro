@@ -1,6 +1,5 @@
 QT += core gui widgets opengl network sql svg concurrent xml
 
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -10,7 +9,6 @@ DESTDIR     = $$PWD/build/bin
 OBJECTS_DIR = $$PWD/build/obj
 MOC_DIR     = $$PWD/build/moc
 UI_DIR      = $$PWD/build/ui
-
 
 MAPLIBRE_INSTALL_DIR = $$(MAPLIBRE_INSTALL_DIR)
 isEmpty(MAPLIBRE_INSTALL_DIR) {
@@ -25,8 +23,6 @@ INCLUDEPATH += $$MAPLIBRE_INSTALL_DIR/include \
 LIBS += -L$$MAPLIBRE_INSTALL_DIR/lib -lQMapLibre -lQMapLibreWidgets -lgdal -lcrypto
 
 QMAKE_LFLAGS += -Wl,-rpath,$$MAPLIBRE_INSTALL_DIR/lib
-
-
 
 INCLUDEPATH += $$PWD/src \
                $$PWD/src/core \
@@ -44,23 +40,14 @@ INCLUDEPATH += $$PWD/src \
                $$PWD/src/core/renderers \
                $$PWD/src/ui/tracks \
                $$PWD/src/ui/area_of_view \
+               $$PWD/src/ui/boundary \
                $$PWD/src/ui/entities \
                $$PWD/src/core/Udp \
-               $$PWD/src/core/Udp/UdpMessages \
-               $$PWD/src/core/Udp/AESEncryptionFile \
                $$PWD/src/core/Udp/handlers \
-               $$PWD/src/generic
-
-
-
+               $$PWD/src/core/Udp/UdpMessages \
+               $$PWD/src/core/Udp/AESEncryptionFile
 
 SOURCES += \
-    fieldkeyvaluemapper.cpp \
-    src/core/Udp/AESEncryptionFile/encryptwithaes256.cpp \
-    src/core/Udp/datastore.cpp \
-    src/core/Udp/mediatorclass.cpp \
-    src/core/Udp/processudpmessagethread.cpp \
-    src/core/Udp/udpcommunication.cpp \
     src/main.cpp \
     src/core/SystemConfigManager.cpp \
     src/ui/mainwindow.cpp \
@@ -104,6 +91,7 @@ SOURCES += \
     src/core/models/TrackRecord.cpp \
     src/core/database/DatabaseManager.cpp \
     src/core/repositories/TrackRepository.cpp \
+    src/core/services/XmlTrackIngestor.cpp \
     src/core/services/MapLibreTrackAdapter.cpp \
     src/ui/tracks/TrackTableModel.cpp \
     src/ui/tracks/TracksTableDialog.cpp \
@@ -113,30 +101,26 @@ SOURCES += \
     src/core/services/XmlAreaOfViewIngestor.cpp \
     src/core/services/MapLibreAreaOfViewAdapter.cpp \
     src/ui/area_of_view/AreaOfViewTableDialog.cpp \
+    src/core/models/BoundaryRecord.cpp \
+    src/core/services/CsvBoundaryIngestor.cpp \
+    src/core/services/MapLibreBoundaryAdapter.cpp \
+    src/ui/boundary/BoundaryTableDialog.cpp \
     src/core/models/GenericGisEntity.cpp \
     src/core/models/GisEntityRegistry.cpp \
     src/core/repositories/GenericEntityRepository.cpp \
     src/core/services/MapLibreGenericEntityAdapter.cpp \
     src/ui/entities/UniversalEntityEditorDialog.cpp \
+    src/core/Udp/AESEncryptionFile/encryptwithaes256.cpp \
+    src/core/Udp/datastore.cpp \
+    src/core/Udp/mediatorclass.cpp \
+    src/core/Udp/processudpmessagethread.cpp \
+    src/core/Udp/udpcommunication.cpp \
     src/core/Udp/handlers/UdpMessageDispatcher.cpp \
     src/core/Udp/handlers/UdpTrackMessageHandler.cpp \
-    src/core/services/XmlTrackIngestor.cpp \
-    src/core/models/BoundaryRecord.cpp \
-    src/core/services/CsvBoundaryIngestor.cpp \
-    src/core/services/MapLibreBoundaryAdapter.cpp \
-    src/ui/boundary/BoundaryTableDialog.cpp
+    fieldkeyvaluemapper.cpp
 
 HEADERS += \
-    fieldkeyvaluemapper.h \
     src/core/SystemConfigManager.h \
-    src/core/Udp/AESEncryptionFile/encryptwithaes256.h \
-    src/core/Udp/UdpMessages/IRS.h \
-    src/core/Udp/UdpMessages/MessageId.h \
-    src/core/Udp/UdpMessages/Structures.h \
-    src/core/Udp/datastore.h \
-    src/core/Udp/mediatorclass.h \
-    src/core/Udp/processudpmessagethread.h \
-    src/core/Udp/udpcommunication.h \
     src/ui/mainwindow.h \
     src/core/models/GeoCoordinate.h \
     src/core/interfaces/IMapView.h \
@@ -154,7 +138,6 @@ HEADERS += \
     src/ui/TacticalStatusBar.h \
     src/ui/HeaderBar.h \
     src/layers/ILayerAdapter.h \
-    src/layers/MapLibreLayerAdapter.h \
     src/layers/LayerTreeNode.h \
     src/layers/LayerTreeModel.h \
     src/layers/LayerManager.h \
@@ -177,8 +160,8 @@ HEADERS += \
     src/ui/tasks/BackgroundTaskDialog.h \
     src/core/tasks/GoogleSatDownloaderTask.h \
     src/ui/download/DownloadSatImageryDialog.h \
-    src/core/notifications/NotificationTypes.h \
     src/core/notifications/ActionableNotification.h \
+    src/core/notifications/NotificationTypes.h \
     src/core/notifications/INotificationStrategy.h \
     src/core/notifications/INotificationObserver.h \
     src/core/notifications/NotificationFactory.h \
@@ -193,6 +176,7 @@ HEADERS += \
     src/core/repositories/ITrackRepository.h \
     src/core/repositories/TrackRepository.h \
     src/core/services/ITrackIngestor.h \
+    src/core/services/XmlTrackIngestor.h \
     src/core/services/MapLibreTrackAdapter.h \
     src/ui/tracks/TrackTableModel.h \
     src/ui/tracks/TracksTableDialog.h \
@@ -203,6 +187,10 @@ HEADERS += \
     src/core/services/XmlAreaOfViewIngestor.h \
     src/core/services/MapLibreAreaOfViewAdapter.h \
     src/ui/area_of_view/AreaOfViewTableDialog.h \
+    src/core/models/BoundaryRecord.h \
+    src/core/services/CsvBoundaryIngestor.h \
+    src/core/services/MapLibreBoundaryAdapter.h \
+    src/ui/boundary/BoundaryTableDialog.h \
     src/core/models/GenericGisEntity.h \
     src/core/models/GisEntityRegistry.h \
     src/core/repositories/IGisEntityRepository.h \
@@ -210,20 +198,21 @@ HEADERS += \
     src/core/renderers/IEntityPainter.h \
     src/core/services/MapLibreGenericEntityAdapter.h \
     src/ui/entities/UniversalEntityEditorDialog.h \
+    src/core/Udp/AESEncryptionFile/encryptwithaes256.h \
+    src/core/Udp/datastore.h \
+    src/core/Udp/mediatorclass.h \
+    src/core/Udp/processudpmessagethread.h \
+    src/core/Udp/udpcommunication.h \
     src/core/Udp/handlers/IUdpMessageHandler.h \
     src/core/Udp/handlers/UdpMessageDispatcher.h \
     src/core/Udp/handlers/UdpTrackMessageHandler.h \
-    src/core/services/XmlTrackIngestor.h \
-    src/core/models/BoundaryRecord.h \
-    src/core/services/CsvBoundaryIngestor.h \
-    src/core/services/MapLibreBoundaryAdapter.h \
-    src/ui/boundary/BoundaryTableDialog.h
-
-
+    src/core/Udp/UdpMessages/IRS.h \
+    src/core/Udp/UdpMessages/MessageId.h \
+    src/core/Udp/UdpMessages/Structures.h \
+    fieldkeyvaluemapper.h
 
 FORMS += \
     mainwindow.ui
-
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

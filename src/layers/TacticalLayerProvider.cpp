@@ -146,6 +146,8 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
     }
     qWarning() << "[TacticalLayerProvider] populateLayerTree executing...";
 
+    layerManager->beginBulkUpdate();
+
     auto tacticalGroup = layerManager->addGroup("🛡️ Tactical Operations");
     auto intelligenceGroup = layerManager->addGroup("📡 Signals & Sensors");
     auto googleGroup = layerManager->addGroup("🌐 Google Imagery");
@@ -312,10 +314,14 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
         "boundary-outer-line-layer", map, indiaExtent, boundaryOuterParams, boundaryInnerParams);
     layerManager->addLayer("🇮🇳 Boundary Lines", boundaryLayerAdapter, tacticalGroup);
 
+    layerManager->endBulkUpdate();
+
     // Auto-restore custom published layers asynchronously after main UI window finishes rendering
     QTimer::singleShot(150, [layerManager, map]() {
+        layerManager->beginBulkUpdate();
         auto publishingService = new GISApp::Publishing::LayerPublishingService(layerManager);
         GISApp::Publishing::LayerRegistryManager::instance().restoreSavedLayers(layerManager, map, publishingService);
+        layerManager->endBulkUpdate();
     });
 }
 

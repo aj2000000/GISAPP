@@ -86,28 +86,15 @@
             "type": "Raster"
         },
         {
-            "folderPath": "/home/crl/aman/map/DSM",
-            "groupName": "🗺️ Raster Imagery & DSM",
-            "isTiled": false,
-            "isVisible": true,
-            "maxZoom": 18,
-            "minZoom": 0,
-            "name": "DSM",
-            "opacity": 1,
-            "orderIndex": 6,
-            "tilePath": "",
-            "type": "Raster"
-        },
-        {
-            "folderPath": "/home/crl/aman/MAPDATA/WorldMap/countries_world.geojson",
+            "folderPath": "/home/aman/aman/MAPDATA/WorldMap/worldgeo.json",
             "groupName": "📍 Custom Vector Layers",
             "isTiled": false,
             "isVisible": true,
             "maxZoom": 22,
             "minZoom": 0,
-            "name": "countries_world",
+            "name": "worldgeo",
             "opacity": 0.10000000149011612,
-            "orderIndex": 7,
+            "orderIndex": 6,
             "tilePath": "",
             "type": "Vector"
         }

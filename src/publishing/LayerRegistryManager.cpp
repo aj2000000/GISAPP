@@ -114,6 +114,11 @@ void LayerRegistryManager::saveToDisk() {
 void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerManager) {
     if (m_isRestoring || !m_restorationComplete) return;
     if (!layerManager || !layerManager->model()) return;
+    
+    if (layerManager->isBulkUpdateActive()) {
+        layerManager->requestRegistrySync();
+        return;
+    }
 
     auto root = layerManager->model()->rootNode();
     if (!root) return;

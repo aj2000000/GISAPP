@@ -89,5 +89,26 @@
         <trackReportTime>2026-08-29 14:57:00</trackReportTime>
         <trackRemarks>OWN movement along Highway NH-44</trackRemarks>
     </track>
+        <track>
+        <trackId>105</trackId>
+        <trackName>OWN TRACK</trackName>
+        <trackLat>32.7397</trackLat>
+        <trackLong>75.0180</trackLong>
+        <trackHeight>1580.0</trackHeight>
+        <trackDir>45.0</trackDir>
+        <trackIdentity>2</trackIdentity> <!-- Neutral -->
+        <trackType>3</trackType>     <!-- Land -->
+        <trackSubType>31</trackSubType>
+        <trackClass>1</trackClass>
+        <trackStrength>12</trackStrength>
+        <trackActType>30</trackActType>
+        <trackActSubType>301</trackActSubType>
+        <trackActClass>1</trackActClass>
+        <trackSystemType>3</trackSystemType>
+        <trackSources>SATELLITE_OPTICAL_SENSORS</trackSources>
+        <trackImage>convoy_truck_symbol</trackImage>
+        <trackReportTime>2026-08-29 14:57:00</trackReportTime>
+        <trackRemarks>OWN movement along Highway NH-44</trackRemarks>
+    </track>
 </tracks>
 

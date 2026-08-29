@@ -202,53 +202,61 @@ void MainWindow::setupMapView()
             // Connect style load to tactical layer population and track rendering
             connect(m_mapWidget->map(), &QMapLibre::Map::mapChanged, [this](QMapLibre::Map::MapChange change) {
                 if (change == QMapLibre::Map::MapChangeDidFinishLoadingStyle) {
-                    if (!m_trackAdapter && m_trackRepository) {
-                        m_trackAdapter = new GISApp::Core::Services::MapLibreTrackAdapter(m_mapWidget->map(), m_trackRepository, this);
-                        m_trackAdapter->setLayerManager(m_layerManager);
-                    } else if (m_trackAdapter) {
-                        m_trackAdapter->setMap(m_mapWidget->map());
-                        m_trackAdapter->setLayerManager(m_layerManager);
-                    }
+                    if (!m_styleDebounceTimer) {
+                        m_styleDebounceTimer = new QTimer(this);
+                        m_styleDebounceTimer->setSingleShot(true);
+                        connect(m_styleDebounceTimer, &QTimer::timeout, this, [this]() {
+                            if (!m_trackAdapter && m_trackRepository) {
+                                m_trackAdapter = new GISApp::Core::Services::MapLibreTrackAdapter(m_mapWidget->map(), m_trackRepository, this);
+                                m_trackAdapter->setLayerManager(m_layerManager);
+                            } else if (m_trackAdapter) {
+                                m_trackAdapter->setMap(m_mapWidget->map());
+                                m_trackAdapter->setLayerManager(m_layerManager);
+                            }
 
-                    if (!m_areaOfViewAdapter && m_areaOfViewRepository) {
-                        m_areaOfViewAdapter = new GISApp::Core::Services::MapLibreAreaOfViewAdapter(m_mapWidget->map(), m_areaOfViewRepository, this);
-                    } else if (m_areaOfViewAdapter) {
-                        m_areaOfViewAdapter->setMap(m_mapWidget->map());
-                    }
+                            if (!m_areaOfViewAdapter && m_areaOfViewRepository) {
+                                m_areaOfViewAdapter = new GISApp::Core::Services::MapLibreAreaOfViewAdapter(m_mapWidget->map(), m_areaOfViewRepository, this);
+                            } else if (m_areaOfViewAdapter) {
+                                m_areaOfViewAdapter->setMap(m_mapWidget->map());
+                            }
 
-                    if (!m_genericEntityAdapter && m_genericEntityRepository) {
-                        m_genericEntityAdapter = new GISApp::Core::Services::MapLibreGenericEntityAdapter(m_mapWidget->map(), m_genericEntityRepository, this);
-                        m_genericEntityAdapter->setLayerManager(m_layerManager);
-                    } else if (m_genericEntityAdapter) {
-                        m_genericEntityAdapter->setMap(m_mapWidget->map());
-                        m_genericEntityAdapter->setLayerManager(m_layerManager);
-                    }
+                            if (!m_genericEntityAdapter && m_genericEntityRepository) {
+                                m_genericEntityAdapter = new GISApp::Core::Services::MapLibreGenericEntityAdapter(m_mapWidget->map(), m_genericEntityRepository, this);
+                                m_genericEntityAdapter->setLayerManager(m_layerManager);
+                            } else if (m_genericEntityAdapter) {
+                                m_genericEntityAdapter->setMap(m_mapWidget->map());
+                                m_genericEntityAdapter->setLayerManager(m_layerManager);
+                            }
 
-                    GISApp::Layers::TacticalLayerProvider p;
-                    p.setupTacticalLayers(m_mapWidget->map());
-                    p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
+                            GISApp::Layers::TacticalLayerProvider p;
+                            p.setupTacticalLayers(m_mapWidget->map());
+                            p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
 
-                    if (!m_boundaryAdapter) {
-                        m_boundaryAdapter = new GISApp::Core::Services::MapLibreBoundaryAdapter(m_mapWidget->map(), this);
-                    } else {
-                        m_boundaryAdapter->setMap(m_mapWidget->map());
-                    }
-                    m_userBoundaries = m_boundaryAdapter->loadSavedBoundaries();
-                    if (!m_userBoundaries.isEmpty()) {
-                        m_boundaryAdapter->setBoundaries(m_userBoundaries);
-                    }
+                            if (!m_boundaryAdapter) {
+                                m_boundaryAdapter = new GISApp::Core::Services::MapLibreBoundaryAdapter(m_mapWidget->map(), this);
+                            } else {
+                                m_boundaryAdapter->setMap(m_mapWidget->map());
+                            }
+                            m_userBoundaries = m_boundaryAdapter->loadSavedBoundaries();
+                            if (!m_userBoundaries.isEmpty()) {
+                                m_boundaryAdapter->setBoundaries(m_userBoundaries);
+                            }
 
-                    m_mapWidget->updateMap();
-                    QTimer::singleShot(200, this, &MainWindow::focusOnAreaOfView);
-                    QTimer::singleShot(600, this, &MainWindow::focusOnAreaOfView);
+                            m_mapWidget->updateMap();
+                            static bool initialFocusDone = false;
+                            if (!initialFocusDone) {
+                                initialFocusDone = true;
+                                QTimer::singleShot(500, this, &MainWindow::focusOnAreaOfView);
+                            }
+                        });
+                    }
+                    m_styleDebounceTimer->start(150); // Debounce to allow multiple style loading events to settle
                 }
             });
 
             // Set Initial Offline Tactical Dark Style and Camera
             QString offlineStyle = QString("file://%1").arg(GISApp::Core::SystemConfigManager::instance().getOfflineStylePath());
             m_mapController->setStyle(offlineStyle);
-            QTimer::singleShot(200, this, &MainWindow::focusOnAreaOfView);
-            QTimer::singleShot(600, this, &MainWindow::focusOnAreaOfView);
         }
     });
     timer->start(50);
