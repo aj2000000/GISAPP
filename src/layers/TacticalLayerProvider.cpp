@@ -286,7 +286,7 @@ void TacticalLayerProvider::populateLayerTree(LayerManager *layerManager, QMapLi
 
     // 5. National Boundary Polyline (Outer Green Stroke, Inner Saffron Stroke)
     auto boundaryAdapter = new Core::Services::MapLibreBoundaryAdapter(map, this);
-    boundaryAdapter->setBoundaries({});
+    boundaryAdapter->ensureLayersCreated();
 
     QVariantMap boundaryOuterParams;
     boundaryOuterParams["id"] = "boundary-outer-line-layer";

@@ -27046,6 +27046,16 @@ build/obj/MapLibreBoundaryAdapter.o: src/core/services/MapLibreBoundaryAdapter.c
 		../../../Qt/6.10.1/gcc_64/include/QtCore/QJsonArray \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/qjsonarray.h \
 		src/core/SystemConfigManager.h \
+		src/core/database/DatabaseManager.h \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/QSqlDatabase \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/qsqldatabase.h \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/qtsqlglobal.h \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/qtsql-config.h \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/qtsqlexports.h \
+		../../../Qt/6.10.1/gcc_64/include/QtCore/qmetaobject.h \
+		../../../Qt/6.10.1/gcc_64/include/QtCore/QMutex \
+		../../../Qt/6.10.1/gcc_64/include/QtCore/qmutex.h \
+		../../../Qt/6.10.1/gcc_64/include/QtCore/qtsan_impl.h \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/QJsonDocument \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/QFile \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/qfile.h \
@@ -27059,6 +27069,10 @@ build/obj/MapLibreBoundaryAdapter.o: src/core/services/MapLibreBoundaryAdapter.c
 		../../../Qt/6.10.1/gcc_64/include/QtCore/QVariantMap \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/qvariantmap.h \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/QMap \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/QSqlQuery \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/qsqlquery.h \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/QSqlError \
+		../../../Qt/6.10.1/gcc_64/include/QtSql/qsqlerror.h \
 		../../../Qt/6.10.1/gcc_64/include/QtCore/QDebug
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/MapLibreBoundaryAdapter.o src/core/services/MapLibreBoundaryAdapter.cpp
 

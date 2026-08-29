@@ -224,17 +224,19 @@ void MainWindow::setupMapView()
                         m_genericEntityAdapter->setLayerManager(m_layerManager);
                     }
 
+                    GISApp::Layers::TacticalLayerProvider p;
+                    p.setupTacticalLayers(m_mapWidget->map());
+                    p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
+
                     if (!m_boundaryAdapter) {
                         m_boundaryAdapter = new GISApp::Core::Services::MapLibreBoundaryAdapter(m_mapWidget->map(), this);
                     } else {
                         m_boundaryAdapter->setMap(m_mapWidget->map());
                     }
                     m_userBoundaries = m_boundaryAdapter->loadSavedBoundaries();
-                    m_boundaryAdapter->setBoundaries(m_userBoundaries);
-
-                    GISApp::Layers::TacticalLayerProvider p;
-                    p.setupTacticalLayers(m_mapWidget->map());
-                    p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
+                    if (!m_userBoundaries.isEmpty()) {
+                        m_boundaryAdapter->setBoundaries(m_userBoundaries);
+                    }
 
                     m_mapWidget->updateMap();
                     QTimer::singleShot(200, this, &MainWindow::focusOnAreaOfView);

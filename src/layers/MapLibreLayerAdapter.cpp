@@ -235,19 +235,30 @@ void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
             m_map->removeLayer(strokeId);
         }
 
+        QString targetBefore = beforeLayerId;
+        if (targetBefore.isEmpty() && m_layerId != "boundary-outer-line-layer" && m_layerId != "boundary-inner-line-layer" && m_layerId != "tracks-circle-layer") {
+            if (m_map->layerExists("boundary-outer-line-layer")) {
+                targetBefore = "boundary-outer-line-layer";
+            } else if (m_map->layerExists("area-of-view-fill-layer")) {
+                targetBefore = "area-of-view-fill-layer";
+            } else if (m_map->layerExists("tracks-circle-layer")) {
+                targetBefore = "tracks-circle-layer";
+            }
+        }
+
         if (!m_map->layerExists(m_layerId)) {
-            if (beforeLayerId.isEmpty()) {
+            if (targetBefore.isEmpty()) {
                 m_map->addLayer(m_layerId, m_layerParams);
             } else {
-                m_map->addLayer(m_layerId, m_layerParams, beforeLayerId);
+                m_map->addLayer(m_layerId, m_layerParams, targetBefore);
             }
         }
 
         if (!m_strokeParams.isEmpty() && !m_map->layerExists(strokeId)) {
-            if (beforeLayerId.isEmpty()) {
+            if (targetBefore.isEmpty()) {
                 m_map->addLayer(strokeId, m_strokeParams);
             } else {
-                m_map->addLayer(strokeId, m_strokeParams, beforeLayerId);
+                m_map->addLayer(strokeId, m_strokeParams, targetBefore);
             }
         }
     } catch (const std::exception &e) {

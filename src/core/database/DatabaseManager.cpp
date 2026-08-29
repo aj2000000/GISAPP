@@ -143,6 +143,21 @@ bool DatabaseManager::createSchema()
         return false;
     }
 
+    const QString createBoundariesDdl = R"(
+        CREATE TABLE IF NOT EXISTS BOUNDARIES (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            BOUNDARY_ID INTEGER,
+            NAME TEXT,
+            N_POINTS INTEGER,
+            POINTS_JSON TEXT
+        );
+    )";
+
+    if (!query.exec(createBoundariesDdl)) {
+        qCritical() << "[DatabaseManager] DDL error creating BOUNDARIES table:" << query.lastError().text();
+        return false;
+    }
+
     return true;
 }
 

@@ -23,6 +23,9 @@ private:
     QMapLibre::Map *m_map{nullptr};
     QVector<Models::BoundaryRecord> m_boundaries;
     bool m_layersCreated{false};
+
+    void saveBoundariesToDatabase(const QVector<Models::BoundaryRecord> &boundaries);
+    QVector<Models::BoundaryRecord> loadBoundariesFromDatabase();
 };
 
 } // namespace GISApp::Core::Services
