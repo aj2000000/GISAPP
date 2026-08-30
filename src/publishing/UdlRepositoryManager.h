@@ -49,6 +49,7 @@ public:
     bool saveEntity(const UdlEntityItem &item, bool recordUndo = true);
     bool deleteEntity(const QString &entityId, const QString &layerId, bool recordUndo = true);
     bool deleteLayer(const QString &layerId);
+    bool clearAllEntities(const QString &layerId = QString());
     bool undoLastAction();
     bool canUndo() const { return !m_undoStack.isEmpty(); }
 

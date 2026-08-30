@@ -72,6 +72,20 @@ void UdlEntityTableDialog::setupUi() {
     });
     topLayout->addWidget(btnClearClipboard);
 
+    auto btnClearAll = new QPushButton(tr("🗑️ Clear All Entities"), this);
+    btnClearAll->setStyleSheet("background-color: #f38ba8; color: #11111b; border: 1px solid #f38ba8; border-radius: 6px; padding: 6px 12px; font-weight: bold;");
+    connect(btnClearAll, &QPushButton::clicked, this, [this]() {
+        QString currentLayer = m_layerFilterCombo ? m_layerFilterCombo->currentData().toString() : "ALL";
+        QString targetMsg = (currentLayer == "ALL" || currentLayer.isEmpty()) ? "all UDL entities across all layers" : QString("all entities in %1").arg(m_layerFilterCombo->currentText());
+        if (QMessageBox::question(this, tr("Clear All Entities"), tr("Are you sure you want to delete %1? This action cannot be undone.").arg(targetMsg), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+            GISApp::Publishing::UdlRepositoryManager::instance().clearAllEntities(currentLayer);
+            GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                "UDL Entities", "Cleared UDL entities successfully.");
+            populateTable();
+        }
+    });
+    topLayout->addWidget(btnClearAll);
+
     mainLayout->addLayout(topLayout);
 
     m_tableWidget = new QTableWidget(this);
@@ -207,6 +221,7 @@ void UdlEntityTableDialog::populateTable() {
             else if (itemCopy.entityType == "Polygon") gType = GISApp::UI::UDL::UdlGeometryType::Polygon;
             else if (itemCopy.entityType == "Circle") gType = GISApp::UI::UDL::UdlGeometryType::Circle;
             else if (itemCopy.entityType == "Text") gType = GISApp::UI::UDL::UdlGeometryType::Text;
+            else if (itemCopy.entityType == "Image") gType = GISApp::UI::UDL::UdlGeometryType::Image;
 
             GISApp::UI::UDL::UdlEntityStyleDialog dlg(gType, this);
             dlg.setEntityName(itemCopy.entityName);

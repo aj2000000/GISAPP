@@ -1012,6 +1012,7 @@ void MainWindow::onMapContextMenuRequested(const QPoint &globalPos, const QPoint
                 else if (ent.entityType == "Polygon") gType = GISApp::UI::UDL::UdlGeometryType::Polygon;
                 else if (ent.entityType == "Circle") gType = GISApp::UI::UDL::UdlGeometryType::Circle;
                 else if (ent.entityType == "Text") gType = GISApp::UI::UDL::UdlGeometryType::Text;
+                else if (ent.entityType == "Image") gType = GISApp::UI::UDL::UdlGeometryType::Image;
 
                 GISApp::UI::UDL::UdlEntityStyleDialog styleDlg(gType, this);
                 styleDlg.setEntityName(ent.entityName);
@@ -1032,6 +1033,15 @@ void MainWindow::onMapContextMenuRequested(const QPoint &globalPos, const QPoint
                 GISApp::Publishing::UdlRepositoryManager::instance().deleteEntity(ent.entityId, ent.layerId);
                 GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
                     "UDL Entity", QString("Deleted entity '%1'").arg(ent.entityName));
+            });
+
+            QAction *clearLayerEntsAct = udlSubMenu->addAction(QString("🗑️ Clear All Entities in Layer"));
+            connect(clearLayerEntsAct, &QAction::triggered, [ent, this]() {
+                if (QMessageBox::question(this, tr("Clear Layer Entities"), tr("Delete all entities in layer '%1'?").arg(ent.layerId), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                    GISApp::Publishing::UdlRepositoryManager::instance().clearAllEntities(ent.layerId);
+                    GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                        "UDL Entities", QString("Cleared all entities for layer '%1'").arg(ent.layerId));
+                }
             });
         }
         menu.addSeparator();
@@ -1272,6 +1282,7 @@ void MainWindow::showUdlEntityDetailsDialog(const GISApp::Publishing::UdlEntityI
         else if (entity.entityType == "Polygon") gType = GISApp::UI::UDL::UdlGeometryType::Polygon;
         else if (entity.entityType == "Circle") gType = GISApp::UI::UDL::UdlGeometryType::Circle;
         else if (entity.entityType == "Text") gType = GISApp::UI::UDL::UdlGeometryType::Text;
+        else if (entity.entityType == "Image") gType = GISApp::UI::UDL::UdlGeometryType::Image;
 
         GISApp::UI::UDL::UdlEntityStyleDialog styleDlg(gType, this);
         styleDlg.setEntityName(entity.entityName);
@@ -1482,6 +1493,7 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
     QString srcId = sanitizedId + "-src";
 
     if (map->layerExists(sanitizedId + "-symbol")) map->removeLayer(sanitizedId + "-symbol");
+    if (map->layerExists(sanitizedId + "-image")) map->removeLayer(sanitizedId + "-image");
     if (map->layerExists(sanitizedId + "-circle")) map->removeLayer(sanitizedId + "-circle");
     if (map->layerExists(sanitizedId + "-line")) map->removeLayer(sanitizedId + "-line");
     if (map->layerExists(sanitizedId + "-fill")) map->removeLayer(sanitizedId + "-fill");
@@ -1531,7 +1543,7 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
     lineParams["paint"] = linePaint;
     map->addLayer(sanitizedId + "-line", lineParams);
 
-    // Add Point Circle layer for non-text Point entities
+    // Add Point Circle layer for non-text / non-image Point entities
     QVariantMap circleParams;
     circleParams["id"] = sanitizedId + "-circle";
     circleParams["type"] = "circle";
@@ -1540,12 +1552,12 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
     circlePaint["circle-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, "#f59e0b"}};
     circlePaint["circle-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
     circlePaint["circle-radius"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "pointRadius"}, QVariantList{"get", "lineWidth"}, 6.0}};
-    circlePaint["circle-stroke-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "borderColor"}, QVariantList{"get", "strokeColor"}, "#ffffff"}};
-    circlePaint["circle-stroke-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "borderOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
-    circlePaint["circle-stroke-width"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "borderWidth"}, 2.0}};
+    circlePaint["circle-stroke-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, "#f59e0b"}};
+    circlePaint["circle-stroke-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
+    circlePaint["circle-stroke-width"] = 0.0;
     circleParams["paint"] = circlePaint;
 
-    QVariantList circleFilter{"all", QVariantList{"==", "$type", "Point"}, QVariantList{"!=", "entityType", "Text"}};
+    QVariantList circleFilter{"all", QVariantList{"==", "$type", "Point"}, QVariantList{"!=", "entityType", "Text"}, QVariantList{"!=", "entityType", "Image"}};
     circleParams["filter"] = circleFilter;
     map->addLayer(sanitizedId + "-circle", circleParams);
 
@@ -1574,6 +1586,45 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
     QVariantList symbolFilter{"==", "entityType", "Text"};
     symbolParams["filter"] = symbolFilter;
     map->addLayer(sanitizedId + "-symbol", symbolParams);
+
+    // Register images and Add Image Symbol layer for Image entities
+    auto layerEntities = GISApp::Publishing::UdlRepositoryManager::instance().getEntitiesForLayer(layerId);
+    for (const auto &item : layerEntities) {
+        if (item.entityType == "Image") {
+            QString path = item.styleJson.value("imagePath").toString();
+            if (!path.isEmpty() && QFile::exists(path)) {
+                QString iconId = QString("udl-icon-%1").arg(qHash(path));
+                QImage img(path);
+                if (!img.isNull()) {
+                    int targetW = item.styleJson.value("imageWidth").toInt(64);
+                    int targetH = item.styleJson.value("imageHeight").toInt(64);
+                    if (targetW > 0 && targetH > 0 && (img.width() != targetW || img.height() != targetH)) {
+                        img = img.scaled(targetW, targetH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    }
+                    map->addImage(iconId, img);
+                }
+            }
+        }
+    }
+
+    QVariantMap imgParams;
+    imgParams["id"] = sanitizedId + "-image";
+    imgParams["type"] = "symbol";
+    imgParams["source"] = srcId;
+
+    QVariantMap imgLayout;
+    imgLayout["icon-image"] = QString("{iconId}");
+    imgLayout["icon-allow-overlap"] = true;
+    imgLayout["icon-ignore-placement"] = true;
+    imgParams["layout"] = imgLayout;
+
+    QVariantMap imgPaint;
+    imgPaint["icon-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "imageOpacity"}, 1.0}};
+    imgParams["paint"] = imgPaint;
+
+    QVariantList imgFilter{"==", "entityType", "Image"};
+    imgParams["filter"] = imgFilter;
+    map->addLayer(sanitizedId + "-image", imgParams);
 
     // Ensure LayerManager has a LayerNode with a valid MapLibreLayerAdapter for this UDL layer!
     if (m_layerManager) {

@@ -9,13 +9,18 @@
 #include <QFormLayout>
 #include <QDialogButtonBox>
 #include <QGroupBox>
+#include <QFileDialog>
+#include <QFileInfo>
 
 namespace GISApp::UI::UDL {
 
 UdlEntityStyleDialog::UdlEntityStyleDialog(UdlGeometryType type, QWidget *parent)
     : QDialog(parent), m_type(type)
 {
-    setWindowTitle(type == UdlGeometryType::Text ? tr("Add Text Label & Font Properties") : tr("Configure UDL Entity Style"));
+    QString title = tr("Configure UDL Entity Style");
+    if (type == UdlGeometryType::Text) title = tr("Add Text Label & Font Properties");
+    else if (type == UdlGeometryType::Image) title = tr("Upload & Configure UDL Image Entity");
+    setWindowTitle(title);
     setMinimumWidth(400);
     setStyleSheet("QDialog { background-color: #1e1e2e; color: #cdd6f4; }"
                   "QLabel { color: #cdd6f4; font-size: 12px; }"
@@ -117,6 +122,42 @@ void UdlEntityStyleDialog::setupUi() {
         m_spinBorderWidth->setValue(1);
         formLayout->addRow(tr("Border Width (px):"), m_spinBorderWidth);
 
+    } else if (m_type == UdlGeometryType::Image) {
+        auto pathLayout = new QHBoxLayout();
+        m_txtImagePath = new QLineEdit(this);
+        m_txtImagePath->setPlaceholderText(tr("Select image file... (PNG, JPG, SVG)"));
+        m_btnBrowseImage = new QPushButton(tr("📁 Browse..."), this);
+        pathLayout->addWidget(m_txtImagePath);
+        pathLayout->addWidget(m_btnBrowseImage);
+
+        connect(m_btnBrowseImage, &QPushButton::clicked, this, [this]() {
+            QString file = QFileDialog::getOpenFileName(this, tr("Select Image File"), QString(),
+                tr("Image Files (*.png *.jpg *.jpeg *.svg *.webp *.bmp *.gif);;All Files (*)"));
+            if (!file.isEmpty()) {
+                m_txtImagePath->setText(file);
+                if (m_txtNameEdit && m_txtNameEdit->text().isEmpty()) {
+                    m_txtNameEdit->setText(QFileInfo(file).baseName());
+                }
+            }
+        });
+        formLayout->addRow(tr("Image File:"), pathLayout);
+
+        m_spinImageWidth = new QSpinBox(this);
+        m_spinImageWidth->setRange(8, 1024);
+        m_spinImageWidth->setValue(64);
+        formLayout->addRow(tr("Image Width (px):"), m_spinImageWidth);
+
+        m_spinImageHeight = new QSpinBox(this);
+        m_spinImageHeight->setRange(8, 1024);
+        m_spinImageHeight->setValue(64);
+        formLayout->addRow(tr("Image Height (px):"), m_spinImageHeight);
+
+        m_spinImageOpacity = new QDoubleSpinBox(this);
+        m_spinImageOpacity->setRange(0.0, 1.0);
+        m_spinImageOpacity->setSingleStep(0.05);
+        m_spinImageOpacity->setValue(1.0);
+        formLayout->addRow(tr("Image Opacity:"), m_spinImageOpacity);
+
     } else {
         // --- Non-Text Shapes (Point, Polyline, Polygon, Circle) ---
         m_btnStrokeColor = new QPushButton(this);
@@ -197,6 +238,9 @@ QString UdlEntityStyleDialog::entityName() const {
 
 void UdlEntityStyleDialog::setStrokeColor(const QColor &color) {
     m_strokeColor = color;
+    if (m_type == UdlGeometryType::Point) {
+        m_fillColor = color;
+    }
     updateColorButton(m_btnStrokeColor, m_strokeColor);
 }
 
@@ -328,6 +372,38 @@ int UdlEntityStyleDialog::fontSize() const {
     return m_spinFontSize ? m_spinFontSize->value() : 14;
 }
 
+void UdlEntityStyleDialog::setImagePath(const QString &path) {
+    if (m_txtImagePath) m_txtImagePath->setText(path);
+}
+
+QString UdlEntityStyleDialog::imagePath() const {
+    return m_txtImagePath ? m_txtImagePath->text().trimmed() : QString();
+}
+
+void UdlEntityStyleDialog::setImageWidth(int width) {
+    if (m_spinImageWidth) m_spinImageWidth->setValue(width);
+}
+
+int UdlEntityStyleDialog::imageWidth() const {
+    return m_spinImageWidth ? m_spinImageWidth->value() : 64;
+}
+
+void UdlEntityStyleDialog::setImageHeight(int height) {
+    if (m_spinImageHeight) m_spinImageHeight->setValue(height);
+}
+
+int UdlEntityStyleDialog::imageHeight() const {
+    return m_spinImageHeight ? m_spinImageHeight->value() : 64;
+}
+
+void UdlEntityStyleDialog::setImageOpacity(double opacity) {
+    if (m_spinImageOpacity) m_spinImageOpacity->setValue(opacity);
+}
+
+double UdlEntityStyleDialog::imageOpacity() const {
+    return m_spinImageOpacity ? m_spinImageOpacity->value() : 1.0;
+}
+
 QJsonObject UdlEntityStyleDialog::styleJsonObject() const {
     QJsonObject obj;
     obj["strokeColor"] = strokeColor().name();
@@ -335,8 +411,8 @@ QJsonObject UdlEntityStyleDialog::styleJsonObject() const {
 
     if (m_type == UdlGeometryType::Point) {
         obj["pointRadius"] = pointRadius();
-        obj["fillColor"] = fillColor().name();
-        obj["fillOpacity"] = fillOpacity();
+        obj["fillColor"] = strokeColor().name();
+        obj["fillOpacity"] = strokeOpacity();
     }
     if (m_type == UdlGeometryType::Polyline || m_type == UdlGeometryType::Polygon || m_type == UdlGeometryType::Circle) {
         obj["lineWidth"] = lineWidth();
@@ -356,6 +432,12 @@ QJsonObject UdlEntityStyleDialog::styleJsonObject() const {
         obj["borderWidth"] = borderWidth();
         obj["fontFamily"] = fontFamily();
         obj["fontSize"] = fontSize();
+    }
+    if (m_type == UdlGeometryType::Image) {
+        obj["imagePath"] = imagePath();
+        obj["imageWidth"] = imageWidth();
+        obj["imageHeight"] = imageHeight();
+        obj["imageOpacity"] = imageOpacity();
     }
     return obj;
 }
@@ -377,6 +459,10 @@ void UdlEntityStyleDialog::setStyleJsonObject(const QJsonObject &style) {
     if (style.contains("borderWidth")) setBorderWidth(style["borderWidth"].toInt());
     if (style.contains("fontFamily")) setFontFamily(style["fontFamily"].toString());
     if (style.contains("fontSize")) setFontSize(style["fontSize"].toInt());
+    if (style.contains("imagePath")) setImagePath(style["imagePath"].toString());
+    if (style.contains("imageWidth")) setImageWidth(style["imageWidth"].toInt());
+    if (style.contains("imageHeight")) setImageHeight(style["imageHeight"].toInt());
+    if (style.contains("imageOpacity")) setImageOpacity(style["imageOpacity"].toDouble());
 }
 
 } // namespace GISApp::UI::UDL

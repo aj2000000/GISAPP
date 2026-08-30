@@ -61,6 +61,7 @@ private:
     QToolButton *m_btnPolygon{nullptr};
     QToolButton *m_btnCircle{nullptr};
     QToolButton *m_btnText{nullptr};
+    QToolButton *m_btnImage{nullptr};
     QLineEdit *m_txtLabelInput{nullptr};
     QToolButton *m_btnUndo{nullptr};
     QToolButton *m_btnStrokeColor{nullptr};

@@ -12,6 +12,8 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QInputDialog>
+#include <QFile>
+#include <QFileInfo>
 #include <cmath>
 
 namespace GISApp::Tools {
@@ -152,7 +154,7 @@ void UdlDrawingTool::onMouseRelease(QMouseEvent *event, const GISApp::Core::Mode
         emit waypointsUpdated(m_waypoints);
         emit previewUpdated(m_waypoints, m_currentMouseCoord, m_geomType, true, m_strokeColor, m_fillColor);
 
-        if (m_geomType == GISApp::UI::UDL::UdlGeometryType::Point || m_geomType == GISApp::UI::UDL::UdlGeometryType::Text) {
+        if (m_geomType == GISApp::UI::UDL::UdlGeometryType::Point || m_geomType == GISApp::UI::UDL::UdlGeometryType::Text || m_geomType == GISApp::UI::UDL::UdlGeometryType::Image) {
             finishShape();
         } else if (m_geomType == GISApp::UI::UDL::UdlGeometryType::Circle && m_waypoints.size() >= 2) {
             finishShape();
@@ -202,6 +204,11 @@ void UdlDrawingTool::finishShape() {
     if (m_geomType == GISApp::UI::UDL::UdlGeometryType::Point) {
         entityTypeStr = "Point";
         entityName = QString("Point #%1").arg(m_entityCounter++);
+        styleObj["strokeColor"] = m_strokeColor.name();
+        styleObj["fillColor"] = m_strokeColor.name();
+        styleObj["fillOpacity"] = 1.0;
+        styleObj["strokeOpacity"] = 1.0;
+        styleObj["pointRadius"] = 6;
         geomObj["type"] = "Point";
         QJsonArray coords;
         coords.append(m_waypoints[0].longitude());
@@ -299,9 +306,39 @@ void UdlDrawingTool::finishShape() {
             emit previewUpdated(m_waypoints, m_currentMouseCoord, m_geomType, m_active, m_strokeColor, m_fillColor);
             return;
         }
+    } else if (m_geomType == GISApp::UI::UDL::UdlGeometryType::Image) {
+        entityTypeStr = "Image";
+
+        geomObj["type"] = "Point";
+        QJsonArray coords;
+        coords.append(m_waypoints[0].longitude());
+        coords.append(m_waypoints[0].latitude());
+        geomObj["coordinates"] = coords;
+
+        GISApp::UI::UDL::UdlEntityStyleDialog dlg(m_geomType);
+        dlg.setWindowTitle(tr("Upload & Place Image Entity"));
+
+        if (dlg.exec() == QDialog::Accepted) {
+            styleObj = dlg.styleJsonObject();
+            QString path = dlg.imagePath();
+            if (path.isEmpty() || !QFile::exists(path)) {
+                qWarning() << "[UdlDrawingTool] Invalid or empty image path provided for Image entity.";
+                m_waypoints.clear();
+                emit waypointsUpdated(m_waypoints);
+                emit previewUpdated(m_waypoints, m_currentMouseCoord, m_geomType, m_active, m_strokeColor, m_fillColor);
+                return;
+            }
+            entityName = dlg.entityName().isEmpty() ? QFileInfo(path).baseName() : dlg.entityName();
+            m_entityCounter++;
+        } else {
+            m_waypoints.clear();
+            emit waypointsUpdated(m_waypoints);
+            emit previewUpdated(m_waypoints, m_currentMouseCoord, m_geomType, m_active, m_strokeColor, m_fillColor);
+            return;
+        }
     }
 
-    if (!m_isQuickName && m_geomType != GISApp::UI::UDL::UdlGeometryType::Text) {
+    if (!m_isQuickName && m_geomType != GISApp::UI::UDL::UdlGeometryType::Text && m_geomType != GISApp::UI::UDL::UdlGeometryType::Image) {
         GISApp::UI::UDL::UdlEntityStyleDialog dlg(m_geomType);
         dlg.setEntityName(entityName);
         dlg.setStrokeColor(m_strokeColor);

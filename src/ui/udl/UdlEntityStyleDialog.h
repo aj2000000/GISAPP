@@ -24,7 +24,8 @@ enum class UdlGeometryType {
     Polyline,
     Polygon,
     Circle,
-    Text
+    Text,
+    Image
 };
 
 class UdlEntityStyleDialog : public QDialog {
@@ -86,6 +87,19 @@ public:
     void setFontSize(int size);
     int fontSize() const;
 
+    // Image specific properties
+    void setImagePath(const QString &path);
+    QString imagePath() const;
+
+    void setImageWidth(int width);
+    int imageWidth() const;
+
+    void setImageHeight(int height);
+    int imageHeight() const;
+
+    void setImageOpacity(double opacity);
+    double imageOpacity() const;
+
     QJsonObject styleJsonObject() const;
     void setStyleJsonObject(const QJsonObject &style);
 
@@ -113,6 +127,13 @@ private:
     QSpinBox *m_spinBorderWidth{nullptr};
     QComboBox *m_comboFontFamily{nullptr};
     QSpinBox *m_spinFontSize{nullptr};
+
+    // Image controls
+    QLineEdit *m_txtImagePath{nullptr};
+    QPushButton *m_btnBrowseImage{nullptr};
+    QSpinBox *m_spinImageWidth{nullptr};
+    QSpinBox *m_spinImageHeight{nullptr};
+    QDoubleSpinBox *m_spinImageOpacity{nullptr};
 
     QColor m_strokeColor{QColor("#f59e0b")};   // Amber
     QColor m_fillColor{QColor("#ff9933")};     // Saffron

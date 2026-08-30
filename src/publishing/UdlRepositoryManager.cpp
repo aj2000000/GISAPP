@@ -165,6 +165,41 @@ bool UdlRepositoryManager::deleteLayer(const QString &layerId) {
     return true;
 }
 
+bool UdlRepositoryManager::clearAllEntities(const QString &layerId) {
+    auto db = GISApp::Core::Database::DatabaseManager::instance()->database();
+    if (!db.isOpen()) return false;
+
+    QSqlQuery query(db);
+    QList<QString> affectedLayers;
+
+    if (!layerId.isEmpty() && layerId != "ALL") {
+        query.prepare("DELETE FROM UDL_ENTITIES WHERE LAYER_ID = :lid;");
+        query.bindValue(":lid", layerId);
+        affectedLayers.append(layerId);
+    } else {
+        QSqlQuery selQuery("SELECT DISTINCT LAYER_ID FROM UDL_ENTITIES;", db);
+        while (selQuery.next()) {
+            affectedLayers.append(selQuery.value(0).toString());
+        }
+        query.prepare("DELETE FROM UDL_ENTITIES;");
+    }
+
+    if (!query.exec()) {
+        qCritical() << "[UdlRepositoryManager] Clear entities failed:" << query.lastError().text();
+        return false;
+    }
+
+    for (const auto &lid : affectedLayers) {
+        syncGeoJsonFile(lid);
+    }
+
+    m_undoStack.clear();
+    emit undoStateChanged(false);
+
+    qDebug() << "[UdlRepositoryManager] Cleared all entities for target:" << (layerId.isEmpty() ? "ALL" : layerId);
+    return true;
+}
+
 bool UdlRepositoryManager::undoLastAction() {
     if (m_undoStack.isEmpty()) return false;
 
@@ -248,6 +283,14 @@ bool UdlRepositoryManager::syncGeoJsonFile(const QString &layerId) {
         properties["entityType"] = item.entityType;
         if (item.entityType == "Text" && (!properties.contains("textContent") || properties["textContent"].toString().isEmpty())) {
             properties["textContent"] = item.entityName;
+        }
+        if (item.entityType == "Image") {
+            QString path = properties.value("imagePath").toString();
+            QString iconId = QString("udl-icon-%1").arg(qHash(path));
+            properties["iconId"] = iconId;
+            properties["imagePath"] = path;
+            double imgWidth = properties.value("imageWidth").toDouble(64.0);
+            properties["imageScale"] = imgWidth / 64.0;
         }
 
         feature["properties"] = properties;

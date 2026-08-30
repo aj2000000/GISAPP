@@ -125,6 +125,17 @@ void UdlToolbarWidget::setupUi() {
     });
     row1Layout->addWidget(m_btnText);
 
+    m_btnImage = new QToolButton(this);
+    m_btnImage->setText(tr("🖼️ Image"));
+    m_btnImage->setCheckable(true);
+    m_btnImage->setToolTip(tr("Upload and place image entity at location (🖼️)"));
+    toolGroup->addButton(m_btnImage);
+    connect(m_btnImage, &QToolButton::clicked, this, [this]() {
+        setActiveGeometryType(UdlGeometryType::Image);
+        emit toolSelected(UdlGeometryType::Image);
+    });
+    row1Layout->addWidget(m_btnImage);
+
     auto line1b = new QFrame(this);
     line1b->setFrameShape(QFrame::VLine);
     line1b->setStyleSheet("color: #45475a;");
@@ -171,6 +182,9 @@ void UdlToolbarWidget::setupUi() {
         QColor c = QColorDialog::getColor(m_strokeColor, this, title);
         if (c.isValid()) {
             m_strokeColor = c;
+            if (m_activeType == UdlGeometryType::Point) {
+                m_fillColor = c;
+            }
             updateColorButtons();
             emit colorsChanged(m_strokeColor, m_fillColor);
         }
@@ -219,6 +233,7 @@ void UdlToolbarWidget::setActiveGeometryType(UdlGeometryType type) {
     if (m_btnPolygon) m_btnPolygon->setChecked(type == UdlGeometryType::Polygon);
     if (m_btnCircle) m_btnCircle->setChecked(type == UdlGeometryType::Circle);
     if (m_btnText) m_btnText->setChecked(type == UdlGeometryType::Text);
+    if (m_btnImage) m_btnImage->setChecked(type == UdlGeometryType::Image);
 
     if (m_txtLabelInput) {
         m_txtLabelInput->setVisible(type == UdlGeometryType::Text);
@@ -270,6 +285,10 @@ void UdlToolbarWidget::updateColorButtons() {
         m_btnStrokeColor->setText(tr("🎨 Text Color"));
         m_btnStrokeColor->setToolTip(tr("Select Text Color"));
         m_btnStrokeColor->setVisible(true);
+        m_btnFillColor->setVisible(false);
+        break;
+    case UdlGeometryType::Image:
+        m_btnStrokeColor->setVisible(false);
         m_btnFillColor->setVisible(false);
         break;
     }
