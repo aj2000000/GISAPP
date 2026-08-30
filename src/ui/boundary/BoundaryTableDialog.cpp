@@ -29,33 +29,45 @@ BoundaryTableDialog::BoundaryTableDialog(
             font-size: 12px;
         }
         QTableWidget {
-            background-color: #1E293B;
-            alternate-background-color: #0F172A;
-            color: #F8FAFC;
+            background-color: #1e293b;
+            alternate-background-color: #0f172a;
+            color: #f8fafc;
             gridline-color: #334155;
-            selection-background-color: #10B981;
-            selection-color: #FFFFFF;
+            selection-background-color: #10b981;
+            selection-color: #ffffff;
             border: 1px solid #334155;
-            border-radius: 6px;
+            border-radius: 8px;
+            outline: 0px;
+            font-size: 12px;
         }
         QTableWidget::item {
-            color: #F8FAFC;
-            background-color: #1E293B;
+            color: #f8fafc;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        QTableWidget::item:alternate {
-            background-color: #0F172A;
-            color: #F8FAFC;
+        QTableWidget::item:hover {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #ffffff;
         }
         QTableWidget::item:selected {
-            background-color: #10B981;
-            color: #FFFFFF;
+            background-color: #10b981;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        QHeaderView {
+            background-color: #0f172a;
+            border: none;
+            border-bottom: 2px solid #10b981;
         }
         QHeaderView::section {
-            background-color: #0F172A;
-            color: #34D399;
-            padding: 6px;
+            background-color: #0f172a;
+            color: #34d399;
+            padding: 8px 12px;
             font-weight: bold;
-            border: 1px solid #334155;
+            font-size: 12px;
+            border: none;
+            border-right: 1px solid #334155;
+            border-bottom: 2px solid #10b981;
         }
         QPushButton {
             background-color: #1E293B;
@@ -115,6 +127,8 @@ void BoundaryTableDialog::setupUi()
     m_tableWidget->setHorizontalHeaderLabels({
         tr("ID"), tr("Boundary Name"), tr("Geometry Type"), tr("Vertices"), tr("Style / Stroke Color"), tr("Bounding Box Extent")
     });
+    m_tableWidget->setAlternatingRowColors(true);
+    m_tableWidget->verticalHeader()->setVisible(false);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);

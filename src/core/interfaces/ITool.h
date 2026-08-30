@@ -52,6 +52,14 @@ public:
      * @brief Event handler for mouse release events on the map canvas.
      */
     virtual void onMouseRelease(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate) = 0;
+
+    /**
+     * @brief Event handler for mouse double click events on the map canvas.
+     */
+    virtual void onMouseDoubleClick(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate) {
+        Q_UNUSED(event);
+        Q_UNUSED(coordinate);
+    }
 };
 
 } // namespace GISApp::Core::Interfaces

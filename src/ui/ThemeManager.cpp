@@ -209,14 +209,135 @@ QString ThemeManager::getStyleSheet(ThemeType theme) const
             color: %7;
             border-color: %5;
         }
-        QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+        QLineEdit, QTextEdit, QPlainTextEdit {
             background-color: %1;
             color: %6;
             border: 1px solid %5;
-            border-radius: 4px;
+            border-radius: 6px;
             padding: 5px 8px;
             selection-background-color: %4;
             selection-color: #ffffff;
+        }
+
+        /* QSpinBox & QDoubleSpinBox Modern High-Contrast Styling */
+        QSpinBox, QDoubleSpinBox {
+            background-color: %1;
+            color: %6;
+            border: 1px solid %5;
+            border-radius: 6px;
+            padding: 4px 24px 4px 10px;
+            min-height: 24px;
+            selection-background-color: %4;
+            selection-color: #ffffff;
+            font-weight: 500;
+        }
+        QSpinBox:hover, QSpinBox:focus, QDoubleSpinBox:hover, QDoubleSpinBox:focus {
+            border-color: %4;
+        }
+        QSpinBox::up-button, QDoubleSpinBox::up-button {
+            subcontrol-origin: border;
+            subcontrol-position: top right;
+            width: 20px;
+            border-left: 1px solid %5;
+            border-bottom: 1px solid %5;
+            background-color: %2;
+            border-top-right-radius: 5px;
+        }
+        QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {
+            background-color: %4;
+        }
+        QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {
+            background-color: %3;
+        }
+        QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 5px solid %6;
+        }
+        QSpinBox::up-button:hover QSpinBox::up-arrow, QDoubleSpinBox::up-button:hover QDoubleSpinBox::up-arrow {
+            border-bottom-color: #ffffff;
+        }
+        QSpinBox::down-button, QDoubleSpinBox::down-button {
+            subcontrol-origin: border;
+            subcontrol-position: bottom right;
+            width: 20px;
+            border-left: 1px solid %5;
+            background-color: %2;
+            border-bottom-right-radius: 5px;
+        }
+        QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
+            background-color: %4;
+        }
+        QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {
+            background-color: %3;
+        }
+        QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid %6;
+        }
+        QSpinBox::down-button:hover QSpinBox::down-arrow, QDoubleSpinBox::down-button:hover QDoubleSpinBox::down-arrow {
+            border-top-color: #ffffff;
+        }
+
+        /* QComboBox Complete High-Contrast & Visible Text Styling */
+        QComboBox {
+            background-color: %1;
+            color: %6;
+            border: 1px solid %5;
+            border-radius: 6px;
+            padding: 4px 28px 4px 10px;
+            min-height: 24px;
+            selection-background-color: %4;
+            selection-color: #ffffff;
+            font-weight: 500;
+        }
+        QComboBox:hover, QComboBox:focus {
+            border-color: %4;
+        }
+        QComboBox:on {
+            border-color: %4;
+            background-color: %2;
+        }
+        QComboBox::drop-down {
+            subcontrol-origin: padding;
+            subcontrol-position: top right;
+            width: 24px;
+            border-left: none;
+            background-color: transparent;
+        }
+        QComboBox::down-arrow {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid %4;
+            margin-right: 8px;
+        }
+        QComboBox QAbstractItemView {
+            background-color: %2;
+            color: %6;
+            border: 1px solid %4;
+            border-radius: 6px;
+            padding: 4px;
+            selection-background-color: %4;
+            selection-color: #ffffff;
+            outline: 0px;
+        }
+        QComboBox QAbstractItemView::item {
+            min-height: 26px;
+            padding: 4px 10px;
+            color: %6;
+            background-color: transparent;
+        }
+        QComboBox QAbstractItemView::item:hover, QComboBox QAbstractItemView::item:selected {
+            background-color: %4;
+            color: #ffffff;
+            border-radius: 4px;
         }
         QToolTip {
             background-color: %2;
@@ -224,6 +345,57 @@ QString ThemeManager::getStyleSheet(ThemeType theme) const
             border: 1px solid %4;
             padding: 4px 8px;
             border-radius: 4px;
+        }
+
+        /* QTableWidget & QTableView Premium Styling */
+        QTableWidget, QTableView {
+            background-color: %1;
+            alternate-background-color: %2;
+            color: %6;
+            gridline-color: %5;
+            border: 1px solid %5;
+            border-radius: 8px;
+            selection-background-color: %4;
+            selection-color: #ffffff;
+            outline: 0px;
+            font-size: 12px;
+        }
+        QTableWidget::item, QTableView::item {
+            color: %6;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        QTableWidget::item:hover, QTableView::item:hover {
+            background-color: rgba(56, 189, 248, 0.15);
+            color: #ffffff;
+        }
+        QTableWidget::item:selected, QTableView::item:selected {
+            background-color: %4;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        QHeaderView {
+            background-color: %2;
+            border: none;
+            border-bottom: 2px solid %4;
+        }
+        QHeaderView::section {
+            background-color: %2;
+            color: %4;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 12px;
+            border: none;
+            border-right: 1px solid %5;
+            border-bottom: 2px solid %4;
+        }
+        QHeaderView::section:hover {
+            background-color: %1;
+            color: #ffffff;
+        }
+        QTableCornerButton::section {
+            background-color: %2;
+            border: 1px solid %5;
         }
     )").arg(bgPrimary, bgPanel, bgFloating, accent, border, textPrimary, textMuted);
 }

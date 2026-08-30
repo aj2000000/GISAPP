@@ -22,6 +22,12 @@
 #include <cmath>
 #include <algorithm>
 #include <QDir>
+#include <QShortcut>
+#include <QRandomGenerator>
+#include <QDateTime>
+#include <QFormLayout>
+#include <QGroupBox>
+#include "src/ui/udl/UdlEntityStyleDialog.h"
 
 #include "ui/publishing/PublishLayerDialog.h"
 #include "ui/publishing/GroupManagerDialog.h"
@@ -38,6 +44,14 @@
 #include "ui/tracks/TrackDetailDialog.h"
 #include "core/repositories/AreaOfViewRepository.h"
 #include "core/services/MapLibreAreaOfViewAdapter.h"
+
+// UDL Component Headers
+#include "src/ui/udl/CreateUdlLayerDialog.h"
+#include "src/ui/udl/UdlToolbarWidget.h"
+#include "src/ui/udl/UdlEntityTableDialog.h"
+#include "src/tools/UdlDrawingTool.h"
+#include "src/publishing/UdlRepositoryManager.h"
+#include "publishing/LayerRegistryManager.h"
 #include "core/services/XmlAreaOfViewIngestor.h"
 #include "ui/area_of_view/AreaOfViewTableDialog.h"
 
@@ -91,6 +105,11 @@ MainWindow::MainWindow(QWidget *parent)
     setupToolBar();
     setupStatusBar();
     setupThemeMenu();
+    setupUdlMenu();
+
+    // Connect UdlRepositoryManager to MapLibre GeoJSON update handler
+    connect(&GISApp::Publishing::UdlRepositoryManager::instance(), &GISApp::Publishing::UdlRepositoryManager::udlLayerUpdated,
+            this, &MainWindow::onUdlLayerUpdated);
 
     // 2. Apply Default Tactical Dark Theme
     GISApp::UI::ThemeManager::instance().applyTheme(GISApp::UI::ThemeType::TacticalDark);
@@ -281,6 +300,8 @@ void MainWindow::setupMapView()
             m_toolManager, &GISApp::Controllers::ToolManager::handleMouseMove);
     connect(m_mapWidget, &GISApp::Map::MapLibreWidget::mouseReleased,
             m_toolManager, &GISApp::Controllers::ToolManager::handleMouseRelease);
+    connect(m_mapWidget, &GISApp::Map::MapLibreWidget::mouseDoubleClicked,
+            m_toolManager, &GISApp::Controllers::ToolManager::handleMouseDoubleClick);
     connect(m_mapWidget, &GISApp::Map::MapLibreWidget::customContextMenuRequested,
             this, &MainWindow::onMapContextMenuRequested);
 
@@ -317,6 +338,13 @@ void MainWindow::updateOverlayPositions()
         int y = m_mapWidget->height() - m_zoomControls->height() - 16;
         m_zoomControls->move(x, y);
         m_zoomControls->raise();
+    }
+    if (m_udlToolbar && m_udlToolbar->isVisible()) {
+        m_udlToolbar->adjustSize();
+        int x = (m_mapWidget->width() - m_udlToolbar->width()) / 2;
+        int y = 16;
+        m_udlToolbar->move(x, y);
+        m_udlToolbar->raise();
     }
 }
 
@@ -795,6 +823,45 @@ void MainWindow::onMapContextMenuRequested(const QPoint &globalPos, const QPoint
         "QMenu::right-arrow { margin: 5px; }"
     );
 
+    // UDL Active Drawing Context Actions
+    if (m_toolManager && m_udlDrawingTool && m_toolManager->activeTool() == m_udlDrawingTool.get()) {
+        auto geomType = m_udlDrawingTool->geometryType();
+        bool canFinish = false;
+        QString finishText = tr("✅ Finish Entity");
+
+        if (geomType == GISApp::UI::UDL::UdlGeometryType::Polyline) {
+            finishText = tr("✅ Finish Line (Polyline)");
+            canFinish = m_udlDrawingTool->waypointsCount() >= 2;
+        } else if (geomType == GISApp::UI::UDL::UdlGeometryType::Polygon) {
+            finishText = tr("✅ Finish Polygon");
+            canFinish = m_udlDrawingTool->waypointsCount() >= 3;
+        } else if (geomType == GISApp::UI::UDL::UdlGeometryType::Circle) {
+            finishText = tr("✅ Finish Circle");
+            canFinish = m_udlDrawingTool->waypointsCount() >= 2;
+        }
+
+        if (canFinish) {
+            QAction *finishAct = menu.addAction(finishText);
+            connect(finishAct, &QAction::triggered, [this]() {
+                if (m_udlDrawingTool) m_udlDrawingTool->finishShape();
+            });
+        }
+
+        if (m_udlDrawingTool->hasWaypoints()) {
+            QAction *undoAct = menu.addAction(tr("↩️ Undo Last Waypoint"));
+            connect(undoAct, &QAction::triggered, [this]() {
+                if (m_udlDrawingTool) m_udlDrawingTool->undoLastPoint();
+            });
+
+            QAction *cancelAct = menu.addAction(tr("❌ Cancel Drawing"));
+            connect(cancelAct, &QAction::triggered, [this]() {
+                if (m_udlDrawingTool) m_udlDrawingTool->clearWaypoints();
+            });
+
+            menu.addSeparator();
+        }
+    }
+
     // Track Hit Resolution
     if (hitTracks.size() == 1) {
         const auto singleTrack = hitTracks.first();
@@ -869,6 +936,193 @@ void MainWindow::onMapContextMenuRequested(const QPoint &globalPos, const QPoint
 
     menu.addSeparator();
 
+    // UDL Spatial Hit-Testing & Entity Context Menu Options
+    auto udlEntities = GISApp::Publishing::UdlRepositoryManager::instance().getAllEntities();
+    QList<GISApp::Publishing::UdlEntityItem> hitUdlEntities;
+    const double udlTolerancePx = 25.0;
+
+    for (const auto &ent : udlEntities) {
+        QJsonObject geom = ent.geometryJson;
+        QString type = geom.value("type").toString();
+        QJsonArray coords = geom.value("coordinates").toArray();
+        bool isHit = false;
+
+        if (type == "Point" && coords.size() >= 2) {
+            double lon = coords[0].toDouble();
+            double lat = coords[1].toDouble();
+            QPointF pt = m_mapWidget->map()->pixelForCoordinate({lat, lon});
+            if (std::hypot(pt.x() - localPos.x(), pt.y() - localPos.y()) <= udlTolerancePx) {
+                isHit = true;
+            }
+        } else if (type == "LineString") {
+            for (int i = 0; i < coords.size(); ++i) {
+                QJsonArray ptArr = coords[i].toArray();
+                if (ptArr.size() >= 2) {
+                    double lon = ptArr[0].toDouble();
+                    double lat = ptArr[1].toDouble();
+                    QPointF pt = m_mapWidget->map()->pixelForCoordinate({lat, lon});
+                    if (std::hypot(pt.x() - localPos.x(), pt.y() - localPos.y()) <= udlTolerancePx) {
+                        isHit = true; break;
+                    }
+                }
+            }
+        } else if (type == "Polygon") {
+            if (!coords.isEmpty()) {
+                QJsonArray ring = coords[0].toArray();
+                for (int i = 0; i < ring.size(); ++i) {
+                    QJsonArray ptArr = ring[i].toArray();
+                    if (ptArr.size() >= 2) {
+                        double lon = ptArr[0].toDouble();
+                        double lat = ptArr[1].toDouble();
+                        QPointF pt = m_mapWidget->map()->pixelForCoordinate({lat, lon});
+                        if (std::hypot(pt.x() - localPos.x(), pt.y() - localPos.y()) <= udlTolerancePx) {
+                            isHit = true; break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (isHit) {
+            hitUdlEntities.append(ent);
+        }
+    }
+
+    if (!hitUdlEntities.isEmpty()) {
+        for (const auto &ent : hitUdlEntities) {
+            QMenu *udlSubMenu = menu.addMenu(QString("🎨 UDL Entity: %1").arg(ent.entityName));
+            udlSubMenu->setStyleSheet(menu.styleSheet());
+
+            QAction *showDetailsAct = udlSubMenu->addAction(QString("ℹ️ Show Details"));
+            connect(showDetailsAct, &QAction::triggered, [this, ent]() {
+                showUdlEntityDetailsDialog(ent);
+            });
+
+            QAction *copyEntAct = udlSubMenu->addAction(QString("📋 Copy Entity"));
+            connect(copyEntAct, &QAction::triggered, [ent]() {
+                GISApp::Publishing::UdlRepositoryManager::instance().setCopiedEntity(ent);
+                GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                    "Clipboard", QString("Copied UDL Entity '%1'").arg(ent.entityName));
+            });
+
+            QAction *editStyleAct = udlSubMenu->addAction(QString("✏️ Edit Style"));
+            connect(editStyleAct, &QAction::triggered, [this, ent]() {
+                GISApp::UI::UDL::UdlGeometryType gType = GISApp::UI::UDL::UdlGeometryType::Point;
+                if (ent.entityType == "Polyline" || ent.entityType == "LineString") gType = GISApp::UI::UDL::UdlGeometryType::Polyline;
+                else if (ent.entityType == "Polygon") gType = GISApp::UI::UDL::UdlGeometryType::Polygon;
+                else if (ent.entityType == "Circle") gType = GISApp::UI::UDL::UdlGeometryType::Circle;
+                else if (ent.entityType == "Text") gType = GISApp::UI::UDL::UdlGeometryType::Text;
+
+                GISApp::UI::UDL::UdlEntityStyleDialog styleDlg(gType, this);
+                styleDlg.setEntityName(ent.entityName);
+                styleDlg.setStyleJsonObject(ent.styleJson);
+
+                if (styleDlg.exec() == QDialog::Accepted) {
+                    GISApp::Publishing::UdlEntityItem updatedItem = ent;
+                    updatedItem.entityName = styleDlg.entityName();
+                    updatedItem.styleJson = styleDlg.styleJsonObject();
+                    GISApp::Publishing::UdlRepositoryManager::instance().saveEntity(updatedItem);
+                    GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                        "UDL Entity", QString("Updated entity '%1'").arg(updatedItem.entityName));
+                }
+            });
+
+            QAction *delEntAct = udlSubMenu->addAction(QString("🗑️ Delete Entity"));
+            connect(delEntAct, &QAction::triggered, [ent]() {
+                GISApp::Publishing::UdlRepositoryManager::instance().deleteEntity(ent.entityId, ent.layerId);
+                GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                    "UDL Entity", QString("Deleted entity '%1'").arg(ent.entityName));
+            });
+        }
+        menu.addSeparator();
+    }
+
+    // UDL Paste Action
+    if (GISApp::Publishing::UdlRepositoryManager::instance().hasCopiedEntity()) {
+        auto copiedItem = GISApp::Publishing::UdlRepositoryManager::instance().copiedEntity();
+        QString targetLayerId = m_udlToolbar ? m_udlToolbar->activeLayerId() : copiedItem.layerId;
+        if (targetLayerId.isEmpty()) targetLayerId = copiedItem.layerId;
+        QString targetLayerName = m_udlToolbar ? m_udlToolbar->activeLayerName() : targetLayerId;
+        if (targetLayerName.isEmpty()) targetLayerName = targetLayerId;
+
+        QAction *pasteUdlAct = menu.addAction(QString("📋 Paste UDL Entity ('%1') onto Layer '%2'").arg(copiedItem.entityName, targetLayerName));
+        connect(pasteUdlAct, &QAction::triggered, [this, copiedItem, targetLayerId, targetLayerName, coordinate]() {
+            GISApp::Publishing::UdlEntityItem newItem = copiedItem;
+            // Generate unique different entity ID
+            newItem.entityId = QString("udl_ent_%1_%2")
+                                   .arg(QDateTime::currentMSecsSinceEpoch())
+                                   .arg(QRandomGenerator::global()->bounded(1000, 9999));
+            newItem.layerId = targetLayerId;
+            newItem.entityName = QString("%1 (Copy)").arg(copiedItem.entityName);
+            newItem.createdAt = QDateTime::currentDateTime().toString(Qt::ISODate);
+
+            // Adjust geometry coordinates to right-click location
+            QJsonObject geom = newItem.geometryJson;
+            QString type = geom.value("type").toString();
+            QJsonArray coords = geom.value("coordinates").toArray();
+
+            if (type == "Point" && coords.size() >= 2) {
+                QJsonArray newCoords;
+                newCoords.append(coordinate.longitude());
+                newCoords.append(coordinate.latitude());
+                geom["coordinates"] = newCoords;
+            } else if (type == "LineString" && !coords.isEmpty()) {
+                QJsonArray refPt = coords[0].toArray();
+                double dLon = coordinate.longitude() - refPt[0].toDouble();
+                double dLat = coordinate.latitude() - refPt[1].toDouble();
+
+                QJsonArray newCoords;
+                for (int i = 0; i < coords.size(); ++i) {
+                    QJsonArray pt = coords[i].toArray();
+                    QJsonArray newPt;
+                    newPt.append(pt[0].toDouble() + dLon);
+                    newPt.append(pt[1].toDouble() + dLat);
+                    newCoords.append(newPt);
+                }
+                geom["coordinates"] = newCoords;
+            } else if (type == "Polygon" && !coords.isEmpty()) {
+                QJsonArray ring = coords[0].toArray();
+                if (!ring.isEmpty()) {
+                    QJsonArray refPt = ring[0].toArray();
+                    double dLon = coordinate.longitude() - refPt[0].toDouble();
+                    double dLat = coordinate.latitude() - refPt[1].toDouble();
+
+                    QJsonArray newRing;
+                    for (int i = 0; i < ring.size(); ++i) {
+                        QJsonArray pt = ring[i].toArray();
+                        QJsonArray newPt;
+                        newPt.append(pt[0].toDouble() + dLon);
+                        newPt.append(pt[1].toDouble() + dLat);
+                        newRing.append(newPt);
+                    }
+                    QJsonArray newPolygonCoords;
+                    newPolygonCoords.append(newRing);
+                    geom["coordinates"] = newPolygonCoords;
+                }
+                if (newItem.entityType == "Circle") {
+                    QJsonObject style = newItem.styleJson;
+                    style["centerLon"] = coordinate.longitude();
+                    style["centerLat"] = coordinate.latitude();
+                    newItem.styleJson = style;
+                }
+            }
+            newItem.geometryJson = geom;
+
+            GISApp::Publishing::UdlRepositoryManager::instance().saveEntity(newItem);
+            GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                "UDL Entity", QString("Pasted '%1' with ID '%2' on layer '%3'").arg(newItem.entityName, newItem.entityId, targetLayerName));
+        });
+
+        QAction *clearClipAct = menu.addAction(QString("🧹 Clear UDL Clipboard ('%1')").arg(copiedItem.entityName));
+        connect(clearClipAct, &QAction::triggered, []() {
+            GISApp::Publishing::UdlRepositoryManager::instance().clearCopiedEntity();
+            GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                "UDL Clipboard", "UDL Clipboard cleared.");
+        });
+
+        menu.addSeparator();
+    }
+
     // EMS Generic Entity Context Actions
     if (m_genericEntityRepository) {
         auto allEntities = m_genericEntityRepository->findAll();
@@ -942,6 +1196,119 @@ void MainWindow::showTrackDetailsDialog(const GISApp::Core::Models::TrackRecord 
     dlg->show();
 }
 
+void MainWindow::showUdlEntityDetailsDialog(const GISApp::Publishing::UdlEntityItem &entity)
+{
+    QDialog *dlg = new QDialog(this);
+    dlg->setWindowTitle(tr("UDL Entity Details — %1").arg(entity.entityName));
+    dlg->setMinimumWidth(480);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setStyleSheet(
+        "QDialog { background-color: #1e1e2e; color: #cdd6f4; }"
+        "QLabel { color: #cdd6f4; font-size: 12px; font-weight: bold; }"
+        "QGroupBox { font-weight: bold; color: #89b4fa; border: 1px solid #45475a; border-radius: 6px; margin-top: 10px; padding-top: 12px; }"
+        "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }"
+        "QLineEdit { background-color: #181825; color: #f3f4f6; border: 1px solid #45475a; border-radius: 4px; padding: 4px 8px; font-weight: normal; }"
+        "QPushButton { background-color: #313244; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 6px 14px; font-weight: bold; }"
+        "QPushButton:hover { background-color: #45475a; color: #ffffff; }"
+    );
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(dlg);
+    mainLayout->setSpacing(12);
+
+    // General Attributes Group
+    QGroupBox *genGroup = new QGroupBox(tr("General Information"), dlg);
+    QFormLayout *genLayout = new QFormLayout(genGroup);
+
+    QLineEdit *txtId = new QLineEdit(entity.entityId, dlg);
+    txtId->setReadOnly(true);
+    genLayout->addRow(tr("Entity ID:"), txtId);
+
+    QLineEdit *txtName = new QLineEdit(entity.entityName, dlg);
+    txtName->setReadOnly(true);
+    genLayout->addRow(tr("Entity Name:"), txtName);
+
+    QLineEdit *txtType = new QLineEdit(entity.entityType, dlg);
+    txtType->setReadOnly(true);
+    genLayout->addRow(tr("Geometry Type:"), txtType);
+
+    QLineEdit *txtLayer = new QLineEdit(entity.layerId, dlg);
+    txtLayer->setReadOnly(true);
+    genLayout->addRow(tr("Layer ID:"), txtLayer);
+
+    QLineEdit *txtTime = new QLineEdit(entity.createdAt, dlg);
+    txtTime->setReadOnly(true);
+    genLayout->addRow(tr("Created At:"), txtTime);
+
+    mainLayout->addWidget(genGroup);
+
+    // Style Attributes Group
+    QGroupBox *styleGroup = new QGroupBox(tr("Visual Style Attributes"), dlg);
+    QFormLayout *styleLayout = new QFormLayout(styleGroup);
+
+    QJsonObject sJson = entity.styleJson;
+    for (auto it = sJson.begin(); it != sJson.end(); ++it) {
+        QLineEdit *valEdit = new QLineEdit(it.value().toVariant().toString(), dlg);
+        valEdit->setReadOnly(true);
+        styleLayout->addRow(QString("%1:").arg(it.key()), valEdit);
+    }
+    mainLayout->addWidget(styleGroup);
+
+    // Action Buttons
+    QHBoxLayout *btnLayout = new QHBoxLayout();
+
+    QPushButton *btnCopy = new QPushButton(tr("📋 Copy Entity"), dlg);
+    btnCopy->setStyleSheet("background-color: #2563eb; color: #ffffff;");
+    connect(btnCopy, &QPushButton::clicked, [entity, dlg]() {
+        GISApp::Publishing::UdlRepositoryManager::instance().setCopiedEntity(entity);
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "Clipboard", QString("Copied UDL Entity '%1'").arg(entity.entityName));
+    });
+
+    QPushButton *btnEdit = new QPushButton(tr("🎨 Edit Style"), dlg);
+    btnEdit->setStyleSheet("background-color: #059669; color: #ffffff;");
+    connect(btnEdit, &QPushButton::clicked, [this, entity, dlg]() {
+        GISApp::UI::UDL::UdlGeometryType gType = GISApp::UI::UDL::UdlGeometryType::Point;
+        if (entity.entityType == "Polyline" || entity.entityType == "LineString") gType = GISApp::UI::UDL::UdlGeometryType::Polyline;
+        else if (entity.entityType == "Polygon") gType = GISApp::UI::UDL::UdlGeometryType::Polygon;
+        else if (entity.entityType == "Circle") gType = GISApp::UI::UDL::UdlGeometryType::Circle;
+        else if (entity.entityType == "Text") gType = GISApp::UI::UDL::UdlGeometryType::Text;
+
+        GISApp::UI::UDL::UdlEntityStyleDialog styleDlg(gType, this);
+        styleDlg.setEntityName(entity.entityName);
+        styleDlg.setStyleJsonObject(entity.styleJson);
+
+        if (styleDlg.exec() == QDialog::Accepted) {
+            GISApp::Publishing::UdlEntityItem updatedItem = entity;
+            updatedItem.entityName = styleDlg.entityName();
+            updatedItem.styleJson = styleDlg.styleJsonObject();
+            GISApp::Publishing::UdlRepositoryManager::instance().saveEntity(updatedItem);
+            GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+                "UDL Entity", QString("Updated entity '%1'").arg(updatedItem.entityName));
+            dlg->accept();
+        }
+    });
+
+    QPushButton *btnClear = new QPushButton(tr("🧹 Clear Clipboard"), dlg);
+    btnClear->setStyleSheet("background-color: #45475a; color: #ffffff;");
+    connect(btnClear, &QPushButton::clicked, []() {
+        GISApp::Publishing::UdlRepositoryManager::instance().clearCopiedEntity();
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "UDL Clipboard", "UDL Clipboard cleared.");
+    });
+
+    QPushButton *btnClose = new QPushButton(tr("Close"), dlg);
+    connect(btnClose, &QPushButton::clicked, dlg, &QDialog::accept);
+
+    btnLayout->addWidget(btnCopy);
+    btnLayout->addWidget(btnEdit);
+    btnLayout->addWidget(btnClear);
+    btnLayout->addStretch();
+    btnLayout->addWidget(btnClose);
+    mainLayout->addLayout(btnLayout);
+
+    dlg->exec();
+}
+
 void MainWindow::showCoordinatesDialog(const GISApp::Core::Models::GeoCoordinate &coordinate)
 {
     auto formatDms = [](double val, bool isLat) {
@@ -970,4 +1337,298 @@ void MainWindow::showCoordinatesDialog(const GISApp::Core::Models::GeoCoordinate
         "QPushButton { background-color: #2563EB; color: white; border-radius: 4px; padding: 6px 14px; font-weight: bold; }"
     );
     msgBox.exec();
+}
+
+void MainWindow::setupUdlMenu()
+{
+    QMenu *udlMenu = menuBar()->addMenu(tr("&UDL"));
+
+    QAction *createLayerAction = udlMenu->addAction(tr("➕ Create UDL Layer..."));
+    connect(createLayerAction, &QAction::triggered, this, &MainWindow::onCreateUdlLayerTriggered);
+
+    QAction *toggleToolbarAction = udlMenu->addAction(tr("🛠️ Toggle Digitizing Toolbar"));
+    connect(toggleToolbarAction, &QAction::triggered, this, &MainWindow::onToggleUdlToolbarTriggered);
+
+    QAction *manageEntitiesAction = udlMenu->addAction(tr("📊 Manage UDL Entities..."));
+    connect(manageEntitiesAction, &QAction::triggered, this, &MainWindow::onManageUdlEntitiesTriggered);
+
+    // Initialize UDL Toolbar Widget
+    m_udlToolbar = new GISApp::UI::UDL::UdlToolbarWidget(m_mapWidget);
+    m_udlToolbar->hide();
+
+    // Initialize UDL Drawing Tool
+    m_udlDrawingTool = std::make_shared<GISApp::Tools::UdlDrawingTool>(this);
+    if (m_toolManager) {
+        m_toolManager->registerTool(m_udlDrawingTool);
+    }
+    if (m_udlDrawingTool && m_mapWidget) {
+        connect(m_udlDrawingTool.get(), &GISApp::Tools::UdlDrawingTool::previewUpdated,
+                m_mapWidget, &GISApp::Map::MapLibreWidget::setUdlPreview);
+    }
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::createLayerRequested, this, &MainWindow::onCreateUdlLayerTriggered);
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::manageEntitiesRequested, this, &MainWindow::onManageUdlEntitiesTriggered);
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::pendingTextLabelChanged, this, [this](const QString &text) {
+        if (m_udlDrawingTool) {
+            m_udlDrawingTool->setPendingTextLabel(text);
+        }
+    });
+
+    auto handleUndo = [this]() {
+        if (m_udlDrawingTool && m_udlDrawingTool->hasWaypoints()) {
+            m_udlDrawingTool->undoLastPoint();
+        } else {
+            GISApp::Publishing::UdlRepositoryManager::instance().undoLastAction();
+        }
+    };
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::undoRequested, this, handleUndo);
+
+    auto *undoShortcut = new QShortcut(QKeySequence::Undo, this);
+    connect(undoShortcut, &QShortcut::activated, this, handleUndo);
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::colorsChanged, this, [this](const QColor &stroke, const QColor &fill) {
+        if (m_udlDrawingTool) {
+            m_udlDrawingTool->setPresetColors(stroke, fill);
+        }
+    });
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::continuousModeChanged, this, [this](bool enabled) {
+        if (m_udlDrawingTool) {
+            m_udlDrawingTool->setContinuousMode(enabled);
+        }
+    });
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::quickNameModeChanged, this, [this](bool enabled) {
+        if (m_udlDrawingTool) {
+            m_udlDrawingTool->setQuickNameMode(enabled);
+        }
+    });
+
+    connect(m_udlToolbar, &GISApp::UI::UDL::UdlToolbarWidget::toolSelected, this, [this](GISApp::UI::UDL::UdlGeometryType type) {
+        if (!m_udlDrawingTool || !m_toolManager) return;
+        m_udlDrawingTool->setTargetLayerId(m_udlToolbar->activeLayerId());
+        m_udlDrawingTool->setGeometryType(type);
+        m_udlDrawingTool->setPendingTextLabel(m_udlToolbar->pendingTextLabel());
+        m_udlDrawingTool->setContinuousMode(m_udlToolbar->isContinuousMode());
+        m_udlDrawingTool->setQuickNameMode(m_udlToolbar->isQuickNameMode());
+        m_udlDrawingTool->setPresetColors(m_udlToolbar->currentStrokeColor(), m_udlToolbar->currentFillColor());
+        m_toolManager->setActiveTool(m_udlDrawingTool->toolName());
+    });
+}
+
+void MainWindow::onCreateUdlLayerTriggered()
+{
+    GISApp::UI::UDL::CreateUdlLayerDialog dlg(this);
+    if (dlg.exec() == QDialog::Accepted) {
+        QString name = dlg.layerName();
+        if (name.isEmpty()) return;
+
+        QString layerId = QString("udl_%1").arg(QDateTime::currentMSecsSinceEpoch());
+        QString jsonPath = GISApp::Publishing::UdlRepositoryManager::instance().getUdlGeoJsonPath(layerId);
+        GISApp::Publishing::LayerRegistryManager::instance().registerUserDefinedLayer(layerId, name, 1.0f, "🎨 User Defined Layers", jsonPath);
+        
+        GISApp::Publishing::UdlRepositoryManager::instance().syncGeoJsonFile(layerId);
+        if (m_udlToolbar) {
+            m_udlToolbar->refreshLayerList();
+            m_udlToolbar->setActiveLayer(layerId);
+            m_udlToolbar->show();
+            updateOverlayPositions();
+        }
+        GISApp::Core::Notifications::NotificationManager::instance()->notifyFlash(
+            "UDL Layer Created",
+            QString("User Defined Layer '%1' created successfully.").arg(name),
+            4000,
+            this
+        );
+    }
+}
+
+void MainWindow::onToggleUdlToolbarTriggered()
+{
+    if (!m_udlToolbar) return;
+    if (m_udlToolbar->isVisible()) {
+        m_udlToolbar->hide();
+    } else {
+        m_udlToolbar->refreshLayerList();
+        m_udlToolbar->show();
+        updateOverlayPositions();
+    }
+}
+
+void MainWindow::onManageUdlEntitiesTriggered()
+{
+    if (!m_udlEntityTableDialog) {
+        m_udlEntityTableDialog = new GISApp::UI::UDL::UdlEntityTableDialog(this);
+        connect(m_udlEntityTableDialog, &GISApp::UI::UDL::UdlEntityTableDialog::zoomToEntityRequested, this, [this](double lat, double lon) {
+            if (m_mapController) {
+                m_mapController->centerOn(GISApp::Core::Models::GeoCoordinate(lat, lon), 14.0);
+            }
+        });
+    }
+    m_udlEntityTableDialog->refreshData();
+    m_udlEntityTableDialog->show();
+    m_udlEntityTableDialog->raise();
+    m_udlEntityTableDialog->activateWindow();
+}
+
+void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojsonPath)
+{
+    if (!m_mapWidget || !m_mapWidget->map()) return;
+
+    auto map = m_mapWidget->map();
+    QString sanitizedId = QString("udl-%1").arg(qHash(layerId));
+    QString srcId = sanitizedId + "-src";
+
+    if (map->layerExists(sanitizedId + "-symbol")) map->removeLayer(sanitizedId + "-symbol");
+    if (map->layerExists(sanitizedId + "-circle")) map->removeLayer(sanitizedId + "-circle");
+    if (map->layerExists(sanitizedId + "-line")) map->removeLayer(sanitizedId + "-line");
+    if (map->layerExists(sanitizedId + "-fill")) map->removeLayer(sanitizedId + "-fill");
+    if (map->sourceExists(srcId)) map->removeSource(srcId);
+
+    if (geojsonPath.isEmpty() || !QFile::exists(geojsonPath)) {
+        if (m_udlToolbar) {
+            m_udlToolbar->refreshLayerList();
+        }
+        if (m_udlEntityTableDialog) {
+            m_udlEntityTableDialog->refreshData();
+        }
+        return;
+    }
+
+    QVariantMap sourceParams;
+    sourceParams["type"] = "geojson";
+    sourceParams["data"] = QString("file://%1").arg(geojsonPath);
+    map->addSource(srcId, sourceParams);
+
+    // Add Polygon Fill layer
+    QVariantMap fillParams;
+    fillParams["id"] = sanitizedId + "-fill";
+    fillParams["type"] = "fill";
+    fillParams["source"] = srcId;
+    QVariantMap fillPaint;
+    fillPaint["fill-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, "#ff9933"}};
+    fillPaint["fill-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, 0.35}};
+    fillParams["paint"] = fillPaint;
+
+    QVariantList fillFilter;
+    fillFilter.append("==");
+    fillFilter.append("$type");
+    fillFilter.append("Polygon");
+    fillParams["filter"] = fillFilter;
+    map->addLayer(sanitizedId + "-fill", fillParams);
+
+    // Add Line / Outline layer
+    QVariantMap lineParams;
+    lineParams["id"] = sanitizedId + "-line";
+    lineParams["type"] = "line";
+    lineParams["source"] = srcId;
+    QVariantMap linePaint;
+    linePaint["line-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "strokeColor"}, "#f59e0b"}};
+    linePaint["line-width"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "lineWidth"}, 3.0}};
+    linePaint["line-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "strokeOpacity"}, QVariantList{"get", "lineOpacity"}, 1.0}};
+    lineParams["paint"] = linePaint;
+    map->addLayer(sanitizedId + "-line", lineParams);
+
+    // Add Point Circle layer for non-text Point entities
+    QVariantMap circleParams;
+    circleParams["id"] = sanitizedId + "-circle";
+    circleParams["type"] = "circle";
+    circleParams["source"] = srcId;
+    QVariantMap circlePaint;
+    circlePaint["circle-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, "#f59e0b"}};
+    circlePaint["circle-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
+    circlePaint["circle-radius"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "pointRadius"}, QVariantList{"get", "lineWidth"}, 6.0}};
+    circlePaint["circle-stroke-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "borderColor"}, QVariantList{"get", "strokeColor"}, "#ffffff"}};
+    circlePaint["circle-stroke-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "borderOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
+    circlePaint["circle-stroke-width"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "borderWidth"}, 2.0}};
+    circleParams["paint"] = circlePaint;
+
+    QVariantList circleFilter{"all", QVariantList{"==", "$type", "Point"}, QVariantList{"!=", "entityType", "Text"}};
+    circleParams["filter"] = circleFilter;
+    map->addLayer(sanitizedId + "-circle", circleParams);
+
+    // Add Symbol Text layer for Text entities
+    QVariantMap symbolParams;
+    symbolParams["id"] = sanitizedId + "-symbol";
+    symbolParams["type"] = "symbol";
+    symbolParams["source"] = srcId;
+
+    QVariantMap symbolLayout;
+    symbolLayout["text-field"] = QString("{textContent}");
+    symbolLayout["text-size"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fontSize"}, 15.0}};
+    symbolLayout["text-font"] = QVariantList{"Open Sans Regular", "Arial Unicode MS"};
+    symbolLayout["text-anchor"] = "center";
+    symbolLayout["text-allow-overlap"] = true;
+    symbolLayout["text-ignore-placement"] = true;
+    symbolParams["layout"] = symbolLayout;
+
+    QVariantMap symbolPaint;
+    symbolPaint["text-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "textColor"}, QVariantList{"get", "strokeColor"}, "#ffffff"}};
+    symbolPaint["text-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "textOpacity"}, 1.0}};
+    symbolPaint["text-halo-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "bgColor"}, "#000000"}};
+    symbolPaint["text-halo-width"] = 2.5;
+    symbolParams["paint"] = symbolPaint;
+
+    QVariantList symbolFilter{"==", "entityType", "Text"};
+    symbolParams["filter"] = symbolFilter;
+    map->addLayer(sanitizedId + "-symbol", symbolParams);
+
+    // Ensure LayerManager has a LayerNode with a valid MapLibreLayerAdapter for this UDL layer!
+    if (m_layerManager) {
+        QString displayName;
+        for (const auto &meta : GISApp::Publishing::LayerRegistryManager::instance().getSavedLayers()) {
+            if (meta.layerId == layerId && !meta.name.isEmpty()) {
+                displayName = meta.name;
+                break;
+            }
+        }
+        if (displayName.isEmpty()) displayName = layerId;
+
+        auto udlExtent = GISApp::Publishing::UdlRepositoryManager::instance().calculateLayerExtent(layerId);
+        auto adapter = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(
+            sanitizedId,
+            map,
+            udlExtent,
+            QVariantMap{}, QVariantMap{}, QVariantMap{},
+            layerId
+        );
+
+        GISApp::Layers::LayerNode *node = m_layerManager->findLayerByLayerId(sanitizedId);
+        if (!node && m_layerManager->model()) {
+            auto root = m_layerManager->model()->rootNode();
+            std::function<void(GISApp::Layers::LayerTreeNode*)> findNode = [&](GISApp::Layers::LayerTreeNode *n) {
+                if (!n || node) return;
+                if (n->nodeType() == GISApp::Layers::NodeType::Layer) {
+                    auto lNode = static_cast<GISApp::Layers::LayerNode*>(n);
+                    auto mlAdapter = std::dynamic_pointer_cast<GISApp::Layers::MapLibreLayerAdapter>(lNode->adapter());
+                    if (lNode->name() == displayName || lNode->name() == layerId || (mlAdapter && mlAdapter->rawUdlLayerId() == layerId)) {
+                        node = lNode;
+                        return;
+                    }
+                }
+                if (n->nodeType() == GISApp::Layers::NodeType::Group) {
+                    auto g = static_cast<GISApp::Layers::LayerGroupNode*>(n);
+                    for (int i = 0; i < g->childCount(); ++i) findNode(g->child(i));
+                }
+            };
+            for (int i = 0; i < root->childCount(); ++i) findNode(root->child(i));
+        }
+
+        if (!node) {
+            auto group = m_layerManager->findGroupByName("🎨 User Defined Layers");
+            if (!group) group = m_layerManager->addGroup("🎨 User Defined Layers");
+            node = m_layerManager->addLayer(displayName, adapter, group);
+        } else {
+            node->setAdapter(adapter);
+        }
+
+        if (node) {
+            adapter->setVisibility(node->checkState() == Qt::Checked);
+            adapter->setOpacity(node->opacity());
+        }
+    }
+
+    map->triggerRepaint();
 }

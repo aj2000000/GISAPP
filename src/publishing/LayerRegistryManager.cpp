@@ -5,6 +5,8 @@
 
 #include "publishing/LayerRegistryManager.h"
 #include "publishing/LayerPublishingService.h"
+#include "publishing/UdlRepositoryManager.h"
+#include "layers/MapLibreLayerAdapter.h"
 #include "core/SystemConfigManager.h"
 #include <QStandardPaths>
 
@@ -53,6 +55,7 @@ void LayerRegistryManager::loadFromDisk() {
         for (const QJsonValue &val : layersArr) {
             QJsonObject obj = val.toObject();
             PublishedLayerMeta meta;
+            meta.layerId = obj["layerId"].toString();
             meta.name = obj["name"].toString();
             meta.type = (obj["type"].toString() == "Vector") ? LayerType::Vector : LayerType::Raster;
             meta.folderPath = obj["folderPath"].toString();
@@ -87,6 +90,9 @@ void LayerRegistryManager::saveToDisk() {
     QJsonArray layersArr;
     for (const auto &meta : m_registry) {
         QJsonObject obj;
+        if (!meta.layerId.isEmpty()) {
+            obj["layerId"] = meta.layerId;
+        }
         obj["name"] = meta.name;
         obj["type"] = (meta.type == LayerType::Vector) ? "Vector" : "Raster";
         obj["folderPath"] = meta.folderPath;
@@ -109,6 +115,32 @@ void LayerRegistryManager::saveToDisk() {
         file.close();
         qWarning() << "[LayerRegistry] Saved" << m_customGroups.size() << "groups &" << m_registry.size() << "published layers to" << registryFilePath();
     }
+}
+
+void LayerRegistryManager::registerUserDefinedLayer(const QString &layerId,
+                                                    const QString &layerName,
+                                                    float opacity,
+                                                    const QString &groupName,
+                                                    const QString &geojsonPath) {
+    PublishedLayerMeta meta;
+    meta.layerId = layerId;
+    meta.name = layerName;
+    meta.type = LayerType::Vector;
+    meta.folderPath = geojsonPath.isEmpty() ? UdlRepositoryManager::instance().getUdlGeoJsonPath(layerId) : geojsonPath;
+    meta.tilePath = "";
+    meta.groupName = groupName.isEmpty() ? "🎨 User Defined Layers" : groupName;
+    meta.isTiled = false;
+    meta.isVisible = true;
+    meta.opacity = opacity;
+    meta.orderIndex = m_registry.size();
+    meta.minZoom = 0;
+    meta.maxZoom = 22;
+
+    m_registry.append(meta);
+    if (!m_customGroups.contains(meta.groupName)) {
+        m_customGroups.append(meta.groupName);
+    }
+    saveToDisk();
 }
 
 void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerManager) {
@@ -145,8 +177,14 @@ void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerMana
         } else if (node->nodeType() == GISApp::Layers::NodeType::Layer) {
             PublishedLayerMeta targetMeta;
             bool found = false;
+
+            auto lNode = static_cast<GISApp::Layers::LayerNode*>(node);
+            auto adapter = lNode ? lNode->adapter() : nullptr;
+            auto mlAdapter = std::dynamic_pointer_cast<GISApp::Layers::MapLibreLayerAdapter>(adapter);
+            QString rawUdlId = mlAdapter ? mlAdapter->rawUdlLayerId() : QString();
+
             for (const auto &meta : m_registry) {
-                if (meta.name == node->name()) {
+                if ((!rawUdlId.isEmpty() && meta.layerId == rawUdlId) || meta.name == node->name()) {
                     targetMeta = meta;
                     found = true;
                     break;
@@ -154,6 +192,9 @@ void LayerRegistryManager::syncTreeState(GISApp::Layers::LayerManager *layerMana
             }
             if (!found) {
                 targetMeta.name = node->name();
+                if (!rawUdlId.isEmpty()) {
+                    targetMeta.layerId = rawUdlId;
+                }
                 targetMeta.type = LayerType::Vector;
                 targetMeta.isTiled = false;
                 targetMeta.minZoom = 0;
@@ -191,12 +232,21 @@ void LayerRegistryManager::registerGroup(const QString &groupName) {
 void LayerRegistryManager::unregisterLayer(const QString &layerName) {
     bool changed = false;
     for (int i = 0; i < m_registry.size(); ++i) {
-        if (m_registry[i].name == layerName) {
+        if (m_registry[i].name == layerName || m_registry[i].layerId == layerName) {
+            QString udlId = m_registry[i].layerId;
+            if (udlId.startsWith("udl_") || m_registry[i].groupName.contains("User Defined Layers") || m_registry[i].groupName.contains("🎨")) {
+                UdlRepositoryManager::instance().deleteLayer(udlId);
+            }
             m_registry.removeAt(i);
             changed = true;
             break;
         }
     }
+
+    if (!changed && layerName.startsWith("udl_")) {
+        UdlRepositoryManager::instance().deleteLayer(layerName);
+    }
+
     if (changed) {
         saveToDisk();
         qWarning() << "[LayerRegistry] Unregistered layer:" << layerName;
@@ -207,6 +257,10 @@ void LayerRegistryManager::unregisterGroup(const QString &groupName) {
     bool changed = m_customGroups.removeOne(groupName);
     for (int i = m_registry.size() - 1; i >= 0; --i) {
         if (m_registry[i].groupName == groupName) {
+            QString udlId = m_registry[i].layerId;
+            if (udlId.startsWith("udl_") || groupName.contains("User Defined Layers") || groupName.contains("🎨")) {
+                UdlRepositoryManager::instance().deleteLayer(udlId);
+            }
             m_registry.removeAt(i);
             changed = true;
         }
@@ -322,6 +376,72 @@ void LayerRegistryManager::restoreSavedLayers(GISApp::Layers::LayerManager *laye
         qWarning() << "[LayerRegistry] Auto-restoring" << m_registry.size() << "published layers in saved order from disk...";
 
         for (const auto &meta : m_registry) {
+            bool isUdl = (meta.groupName.contains("User Defined Layers") || meta.groupName.contains("🎨") || meta.layerId.startsWith("udl_"));
+            
+            if (isUdl) {
+                QString lId = meta.layerId.isEmpty() ? meta.name : meta.layerId;
+                qWarning() << "[LayerRegistry] Restoring User Defined Layer (UDL):" << meta.name << "| ID:" << lId;
+                
+                // 1. Sync SQLite entities to GeoJSON file on disk and emit udlLayerUpdated signal
+                UdlRepositoryManager::instance().syncGeoJsonFile(lId);
+
+                // 2. Compute dynamic extent and construct MapLibreLayerAdapter
+                QString sanitizedId = QString("udl-%1").arg(qHash(lId));
+                auto udlExtent = UdlRepositoryManager::instance().calculateLayerExtent(lId);
+                auto adapter = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(
+                    sanitizedId,
+                    map,
+                    udlExtent,
+                    QVariantMap{}, QVariantMap{}, QVariantMap{},
+                    lId
+                );
+
+                // 3. Find or create existing layer node in LayerTree
+                GISApp::Layers::LayerTreeNode *existingNode = nullptr;
+                if (layerManager->model()) {
+                    auto root = layerManager->model()->rootNode();
+                    std::function<void(GISApp::Layers::LayerTreeNode*)> findNode = [&](GISApp::Layers::LayerTreeNode *n) {
+                        if (!n || existingNode) return;
+                        if (n->nodeType() == GISApp::Layers::NodeType::Layer && (n->name() == meta.name || n->name() == lId)) {
+                            existingNode = n;
+                            return;
+                        }
+                        if (n->nodeType() == GISApp::Layers::NodeType::Group) {
+                            auto g = static_cast<GISApp::Layers::LayerGroupNode*>(n);
+                            for (int i = 0; i < g->childCount(); ++i) findNode(g->child(i));
+                        }
+                    };
+                    for (int i = 0; i < root->childCount(); ++i) findNode(root->child(i));
+                }
+
+                if (!existingNode) {
+                    GISApp::Layers::LayerGroupNode *targetGroup = nullptr;
+                    QString searchGroupName = meta.groupName.isEmpty() ? "🎨 User Defined Layers" : meta.groupName;
+                    if (layerManager->model()) {
+                        auto root = layerManager->model()->rootNode();
+                        for (int i = 0; i < root->childCount(); ++i) {
+                            auto child = root->child(i);
+                            if (child->nodeType() == GISApp::Layers::NodeType::Group && child->name() == searchGroupName) {
+                                targetGroup = static_cast<GISApp::Layers::LayerGroupNode*>(child);
+                                break;
+                            }
+                        }
+                        if (!targetGroup) {
+                            targetGroup = layerManager->addGroup(searchGroupName);
+                        }
+                    }
+                    existingNode = layerManager->addLayer(meta.name, adapter, targetGroup);
+                } else {
+                    static_cast<GISApp::Layers::LayerNode*>(existingNode)->setAdapter(adapter);
+                }
+
+                if (existingNode) {
+                    layerManager->setOpacity(existingNode, meta.opacity);
+                    layerManager->setVisibility(existingNode, meta.isVisible);
+                }
+                continue;
+            }
+
             // Find existing layer node in LayerManager tree
             GISApp::Layers::LayerTreeNode *existingNode = nullptr;
             if (layerManager->model()) {

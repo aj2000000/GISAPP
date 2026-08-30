@@ -56,7 +56,13 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "onMapContextMenuRequested",
         "QPoint",
         "globalPos",
-        "localPos"
+        "localPos",
+        "onCreateUdlLayerTriggered",
+        "onToggleUdlToolbarTriggered",
+        "onManageUdlEntitiesTriggered",
+        "onUdlLayerUpdated",
+        "layerId",
+        "geojsonPath"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -85,6 +91,16 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         // Slot 'onMapContextMenuRequested'
         QtMocHelpers::SlotData<void(const QPoint &, const QPoint &, const GISApp::Core::Models::GeoCoordinate &)>(14, 2, QMC::AccessPrivate, QMetaType::Void, {{
             { 0x80000000 | 15, 16 }, { 0x80000000 | 15, 17 }, { 0x80000000 | 3, 4 },
+        }}),
+        // Slot 'onCreateUdlLayerTriggered'
+        QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onToggleUdlToolbarTriggered'
+        QtMocHelpers::SlotData<void()>(19, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onManageUdlEntitiesTriggered'
+        QtMocHelpers::SlotData<void()>(20, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onUdlLayerUpdated'
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(21, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 22 }, { QMetaType::QString, 23 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -119,6 +135,10 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 7: _t->onUploadBoundaryTriggered(); break;
         case 8: _t->onViewBoundaryTriggered(); break;
         case 9: _t->onMapContextMenuRequested((*reinterpret_cast<std::add_pointer_t<QPoint>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QPoint>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<GISApp::Core::Models::GeoCoordinate>>(_a[3]))); break;
+        case 10: _t->onCreateUdlLayerTriggered(); break;
+        case 11: _t->onToggleUdlToolbarTriggered(); break;
+        case 12: _t->onManageUdlEntitiesTriggered(); break;
+        case 13: _t->onUdlLayerUpdated((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         default: ;
         }
     }
@@ -143,14 +163,14 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 14)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 14;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 10)
+        if (_id < 14)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 10;
+        _id -= 14;
     }
     return _id;
 }

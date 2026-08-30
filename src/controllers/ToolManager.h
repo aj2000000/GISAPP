@@ -46,6 +46,7 @@ public:
     void handleMousePress(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord);
     void handleMouseMove(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord);
     void handleMouseRelease(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord);
+    void handleMouseDoubleClick(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord);
 
 signals:
     /**

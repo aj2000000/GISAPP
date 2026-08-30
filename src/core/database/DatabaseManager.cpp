@@ -158,6 +158,23 @@ bool DatabaseManager::createSchema()
         return false;
     }
 
+    const QString createUdlEntitiesDdl = R"(
+        CREATE TABLE IF NOT EXISTS UDL_ENTITIES (
+            ENTITY_ID TEXT PRIMARY KEY,
+            LAYER_ID TEXT NOT NULL,
+            ENTITY_NAME TEXT,
+            ENTITY_TYPE TEXT NOT NULL,
+            GEOMETRY_JSON TEXT NOT NULL,
+            STYLE_JSON TEXT,
+            CREATED_AT TEXT
+        );
+    )";
+
+    if (!query.exec(createUdlEntitiesDdl)) {
+        qCritical() << "[DatabaseManager] DDL error creating UDL_ENTITIES table:" << query.lastError().text();
+        return false;
+    }
+
     return true;
 }
 

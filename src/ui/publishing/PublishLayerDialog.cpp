@@ -315,17 +315,19 @@ void PublishLayerDialog::setupUI()
             border: 1px solid #334155;
             border-radius: 6px;
             color: #ffffff;
-            padding: 6px 12px;
+            padding: 6px 28px 6px 12px;
             font-size: 13px;
+            font-weight: 600;
+        }
+        QComboBox:hover, QComboBox:focus {
+            border-color: #38bdf8;
         }
         QComboBox::drop-down {
             subcontrol-origin: padding;
             subcontrol-position: top right;
             width: 24px;
-            border-left: 1px solid #334155;
-            border-top-right-radius: 6px;
-            border-bottom-right-radius: 6px;
-            background-color: #1e293b;
+            border-left: none;
+            background-color: transparent;
         }
         QComboBox::down-arrow {
             width: 0;
@@ -333,13 +335,14 @@ void PublishLayerDialog::setupUI()
             border-left: 5px solid transparent;
             border-right: 5px solid transparent;
             border-top: 6px solid #38bdf8;
+            margin-right: 8px;
         }
         QComboBox QAbstractItemView {
             background-color: #1e293b;
             color: #ffffff;
             selection-background-color: #0284c7;
             selection-color: #ffffff;
-            border: 1px solid #334155;
+            border: 1px solid #38bdf8;
             border-radius: 6px;
             padding: 4px;
             outline: 0;
@@ -348,15 +351,12 @@ void PublishLayerDialog::setupUI()
             min-height: 28px;
             padding: 4px 8px;
             color: #ffffff;
-            background-color: #1e293b;
+            background-color: transparent;
         }
-        QComboBox QAbstractItemView::item:selected {
+        QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {
             background-color: #0284c7;
             color: #ffffff;
-        }
-        QComboBox QAbstractItemView::item:hover {
-            background-color: #0284c7;
-            color: #ffffff;
+            border-radius: 4px;
         }
 
         QProgressBar {

@@ -4,7 +4,9 @@
  */
 
 #include "layers/LayerManager.h"
+#include "layers/MapLibreLayerAdapter.h"
 #include "publishing/LayerRegistryManager.h"
+#include "publishing/UdlRepositoryManager.h"
 #include "publishing/LocalTileServer.h"
 
 namespace GISApp::Layers {
@@ -138,6 +140,11 @@ void LayerManager::removeNode(LayerTreeNode *node) {
     if (node->nodeType() == NodeType::Layer) {
         LayerNode *layerNode = static_cast<LayerNode*>(node);
         if (layerNode->adapter()) {
+            auto mlAdapter = std::dynamic_pointer_cast<MapLibreLayerAdapter>(layerNode->adapter());
+            if (mlAdapter && !mlAdapter->rawUdlLayerId().isEmpty()) {
+                QString rawUdlId = mlAdapter->rawUdlLayerId();
+                GISApp::Publishing::UdlRepositoryManager::instance().deleteLayer(rawUdlId);
+            }
             layerNode->adapter()->removeLayer();
         }
         QString layerName = node->name();

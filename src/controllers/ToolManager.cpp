@@ -75,4 +75,11 @@ void ToolManager::handleMouseRelease(QMouseEvent *event, const GISApp::Core::Mod
     }
 }
 
+void ToolManager::handleMouseDoubleClick(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coord)
+{
+    if (m_activeTool) {
+        m_activeTool->onMouseDoubleClick(event, coord);
+    }
+}
+
 } // namespace GISApp::Controllers

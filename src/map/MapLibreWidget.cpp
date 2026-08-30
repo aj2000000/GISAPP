@@ -128,6 +128,13 @@ bool MapLibreWidget::eventFilter(QObject *watched, QEvent *event)
             emit mouseReleased(mouseEvent, geoCoord);
             emitCameraChanged();
         }
+        else if (event->type() == QEvent::MouseButtonDblClick) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            QMapLibre::Coordinate coord = map()->coordinateForPixel(mouseEvent->position());
+            GISApp::Core::Models::GeoCoordinate geoCoord(coord.first, coord.second);
+            emit mouseDoubleClicked(mouseEvent, geoCoord);
+            return true;
+        }
         else if (event->type() == QEvent::ContextMenu) {
             QContextMenuEvent *cme = static_cast<QContextMenuEvent*>(event);
             QMapLibre::Coordinate coord = map()->coordinateForPixel(cme->pos());
@@ -146,6 +153,18 @@ void MapLibreWidget::setWaypoints(const std::vector<GISApp::Core::Models::GeoCoo
 {
     if (m_overlayWidget) {
         m_overlayWidget->setWaypoints(waypoints);
+    }
+}
+
+void MapLibreWidget::setUdlPreview(const std::vector<GISApp::Core::Models::GeoCoordinate> &waypoints,
+                                   const GISApp::Core::Models::GeoCoordinate &mouseCoord,
+                                   GISApp::UI::UDL::UdlGeometryType geomType,
+                                   bool active,
+                                   const QColor &strokeColor,
+                                   const QColor &fillColor)
+{
+    if (m_overlayWidget) {
+        m_overlayWidget->setUdlPreview(waypoints, mouseCoord, geomType, active, strokeColor, fillColor);
     }
 }
 

@@ -4,6 +4,7 @@
  */
 
 #include "layers/MapLibreLayerAdapter.h"
+#include "publishing/UdlRepositoryManager.h"
 #include "SystemConfigManager.h"
 #include <QVariantMap>
 #include <QFile>
@@ -18,13 +19,15 @@ MapLibreLayerAdapter::MapLibreLayerAdapter(const QString &layerId,
                                            const LayerExtent &defaultExtent,
                                            const QVariantMap &layerParams,
                                            const QVariantMap &strokeParams,
-                                           const QVariantMap &sourceParams)
+                                           const QVariantMap &sourceParams,
+                                           const QString &rawUdlLayerId)
     : m_layerId(layerId), 
       m_map(mapPointer), 
       m_extent(defaultExtent),
       m_layerParams(layerParams),
       m_strokeParams(strokeParams),
-      m_sourceParams(sourceParams)
+      m_sourceParams(sourceParams),
+      m_rawUdlLayerId(rawUdlLayerId)
 {
 }
 
@@ -52,7 +55,17 @@ void MapLibreLayerAdapter::setVisibility(bool visible) {
 
     QString visString = visible ? QString("visible") : QString("none");
 
-    if (m_layerId == "dark-matter-base") {
+    if (m_layerId.startsWith("udl-")) {
+        qWarning() << "[LayerAdapter] Setting visibility for UDL layer:" << m_layerId << "->" << visString;
+        QString fillId = m_layerId + "-fill";
+        QString lineId = m_layerId + "-line";
+        QString circleId = m_layerId + "-circle";
+        QString symbolId = m_layerId + "-symbol";
+        if (m_map->layerExists(fillId)) m_map->setLayoutProperty(fillId, "visibility", visString);
+        if (m_map->layerExists(lineId)) m_map->setLayoutProperty(lineId, "visibility", visString);
+        if (m_map->layerExists(circleId)) m_map->setLayoutProperty(circleId, "visibility", visString);
+        if (m_map->layerExists(symbolId)) m_map->setLayoutProperty(symbolId, "visibility", visString);
+    } else if (m_layerId == "dark-matter-base") {
         const auto layers = m_map->layerIds();
         for (const QString &id : layers) {
             // Protect user-published custom layers from base map bulk toggling
@@ -83,7 +96,41 @@ void MapLibreLayerAdapter::setOpacity(float opacity) {
 
     double dOpacity = static_cast<double>(m_opacity);
 
-    if (m_layerId == "dark-matter-base") {
+    if (m_layerId.startsWith("udl-")) {
+        qWarning() << "[LayerAdapter] Setting opacity for UDL layer:" << m_layerId << "->" << dOpacity;
+        QString fillId = m_layerId + "-fill";
+        QString lineId = m_layerId + "-line";
+        QString circleId = m_layerId + "-circle";
+        QString symbolId = m_layerId + "-symbol";
+        if (m_map->layerExists(fillId)) {
+            if (qFuzzyCompare(dOpacity, 1.0)) {
+                m_map->setPaintProperty(fillId, "fill-opacity", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, 0.35}});
+            } else {
+                m_map->setPaintProperty(fillId, "fill-opacity", QVariantList{"*", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, 0.35}}, dOpacity});
+            }
+        }
+        if (m_map->layerExists(lineId)) {
+            if (qFuzzyCompare(dOpacity, 1.0)) {
+                m_map->setPaintProperty(lineId, "line-opacity", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "strokeOpacity"}, QVariantList{"get", "lineOpacity"}, 1.0}});
+            } else {
+                m_map->setPaintProperty(lineId, "line-opacity", QVariantList{"*", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "strokeOpacity"}, QVariantList{"get", "lineOpacity"}, 1.0}}, dOpacity});
+            }
+        }
+        if (m_map->layerExists(circleId)) {
+            if (qFuzzyCompare(dOpacity, 1.0)) {
+                m_map->setPaintProperty(circleId, "circle-opacity", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}});
+            } else {
+                m_map->setPaintProperty(circleId, "circle-opacity", QVariantList{"*", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}}, dOpacity});
+            }
+        }
+        if (m_map->layerExists(symbolId)) {
+            if (qFuzzyCompare(dOpacity, 1.0)) {
+                m_map->setPaintProperty(symbolId, "text-opacity", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "textOpacity"}, 1.0}});
+            } else {
+                m_map->setPaintProperty(symbolId, "text-opacity", QVariantList{"*", QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "textOpacity"}, 1.0}}, dOpacity});
+            }
+        }
+    } else if (m_layerId == "dark-matter-base") {
         const auto layers = m_map->layerIds();
         for (const QString &id : layers) {
             if (id != "air-zones-layer" && id != "radar-coverage" && 
@@ -123,6 +170,13 @@ float MapLibreLayerAdapter::opacity() const {
 }
 
 LayerExtent MapLibreLayerAdapter::getExtent() const {
+    if (m_layerId.startsWith("udl-") || !m_rawUdlLayerId.isEmpty()) {
+        QString targetUdlId = !m_rawUdlLayerId.isEmpty() ? m_rawUdlLayerId : m_layerId;
+        auto calc = GISApp::Publishing::UdlRepositoryManager::instance().calculateLayerExtent(targetUdlId);
+        if (calc.isValid()) {
+            return calc;
+        }
+    }
     return m_extent;
 }
 
@@ -134,6 +188,20 @@ void MapLibreLayerAdapter::removeLayer() {
     if (!m_map || m_layerId.isEmpty()) return;
 
     qWarning() << "[MapLibreLayerAdapter] Removing layer and source from MapLibre engine:" << m_layerId;
+
+    if (m_layerId.startsWith("udl-")) {
+        QString fillId = m_layerId + "-fill";
+        QString lineId = m_layerId + "-line";
+        QString circleId = m_layerId + "-circle";
+        QString symbolId = m_layerId + "-symbol";
+        QString srcId = m_layerId + "-src";
+        if (m_map->layerExists(symbolId)) m_map->removeLayer(symbolId);
+        if (m_map->layerExists(circleId)) m_map->removeLayer(circleId);
+        if (m_map->layerExists(lineId)) m_map->removeLayer(lineId);
+        if (m_map->layerExists(fillId)) m_map->removeLayer(fillId);
+        if (m_map->sourceExists(srcId)) m_map->removeSource(srcId);
+        return;
+    }
 
     if (m_map->layerExists(m_layerId)) {
         m_map->removeLayer(m_layerId);
@@ -151,6 +219,11 @@ void MapLibreLayerAdapter::removeLayer() {
 
 void MapLibreLayerAdapter::reinsertLayer(const QString &beforeLayerId) {
     if (!m_map || m_layerId.isEmpty()) return;
+
+    if (m_layerId.startsWith("udl-")) {
+        // UDL sub-layers (-fill, -line, -circle) are managed dynamically via GeoJSON sources
+        return;
+    }
 
     if (m_layerId == "tracks-circle-layer") {
         if (!m_map->sourceExists("tracks-geojson-source")) {

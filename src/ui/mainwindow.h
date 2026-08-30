@@ -36,6 +36,9 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+namespace GISApp::Publishing {
+    struct UdlEntityItem;
+}
 namespace GISApp::UI::Publishing {
     class PublishLayerDialog;
     class GroupManagerDialog;
@@ -62,6 +65,13 @@ namespace GISApp::UI::Tracks {
 }
 namespace GISApp::UI::Boundary {
     class BoundaryTableDialog;
+}
+namespace GISApp::UI::UDL {
+    class UdlToolbarWidget;
+    class UdlEntityTableDialog;
+}
+namespace GISApp::Tools {
+    class UdlDrawingTool;
 }
 class MediatorClass;
 class MainWindow : public QMainWindow {
@@ -90,6 +100,7 @@ private slots:
 
 private:
     void showTrackDetailsDialog(const GISApp::Core::Models::TrackRecord &track);
+    void showUdlEntityDetailsDialog(const GISApp::Publishing::UdlEntityItem &entity);
     void showCoordinatesDialog(const GISApp::Core::Models::GeoCoordinate &coordinate);
     Ui::MainWindow *ui;
     
@@ -138,6 +149,18 @@ private:
 
     MediatorClass *m_udpMediator{nullptr};
     QTimer *m_styleDebounceTimer{nullptr};
+
+    // UDL Components
+    GISApp::UI::UDL::UdlToolbarWidget *m_udlToolbar{nullptr};
+    std::shared_ptr<GISApp::Tools::UdlDrawingTool> m_udlDrawingTool;
+    GISApp::UI::UDL::UdlEntityTableDialog *m_udlEntityTableDialog{nullptr};
+
+    void setupUdlMenu();
+private slots:
+    void onCreateUdlLayerTriggered();
+    void onToggleUdlToolbarTriggered();
+    void onManageUdlEntitiesTriggered();
+    void onUdlLayerUpdated(const QString &layerId, const QString &geojsonPath);
 };
 
 #endif // MAINWINDOW_H

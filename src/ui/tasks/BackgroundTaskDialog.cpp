@@ -58,6 +58,8 @@ void BackgroundTaskDialog::setupUI()
     m_taskTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     m_taskTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
     m_taskTable->verticalHeader()->setVisible(false);
+    m_taskTable->verticalHeader()->setDefaultSectionSize(38);
+    m_taskTable->setAlternatingRowColors(true);
     m_taskTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_taskTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -84,25 +86,39 @@ void BackgroundTaskDialog::setupUI()
             border-radius: 8px;
             color: #f8fafc;
             gridline-color: #334155;
+            selection-background-color: #0284c7;
+            selection-color: #ffffff;
+            outline: 0px;
+            font-size: 12px;
         }
         QTableWidget::item {
             color: #f8fafc;
-            background-color: #1e293b;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        QTableWidget::item:alternate {
-            background-color: #0f172a;
-            color: #f8fafc;
+        QTableWidget::item:hover {
+            background-color: rgba(56, 189, 248, 0.15);
+            color: #ffffff;
         }
         QTableWidget::item:selected {
             background-color: #0284c7;
             color: #ffffff;
+            font-weight: bold;
+        }
+        QHeaderView {
+            background-color: #0f172a;
+            border: none;
+            border-bottom: 2px solid #0284c7;
         }
         QHeaderView::section {
             background-color: #0f172a;
             color: #38bdf8;
-            padding: 6px;
+            padding: 8px 12px;
             font-weight: bold;
-            border: 1px solid #334155;
+            font-size: 12px;
+            border: none;
+            border-right: 1px solid #334155;
+            border-bottom: 2px solid #0284c7;
         }
         QProgressBar {
             background-color: #0f172a;
@@ -214,14 +230,29 @@ void BackgroundTaskDialog::refreshTaskTable()
 
         // Col 5: Action (Cancel button) - REUSE OR REMOVE WIDGET
         if (task.state == GISApp::Core::Tasks::TaskState::Running) {
-            QPushButton *btnCancel = qobject_cast<QPushButton*>(m_taskTable->cellWidget(i, 5));
-            if (!btnCancel) {
-                btnCancel = new QPushButton(tr("Cancel"));
-                btnCancel->setStyleSheet("background-color: #ef4444; color: white; padding: 2px 8px; border-radius: 4px;");
+            QWidget *actionWidget = m_taskTable->cellWidget(i, 5);
+            QPushButton *btnCancel = nullptr;
+            if (!actionWidget) {
+                actionWidget = new QWidget(this);
+                QHBoxLayout *layout = new QHBoxLayout(actionWidget);
+                layout->setContentsMargins(4, 2, 4, 2);
+                layout->setAlignment(Qt::AlignCenter);
+
+                btnCancel = new QPushButton(tr("❌ Cancel"), this);
+                btnCancel->setCursor(Qt::PointingHandCursor);
+                btnCancel->setStyleSheet(
+                    "QPushButton { background-color: #c0392b; color: #ffffff; font-weight: bold; border-radius: 4px; padding: 4px 10px; font-size: 11px; border: none; }"
+                    "QPushButton:hover { background-color: #e74c3c; color: #ffffff; }"
+                );
                 connect(btnCancel, &QPushButton::clicked, this, &BackgroundTaskDialog::onCancelTaskClicked);
-                m_taskTable->setCellWidget(i, 5, btnCancel);
+                layout->addWidget(btnCancel);
+                m_taskTable->setCellWidget(i, 5, actionWidget);
+            } else {
+                btnCancel = actionWidget->findChild<QPushButton*>();
             }
-            btnCancel->setProperty("taskId", task.id);
+            if (btnCancel) {
+                btnCancel->setProperty("taskId", task.id);
+            }
         } else {
             if (m_taskTable->cellWidget(i, 5)) {
                 m_taskTable->removeCellWidget(i, 5);

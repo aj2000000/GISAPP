@@ -182,6 +182,14 @@ std::shared_ptr<ILayerAdapter> LayerNode::adapter() const {
     return m_adapter;
 }
 
+void LayerNode::setAdapter(std::shared_ptr<ILayerAdapter> adapter) {
+    m_adapter = adapter;
+    if (m_adapter) {
+        m_adapter->setVisibility(checkState() == Qt::Checked);
+        m_adapter->setOpacity(opacity());
+    }
+}
+
 void LayerNode::setCheckState(Qt::CheckState state) {
     LayerTreeNode::setCheckState(state);
     if (m_adapter) {

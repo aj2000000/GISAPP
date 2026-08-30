@@ -101,6 +101,7 @@ public:
     LayerNode(const QString &name, std::shared_ptr<ILayerAdapter> adapter, LayerTreeNode *parent = nullptr);
 
     std::shared_ptr<ILayerAdapter> adapter() const;
+    void setAdapter(std::shared_ptr<ILayerAdapter> adapter);
 
     void setCheckState(Qt::CheckState state) override;
     void setOpacity(float opacity) override;

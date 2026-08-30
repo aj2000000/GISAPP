@@ -27,6 +27,7 @@ namespace GISApp::Publishing {
 class LayerPublishingService;
 
 struct PublishedLayerMeta {
+    QString layerId;
     QString name;
     LayerType type;
     QString folderPath;
@@ -56,6 +57,12 @@ public:
                                 int maxZoom = 22,
                                 float opacity = 1.0f,
                                 bool isVisible = true);
+
+    void registerUserDefinedLayer(const QString &layerId,
+                                  const QString &layerName,
+                                  float opacity = 1.0f,
+                                  const QString &groupName = "🎨 User Defined Layers",
+                                  const QString &geojsonPath = "");
 
     void registerGroup(const QString &groupName);
     void unregisterLayer(const QString &layerName);

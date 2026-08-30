@@ -29,6 +29,12 @@ public:
     void setZoom(double zoomLevel) override;
 
     void setWaypoints(const std::vector<GISApp::Core::Models::GeoCoordinate> &waypoints);
+    void setUdlPreview(const std::vector<GISApp::Core::Models::GeoCoordinate> &waypoints,
+                       const GISApp::Core::Models::GeoCoordinate &mouseCoord,
+                       GISApp::UI::UDL::UdlGeometryType geomType,
+                       bool active,
+                       const QColor &strokeColor,
+                       const QColor &fillColor);
     QMapLibre::Map* map();
 
 signals:
@@ -36,6 +42,7 @@ signals:
     void mouseMoved(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void mousePressed(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void mouseReleased(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
+    void mouseDoubleClicked(QMouseEvent *event, const GISApp::Core::Models::GeoCoordinate &coordinate);
     void cameraChanged(double zoomLevel, double scaleDenominator, const GISApp::Core::Models::GeoCoordinate &center);
     void customContextMenuRequested(const QPoint &globalPos, const QPoint &localPos, const GISApp::Core::Models::GeoCoordinate &coordinate);
 

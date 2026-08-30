@@ -28,9 +28,11 @@ public:
                          const LayerExtent &defaultExtent = LayerExtent(),
                          const QVariantMap &layerParams = {},
                          const QVariantMap &strokeParams = {},
-                         const QVariantMap &sourceParams = {});
+                         const QVariantMap &sourceParams = {},
+                         const QString &rawUdlLayerId = "");
 
     QString layerId() const override;
+    QString rawUdlLayerId() const { return m_rawUdlLayerId; }
     void setVisibility(bool visible) override;
     bool isVisible() const override;
     void setOpacity(float opacity) override;
@@ -49,6 +51,7 @@ private:
     QVariantMap m_layerParams;
     QVariantMap m_strokeParams;
     QVariantMap m_sourceParams;
+    QString m_rawUdlLayerId;
 };
 
 } // namespace GISApp::Layers

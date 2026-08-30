@@ -45,7 +45,8 @@ INCLUDEPATH += $$PWD/src \
                $$PWD/src/core/Udp \
                $$PWD/src/core/Udp/handlers \
                $$PWD/src/core/Udp/UdpMessages \
-               $$PWD/src/core/Udp/AESEncryptionFile
+               $$PWD/src/core/Udp/AESEncryptionFile \
+               $$PWD/src/ui/udl
 
 SOURCES += \
     src/main.cpp \
@@ -117,6 +118,12 @@ SOURCES += \
     src/core/Udp/udpcommunication.cpp \
     src/core/Udp/handlers/UdpMessageDispatcher.cpp \
     src/core/Udp/handlers/UdpTrackMessageHandler.cpp \
+    src/ui/udl/CreateUdlLayerDialog.cpp \
+    src/ui/udl/UdlEntityStyleDialog.cpp \
+    src/ui/udl/UdlToolbarWidget.cpp \
+    src/ui/udl/UdlEntityTableDialog.cpp \
+    src/publishing/UdlRepositoryManager.cpp \
+    src/tools/UdlDrawingTool.cpp \
     fieldkeyvaluemapper.cpp
 
 HEADERS += \
@@ -209,6 +216,12 @@ HEADERS += \
     src/core/Udp/UdpMessages/IRS.h \
     src/core/Udp/UdpMessages/MessageId.h \
     src/core/Udp/UdpMessages/Structures.h \
+    src/ui/udl/CreateUdlLayerDialog.h \
+    src/ui/udl/UdlEntityStyleDialog.h \
+    src/ui/udl/UdlToolbarWidget.h \
+    src/ui/udl/UdlEntityTableDialog.h \
+    src/publishing/UdlRepositoryManager.h \
+    src/tools/UdlDrawingTool.h \
     fieldkeyvaluemapper.h
 
 FORMS += \

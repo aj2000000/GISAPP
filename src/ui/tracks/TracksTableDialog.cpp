@@ -196,35 +196,40 @@ void TracksTableDialog::applyDarkTheme()
             color: #f1f5f9;
             gridline-color: #334155;
             border: 1px solid #334155;
-            border-radius: 6px;
+            border-radius: 8px;
             selection-background-color: #0284c7;
             selection-color: #ffffff;
+            outline: 0px;
             font-size: 12px;
         }
         QTableView::item {
             color: #f1f5f9;
-            background-color: #1e293b;
-            padding: 4px;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        QTableView::item:alternate {
-            background-color: #0f172a;
-            color: #f1f5f9;
+        QTableView::item:hover {
+            background-color: rgba(56, 189, 248, 0.15);
+            color: #ffffff;
         }
         QTableView::item:selected {
             background-color: #0284c7;
             color: #ffffff;
+            font-weight: bold;
         }
-        QTableView::item:hover {
-            background-color: #334155;
-            color: #38bdf8;
+        QHeaderView {
+            background-color: #0f172a;
+            border: none;
+            border-bottom: 2px solid #0284c7;
         }
         QHeaderView::section {
             background-color: #0f172a;
             color: #38bdf8;
-            padding: 8px;
+            padding: 8px 12px;
             font-weight: bold;
             font-size: 12px;
-            border: 1px solid #334155;
+            border: none;
+            border-right: 1px solid #334155;
+            border-bottom: 2px solid #0284c7;
         }
         QHeaderView::section:hover {
             background-color: #1e293b;
