@@ -88,6 +88,18 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+
+
+
+
+
+
+
+
+
+
+
+
     // Initialize SQLite Database and Repositories
     GISApp::Core::Database::DatabaseManager::instance()->initialize();
     m_trackRepository = new GISApp::Core::Repositories::TrackRepository(this);
@@ -96,6 +108,40 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Initialize UDP Subsystem & Listener Thread
     m_udpMediator = new MediatorClass(this);
+
+    //-EXPERIEMENT BLOCK
+    // Default ExpTable creation
+    m_expTable = new GISApp::Experiment::ExpTable("exp_telemetry_table", this);
+
+    // Default ExpMessage creation with ExpTable attached
+    m_expMessage = new GISApp::Experiment::ExpMessage(m_expTable, this);
+
+    // Default ExpLayer creation with layer name, group, and query (hardcoded: display all data)
+    m_expLayer = new GISApp::Experiment::ExpLayer("Experiment Telemetry", "EXP group", "ALL", m_expTable, this);
+
+    // Connect ExpLayer updated signal to map update delegate
+    connect(m_expLayer, &GISApp::Experiment::ExpLayer::layerUpdated,
+            this, [this](const QString &layerName, const QString &geoJsonPath) {
+                this->onUdlLayerUpdated("vector-" + QString::number(qHash(layerName)), geoJsonPath);
+            });
+
+    // Directly receive raw UDP payload via signal-slot bypassing UdpMessageDispatcher
+    if (m_udpMediator) {
+        connect(m_udpMediator, &MediatorClass::rawUdpPayloadReceived,
+                this, [this](const QByteArray &rawPayload) {
+                    if (static_cast<size_t>(rawPayload.size()) < sizeof(STRUCT_MESSAGE_HEADER)) return;
+                    STRUCT_MESSAGE_HEADER sysHeader;
+                    std::memcpy(&sysHeader, rawPayload.constData(), sizeof(STRUCT_MESSAGE_HEADER));
+
+                    if (sysHeader.message_id == EXP_MESSAGE_ID) {
+                        qDebug() << "[MainWindow] 📡 Received EXP_MESSAGE_ID (903) datagram via direct signal-slot connection";
+                        if (m_expMessage) {
+                            m_expMessage->parseAndSaveToDb(rawPayload);
+                        }
+                    }
+                });
+    }
+    //--EXPERIEMENT BLOCK
 
 
     // Create and Register Track Message Handler (ID: 613)
@@ -126,6 +172,15 @@ MainWindow::MainWindow(QWidget *parent)
     setupStatusBar();
     setupThemeMenu();
     setupUdlMenu();
+
+
+
+
+
+
+
+
+
 
     // Connect UdlRepositoryManager to MapLibre GeoJSON update handler
     connect(&GISApp::Publishing::UdlRepositoryManager::instance(), &GISApp::Publishing::UdlRepositoryManager::udlLayerUpdated,
@@ -1673,7 +1728,10 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
         }
 
         if (displayName.isEmpty() || displayName == layerId) {
-            if (geojsonPath.contains("sensor_telemetry")) {
+            if (geojsonPath.contains("exp_layer")) {
+                displayName = m_expLayer ? m_expLayer->layerName() : "Experiment entity";
+                groupName = m_expLayer ? m_expLayer->layerGroup() : "EXP group1";
+            } else if (geojsonPath.contains("sensor_telemetry")) {
                 displayName = "sensor";
                 groupName = "SensorGroup";
             } else if (geojsonPath.contains("sample_telemetry")) {
@@ -1746,14 +1804,22 @@ void MainWindow::restoreCustomEntityLayersAndGroups()
     if (!m_layerManager || !m_mapWidget || !m_mapWidget->map()) return;
 
     // 1. Register custom groups in LayerRegistryManager
+    QString expGroup = m_expLayer ? m_expLayer->layerGroup() : "EXP group";
     GISApp::Publishing::LayerRegistryManager::instance().registerGroup("SensorGroup");
     GISApp::Publishing::LayerRegistryManager::instance().registerGroup("🛡️ Tactical Operations");
+    GISApp::Publishing::LayerRegistryManager::instance().registerGroup(expGroup);
 
     // 2. Restore saved layers from published_layers.json
     auto publishingService = new GISApp::Publishing::LayerPublishingService(m_layerManager);
     GISApp::Publishing::LayerRegistryManager::instance().restoreSavedLayers(
         m_layerManager, m_mapWidget->map(), publishingService
     );
+
+    //-EXPERIEMENT BLOCK
+    if (m_expLayer) {
+        m_expLayer->updateLayer();
+    }
+    //--EXPERIEMENT BLOCK
 
     // 3. Scan and auto-load existing telemetry GeoJSON files on app restart
     QString mapDataDir = GISApp::Core::SystemConfigManager::instance().getMapDataDir();
@@ -1767,7 +1833,8 @@ void MainWindow::restoreCustomEntityLayersAndGroups()
 
     QList<TelemetryLayerConfig> telemetryLayers = {
         {"sensor_telemetry.geojson", "sensor", "SensorGroup"},
-        {"sample_telemetry.geojson", "⚡ Sample Entities", "🛡️ Tactical Operations"}
+        {"sample_telemetry.geojson", "⚡ Sample Entities", "🛡️ Tactical Operations"},
+        {"exp_layer_experiment_telemetry.geojson", "Experiment Telemetry", expGroup}
     };
 
     for (const auto &cfg : telemetryLayers) {

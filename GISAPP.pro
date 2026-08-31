@@ -46,7 +46,8 @@ INCLUDEPATH += $$PWD/src \
                $$PWD/src/core/Udp/handlers \
                $$PWD/src/core/Udp/UdpMessages \
                $$PWD/src/core/Udp/AESEncryptionFile \
-               $$PWD/src/ui/udl
+               $$PWD/src/ui/udl \
+               $$PWD/src/experiment
 
 SOURCES += \
     src/main.cpp \
@@ -232,6 +233,12 @@ HEADERS += \
     src/core/Udp/UdpMessages/SampleEntityMessage.h \
     src/core/models/SensorEntity.h \
     src/core/Udp/UdpMessages/SensorMessage.h \
+    # -EXPERIEMENT BLOCK
+    src/experiment/Entity.h \
+    src/experiment/Table.h \
+    src/experiment/Layer.h \
+    src/experiment/Message.h \
+    # --EXPERIEMENT BLOCK
     fieldkeyvaluemapper.h
 
 FORMS += \

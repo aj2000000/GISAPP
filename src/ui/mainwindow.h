@@ -32,6 +32,13 @@
 #include "core/models/TrackRecord.h"
 
 
+//-EXPERIEMENT BLOCK
+#include "experiment/Entity.h"
+#include "experiment/Table.h"
+#include "experiment/Layer.h"
+#include "experiment/Message.h"
+//--EXPERIEMENT BLOCK
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -155,6 +162,12 @@ private:
     std::shared_ptr<GISApp::Tools::UdlDrawingTool> m_udlDrawingTool;
     GISApp::UI::UDL::UdlEntityTableDialog *m_udlEntityTableDialog{nullptr};
 
+    //-EXPERIEMENT BLOCK
+    GISApp::Experiment::ExpTable *m_expTable{nullptr};
+    GISApp::Experiment::ExpMessage *m_expMessage{nullptr};
+    GISApp::Experiment::ExpLayer *m_expLayer{nullptr};
+    //--EXPERIEMENT BLOCK
+
     void setupUdlMenu();
     void restoreCustomEntityLayersAndGroups();
 private slots:
@@ -162,6 +175,18 @@ private slots:
     void onToggleUdlToolbarTriggered();
     void onManageUdlEntitiesTriggered();
     void onUdlLayerUpdated(const QString &layerId, const QString &geojsonPath);
+
+
+
+
+
+
+
+
+
+
+
+
 };
 
 #endif // MAINWINDOW_H
