@@ -11,6 +11,10 @@
 #include <QByteArray>
 #include "UdpMessages/IRS.h"
 
+namespace GISApp::Core::Services {
+class CUSTOM_MESSAGE;
+}
+
 namespace GISApp::Core::Udp::Handlers {
 
 /**
@@ -33,6 +37,12 @@ public:
      * @return True if parsing and processing succeeded, false otherwise.
      */
     virtual bool processPayload(const QByteArray &payload) = 0;
+
+    /**
+     * @brief Optional accessor for handlers encapsulating a CUSTOM_MESSAGE instance.
+     * @return Pointer to internal CUSTOM_MESSAGE instance or nullptr.
+     */
+    virtual GISApp::Core::Services::CUSTOM_MESSAGE* customMessage() { return nullptr; }
 };
 
 } // namespace GISApp::Core::Udp::Handlers

@@ -5,7 +5,8 @@
         "📡 Signals & Sensors",
         "🌐 Google Imagery",
         "🗺️ Raster Imagery & DSM",
-        "📍 Custom Vector Layers"
+        "📍 Custom Vector Layers",
+        "SensorGroup"
     ],
     "layers": [
         {
@@ -61,6 +62,19 @@
             "type": "Vector"
         },
         {
+            "folderPath": "/home/aman/MAPDATA/udl_layers/sample_telemetry.geojson",
+            "groupName": "🛡️ Tactical Operations",
+            "isTiled": false,
+            "isVisible": true,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "⚡ Sample Entities",
+            "opacity": 1,
+            "orderIndex": 4,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
             "folderPath": "/home/aman/MAPDATA/udl_layers/udl_1788084349080.geojson",
             "groupName": "🎨 User Defined Layers",
             "isTiled": false,
@@ -70,7 +84,35 @@
             "minZoom": 0,
             "name": "layer 2",
             "opacity": 1,
-            "orderIndex": 4,
+            "orderIndex": 5,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "/home/aman/MAPDATA/udl_layers/vector-14890759765805251964.geojson",
+            "groupName": "🎨 User Defined Layers",
+            "isTiled": false,
+            "isVisible": true,
+            "layerId": "vector-14890759765805251964",
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "vector-14890759765805251964",
+            "opacity": 1,
+            "orderIndex": 6,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "/home/aman/MAPDATA/udl_layers/vector-7206881964099171171.geojson",
+            "groupName": "🎨 User Defined Layers",
+            "isTiled": false,
+            "isVisible": true,
+            "layerId": "vector-7206881964099171171",
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "vector-7206881964099171171",
+            "opacity": 1,
+            "orderIndex": 7,
             "tilePath": "",
             "type": "Vector"
         },
@@ -83,7 +125,7 @@
             "minZoom": 0,
             "name": "Primary Radar Coverage",
             "opacity": 1,
-            "orderIndex": 5,
+            "orderIndex": 8,
             "tilePath": "",
             "type": "Vector"
         },
@@ -91,12 +133,12 @@
             "folderPath": "",
             "groupName": "🌐 Google Imagery",
             "isTiled": true,
-            "isVisible": true,
+            "isVisible": false,
             "maxZoom": 20,
             "minZoom": 0,
             "name": "Google Earth Satellite",
             "opacity": 1,
-            "orderIndex": 6,
+            "orderIndex": 9,
             "tilePath": "",
             "type": "Raster"
         },
@@ -109,7 +151,20 @@
             "minZoom": 0,
             "name": "worldgeo",
             "opacity": 0.10000000149011612,
-            "orderIndex": 7,
+            "orderIndex": 10,
+            "tilePath": "",
+            "type": "Vector"
+        },
+        {
+            "folderPath": "/home/aman/MAPDATA/udl_layers/sensor_telemetry.geojson",
+            "groupName": "SensorGroup",
+            "isTiled": true,
+            "isVisible": true,
+            "maxZoom": 22,
+            "minZoom": 0,
+            "name": "sensor",
+            "opacity": 1,
+            "orderIndex": 11,
             "tilePath": "",
             "type": "Vector"
         }

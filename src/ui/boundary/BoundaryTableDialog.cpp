@@ -96,6 +96,58 @@ BoundaryTableDialog::BoundaryTableDialog(
             border-radius: 4px;
             padding: 5px 8px;
         }
+        QScrollBar:vertical {
+            background: #0f172a;
+            width: 10px;
+            margin: 0px;
+            border-radius: 5px;
+        }
+        QScrollBar::handle:vertical {
+            background: #334155;
+            min-height: 25px;
+            border-radius: 4px;
+            margin: 2px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #10b981;
+        }
+        QScrollBar::handle:vertical:pressed {
+            background: #059669;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+            background: none;
+            border: none;
+        }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+            background: none;
+        }
+        QScrollBar:horizontal {
+            background: #0f172a;
+            height: 10px;
+            margin: 0px;
+            border-radius: 5px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #334155;
+            min-width: 25px;
+            border-radius: 4px;
+            margin: 2px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background: #10b981;
+        }
+        QScrollBar::handle:horizontal:pressed {
+            background: #059669;
+        }
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            width: 0px;
+            background: none;
+            border: none;
+        }
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+            background: none;
+        }
     )");
 
     setupUi();

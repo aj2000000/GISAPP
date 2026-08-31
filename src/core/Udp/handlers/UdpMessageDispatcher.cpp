@@ -1,5 +1,6 @@
 #include "UdpMessageDispatcher.h"
 #include "UdpMessages/Structures.h"
+#include "core/interfaces/CUSTOM_MESSAGE.h"
 #include <QDebug>
 
 namespace GISApp::Core::Udp::Handlers {
@@ -15,6 +16,12 @@ void UdpMessageDispatcher::registerHandler(std::shared_ptr<IUdpMessageHandler> h
     MESSAGE_ID id = handler->messageId();
     m_handlers[id] = handler;
     qDebug() << "[UdpMessageDispatcher] Registered handler for Message ID:" << id;
+
+    if (handler->customMessage()) {
+        connect(handler->customMessage(), &GISApp::Core::Services::CUSTOM_MESSAGE::layerUpdated,
+                this, &UdpMessageDispatcher::telemetryLayerUpdated,
+                Qt::UniqueConnection);
+    }
 }
 
 void UdpMessageDispatcher::dispatchMessage(const QByteArray &payload)

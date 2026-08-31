@@ -2,7 +2,8 @@
 #define MESSAGEID_H
 
 #define MAIN_LITE_TRACK_MSG_ID 613
-
+#define SAMPLE_ENTITY_MSG_ID 901
+#define SENSOR_MSG_ID 902 
 
 
 

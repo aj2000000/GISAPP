@@ -39,15 +39,22 @@ template <> constexpr inline auto GISApp::Core::Udp::Handlers::UdpMessageDispatc
     namespace QMC = QtMocConstants;
     QtMocHelpers::StringRefStorage qt_stringData {
         "GISApp::Core::Udp::Handlers::UdpMessageDispatcher",
-        "dispatchMessage",
+        "telemetryLayerUpdated",
         "",
+        "layerName",
+        "geoJsonPath",
+        "dispatchMessage",
         "payload"
     };
 
     QtMocHelpers::UintData qt_methods {
+        // Signal 'telemetryLayerUpdated'
+        QtMocHelpers::SignalData<void(const QString &, const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 3 }, { QMetaType::QString, 4 },
+        }}),
         // Slot 'dispatchMessage'
-        QtMocHelpers::SlotData<void(const QByteArray &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QByteArray, 3 },
+        QtMocHelpers::SlotData<void(const QByteArray &)>(5, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QByteArray, 6 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -72,9 +79,14 @@ void GISApp::Core::Udp::Handlers::UdpMessageDispatcher::qt_static_metacall(QObje
     auto *_t = static_cast<UdpMessageDispatcher *>(_o);
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
-        case 0: _t->dispatchMessage((*reinterpret_cast<std::add_pointer_t<QByteArray>>(_a[1]))); break;
+        case 0: _t->telemetryLayerUpdated((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 1: _t->dispatchMessage((*reinterpret_cast<std::add_pointer_t<QByteArray>>(_a[1]))); break;
         default: ;
         }
+    }
+    if (_c == QMetaObject::IndexOfMethod) {
+        if (QtMocHelpers::indexOfMethod<void (UdpMessageDispatcher::*)(const QString & , const QString & )>(_a, &UdpMessageDispatcher::telemetryLayerUpdated, 0))
+            return;
     }
 }
 
@@ -97,15 +109,21 @@ int GISApp::Core::Udp::Handlers::UdpMessageDispatcher::qt_metacall(QMetaObject::
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 2)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 2;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 1)
+        if (_id < 2)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 1;
+        _id -= 2;
     }
     return _id;
+}
+
+// SIGNAL 0
+void GISApp::Core::Udp::Handlers::UdpMessageDispatcher::telemetryLayerUpdated(const QString & _t1, const QString & _t2)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1, _t2);
 }
 QT_WARNING_POP

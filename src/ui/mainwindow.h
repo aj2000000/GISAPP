@@ -156,6 +156,7 @@ private:
     GISApp::UI::UDL::UdlEntityTableDialog *m_udlEntityTableDialog{nullptr};
 
     void setupUdlMenu();
+    void restoreCustomEntityLayersAndGroups();
 private slots:
     void onCreateUdlLayerTriggered();
     void onToggleUdlToolbarTriggered();

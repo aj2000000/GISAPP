@@ -32,6 +32,14 @@ public:
      */
     void registerHandler(std::shared_ptr<IUdpMessageHandler> handler);
 
+signals:
+    /**
+     * @brief Central signal emitted when any registered telemetry handler updates its GeoJSON layer.
+     * @param layerName Name of the tactical/telemetry layer.
+     * @param geoJsonPath Absolute path to updated GeoJSON file on disk.
+     */
+    void telemetryLayerUpdated(const QString &layerName, const QString &geoJsonPath);
+
 public slots:
     /**
      * @brief Central slot connected to MediatorClass signal emitting incoming raw UDP payloads.

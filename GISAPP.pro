@@ -118,6 +118,8 @@ SOURCES += \
     src/core/Udp/udpcommunication.cpp \
     src/core/Udp/handlers/UdpMessageDispatcher.cpp \
     src/core/Udp/handlers/UdpTrackMessageHandler.cpp \
+    src/core/Udp/handlers/UdpSampleEntityMessageHandler.cpp \
+    src/core/Udp/handlers/UdpSensorMessageHandler.cpp \
     src/ui/udl/CreateUdlLayerDialog.cpp \
     src/ui/udl/UdlEntityStyleDialog.cpp \
     src/ui/udl/UdlToolbarWidget.cpp \
@@ -213,6 +215,8 @@ HEADERS += \
     src/core/Udp/handlers/IUdpMessageHandler.h \
     src/core/Udp/handlers/UdpMessageDispatcher.h \
     src/core/Udp/handlers/UdpTrackMessageHandler.h \
+    src/core/Udp/handlers/UdpSampleEntityMessageHandler.h \
+    src/core/Udp/handlers/UdpSensorMessageHandler.h \
     src/core/Udp/UdpMessages/IRS.h \
     src/core/Udp/UdpMessages/MessageId.h \
     src/core/Udp/UdpMessages/Structures.h \
@@ -222,6 +226,12 @@ HEADERS += \
     src/ui/udl/UdlEntityTableDialog.h \
     src/publishing/UdlRepositoryManager.h \
     src/tools/UdlDrawingTool.h \
+    src/core/interfaces/CUSTOM_ENTITY.h \
+    src/core/interfaces/CUSTOM_MESSAGE.h \
+    src/core/models/SampleEntity.h \
+    src/core/Udp/UdpMessages/SampleEntityMessage.h \
+    src/core/models/SensorEntity.h \
+    src/core/Udp/UdpMessages/SensorMessage.h \
     fieldkeyvaluemapper.h
 
 FORMS += \

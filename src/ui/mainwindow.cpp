@@ -36,6 +36,9 @@
 #include "core/SystemConfigManager.h"
 #include "core/notifications/NotificationManager.h"
 
+#include "core/Udp/handlers/UdpSampleEntityMessageHandler.h"
+#include "core/Udp/UdpMessages/SampleEntityMessage.h"
+
 // Track System MVC & SQLite Database Headers
 #include "core/database/DatabaseManager.h"
 #include "core/repositories/TrackRepository.h"
@@ -66,6 +69,7 @@
 #include "core/services/CsvBoundaryIngestor.h"
 #include "core/services/MapLibreBoundaryAdapter.h"
 #include "ui/boundary/BoundaryTableDialog.h"
+#include "core/Udp/handlers/UdpSensorMessageHandler.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -99,6 +103,22 @@ MainWindow::MainWindow(QWidget *parent)
         auto trackHandler = std::make_shared<GISApp::Core::Udp::Handlers::UdpTrackMessageHandler>(m_trackRepository);
         m_udpMediator->dispatcher()->registerHandler(trackHandler);
     }
+
+    // Create and Register Sensor Message Handler (ID: 902)
+    if (m_udpMediator && m_udpMediator->dispatcher()) {
+        auto sensorHandler = std::make_shared<GISApp::Core::Udp::Handlers::UdpSensorMessageHandler>();
+        m_udpMediator->dispatcher()->registerHandler(sensorHandler);
+    }
+
+    // Universal signal connection: Any telemetry handler registered with UdpMessageDispatcher automatically updates MapLibre!
+    if (m_udpMediator && m_udpMediator->dispatcher()) {
+        connect(m_udpMediator->dispatcher(), &GISApp::Core::Udp::Handlers::UdpMessageDispatcher::telemetryLayerUpdated,
+                this, [this](const QString &layerName, const QString &geoJsonPath) {
+                    this->onUdlLayerUpdated("vector-" + QString::number(qHash(layerName)), geoJsonPath);
+                });
+    }
+
+
 
     // 1. Initialize Layout and Overlay Components
     setupMapView();
@@ -250,6 +270,8 @@ void MainWindow::setupMapView()
                             GISApp::Layers::TacticalLayerProvider p;
                             p.setupTacticalLayers(m_mapWidget->map());
                             p.populateLayerTree(m_layerManager, m_mapWidget->map(), m_mapController);
+
+                            restoreCustomEntityLayersAndGroups();
 
                             if (!m_boundaryAdapter) {
                                 m_boundaryAdapter = new GISApp::Core::Services::MapLibreBoundaryAdapter(m_mapWidget->map(), this);
@@ -1509,9 +1531,20 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
         return;
     }
 
+    QFile geoJsonFile(geojsonPath);
+    QByteArray geoJsonData;
+    if (geoJsonFile.open(QIODevice::ReadOnly)) {
+        geoJsonData = geoJsonFile.readAll();
+        geoJsonFile.close();
+    }
+
     QVariantMap sourceParams;
     sourceParams["type"] = "geojson";
-    sourceParams["data"] = QString("file://%1").arg(geojsonPath);
+    if (!geoJsonData.isEmpty()) {
+        sourceParams["data"] = geoJsonData;
+    } else {
+        sourceParams["data"] = QString("file://%1").arg(geojsonPath);
+    }
     map->addSource(srcId, sourceParams);
 
     // Add Polygon Fill layer
@@ -1549,10 +1582,11 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
     circleParams["type"] = "circle";
     circleParams["source"] = srcId;
     QVariantMap circlePaint;
-    circlePaint["circle-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, "#f59e0b"}};
+    QString defaultCircleColor = (sanitizedId.contains("sensor") || geojsonPath.contains("sensor")) ? "#ffff00" : "#f59e0b";
+    circlePaint["circle-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, defaultCircleColor}};
     circlePaint["circle-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
     circlePaint["circle-radius"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "pointRadius"}, QVariantList{"get", "lineWidth"}, 6.0}};
-    circlePaint["circle-stroke-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, "#f59e0b"}};
+    circlePaint["circle-stroke-color"] = QVariantList{"to-color", QVariantList{"coalesce", QVariantList{"get", "fillColor"}, QVariantList{"get", "strokeColor"}, defaultCircleColor}};
     circlePaint["circle-stroke-opacity"] = QVariantList{"to-number", QVariantList{"coalesce", QVariantList{"get", "fillOpacity"}, QVariantList{"get", "strokeOpacity"}, 1.0}};
     circlePaint["circle-stroke-width"] = 0.0;
     circleParams["paint"] = circlePaint;
@@ -1629,13 +1663,36 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
     // Ensure LayerManager has a LayerNode with a valid MapLibreLayerAdapter for this UDL layer!
     if (m_layerManager) {
         QString displayName;
+        QString groupName;
         for (const auto &meta : GISApp::Publishing::LayerRegistryManager::instance().getSavedLayers()) {
-            if (meta.layerId == layerId && !meta.name.isEmpty()) {
+            if ((meta.layerId == layerId || meta.folderPath == geojsonPath) && !meta.name.isEmpty()) {
                 displayName = meta.name;
+                groupName = meta.groupName;
                 break;
             }
         }
-        if (displayName.isEmpty()) displayName = layerId;
+
+        if (displayName.isEmpty() || displayName == layerId) {
+            if (geojsonPath.contains("sensor_telemetry")) {
+                displayName = "sensor";
+                groupName = "SensorGroup";
+            } else if (geojsonPath.contains("sample_telemetry")) {
+                displayName = "⚡ Sample Entities";
+                groupName = "🛡️ Tactical Operations";
+            } else {
+                displayName = layerId;
+                groupName = "🎨 User Defined Layers";
+            }
+
+            GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(
+                GISApp::Publishing::LayerType::Vector,
+                geojsonPath,
+                displayName,
+                groupName
+            );
+        }
+
+        if (groupName.isEmpty()) groupName = "🎨 User Defined Layers";
 
         auto udlExtent = GISApp::Publishing::UdlRepositoryManager::instance().calculateLayerExtent(layerId);
         auto adapter = std::make_shared<GISApp::Layers::MapLibreLayerAdapter>(
@@ -1668,8 +1725,8 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
         }
 
         if (!node) {
-            auto group = m_layerManager->findGroupByName("🎨 User Defined Layers");
-            if (!group) group = m_layerManager->addGroup("🎨 User Defined Layers");
+            auto group = m_layerManager->findGroupByName(groupName);
+            if (!group) group = m_layerManager->addGroup(groupName);
             node = m_layerManager->addLayer(displayName, adapter, group);
         } else {
             node->setAdapter(adapter);
@@ -1683,3 +1740,50 @@ void MainWindow::onUdlLayerUpdated(const QString &layerId, const QString &geojso
 
     map->triggerRepaint();
 }
+
+void MainWindow::restoreCustomEntityLayersAndGroups()
+{
+    if (!m_layerManager || !m_mapWidget || !m_mapWidget->map()) return;
+
+    // 1. Register custom groups in LayerRegistryManager
+    GISApp::Publishing::LayerRegistryManager::instance().registerGroup("SensorGroup");
+    GISApp::Publishing::LayerRegistryManager::instance().registerGroup("🛡️ Tactical Operations");
+
+    // 2. Restore saved layers from published_layers.json
+    auto publishingService = new GISApp::Publishing::LayerPublishingService(m_layerManager);
+    GISApp::Publishing::LayerRegistryManager::instance().restoreSavedLayers(
+        m_layerManager, m_mapWidget->map(), publishingService
+    );
+
+    // 3. Scan and auto-load existing telemetry GeoJSON files on app restart
+    QString mapDataDir = GISApp::Core::SystemConfigManager::instance().getMapDataDir();
+    QString udlDir = mapDataDir + "/udl_layers";
+
+    struct TelemetryLayerConfig {
+        QString fileName;
+        QString layerName;
+        QString groupName;
+    };
+
+    QList<TelemetryLayerConfig> telemetryLayers = {
+        {"sensor_telemetry.geojson", "sensor", "SensorGroup"},
+        {"sample_telemetry.geojson", "⚡ Sample Entities", "🛡️ Tactical Operations"}
+    };
+
+    for (const auto &cfg : telemetryLayers) {
+        QString geojsonPath = udlDir + "/" + cfg.fileName;
+        if (QFile::exists(geojsonPath)) {
+            QString layerId = "vector-" + QString::number(qHash(cfg.layerName));
+
+            GISApp::Publishing::LayerRegistryManager::instance().registerPublishedLayer(
+                GISApp::Publishing::LayerType::Vector,
+                geojsonPath,
+                cfg.layerName,
+                cfg.groupName
+            );
+
+            this->onUdlLayerUpdated(layerId, geojsonPath);
+        }
+    }
+}
+

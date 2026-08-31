@@ -121,6 +121,8 @@ SOURCES       = src/main.cpp \
 		src/core/Udp/udpcommunication.cpp \
 		src/core/Udp/handlers/UdpMessageDispatcher.cpp \
 		src/core/Udp/handlers/UdpTrackMessageHandler.cpp \
+		src/core/Udp/handlers/UdpSampleEntityMessageHandler.cpp \
+		src/core/Udp/handlers/UdpSensorMessageHandler.cpp \
 		src/ui/udl/CreateUdlLayerDialog.cpp \
 		src/ui/udl/UdlEntityStyleDialog.cpp \
 		src/ui/udl/UdlToolbarWidget.cpp \
@@ -186,7 +188,10 @@ SOURCES       = src/main.cpp \
 		build/moc/moc_UdlToolbarWidget.cpp \
 		build/moc/moc_UdlEntityTableDialog.cpp \
 		build/moc/moc_UdlRepositoryManager.cpp \
-		build/moc/moc_UdlDrawingTool.cpp
+		build/moc/moc_UdlDrawingTool.cpp \
+		build/moc/moc_CUSTOM_MESSAGE.cpp \
+		build/moc/moc_SampleEntityMessage.cpp \
+		build/moc/moc_SensorMessage.cpp
 OBJECTS       = build/obj/main.o \
 		build/obj/SystemConfigManager.o \
 		build/obj/mainwindow.o \
@@ -256,6 +261,8 @@ OBJECTS       = build/obj/main.o \
 		build/obj/udpcommunication.o \
 		build/obj/UdpMessageDispatcher.o \
 		build/obj/UdpTrackMessageHandler.o \
+		build/obj/UdpSampleEntityMessageHandler.o \
+		build/obj/UdpSensorMessageHandler.o \
 		build/obj/CreateUdlLayerDialog.o \
 		build/obj/UdlEntityStyleDialog.o \
 		build/obj/UdlToolbarWidget.o \
@@ -322,7 +329,10 @@ OBJECTS       = build/obj/main.o \
 		build/obj/moc_UdlToolbarWidget.o \
 		build/obj/moc_UdlEntityTableDialog.o \
 		build/obj/moc_UdlRepositoryManager.o \
-		build/obj/moc_UdlDrawingTool.o
+		build/obj/moc_UdlDrawingTool.o \
+		build/obj/moc_CUSTOM_MESSAGE.o \
+		build/obj/moc_SampleEntityMessage.o \
+		build/obj/moc_SensorMessage.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/common/linux.conf \
@@ -530,6 +540,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		src/core/Udp/handlers/IUdpMessageHandler.h \
 		src/core/Udp/handlers/UdpMessageDispatcher.h \
 		src/core/Udp/handlers/UdpTrackMessageHandler.h \
+		src/core/Udp/handlers/UdpSampleEntityMessageHandler.h \
+		src/core/Udp/handlers/UdpSensorMessageHandler.h \
 		src/core/Udp/UdpMessages/IRS.h \
 		src/core/Udp/UdpMessages/MessageId.h \
 		src/core/Udp/UdpMessages/Structures.h \
@@ -539,6 +551,12 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		src/ui/udl/UdlEntityTableDialog.h \
 		src/publishing/UdlRepositoryManager.h \
 		src/tools/UdlDrawingTool.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SampleEntity.h \
+		src/core/Udp/UdpMessages/SampleEntityMessage.h \
+		src/core/models/SensorEntity.h \
+		src/core/Udp/UdpMessages/SensorMessage.h \
 		fieldkeyvaluemapper.h src/main.cpp \
 		src/core/SystemConfigManager.cpp \
 		src/ui/mainwindow.cpp \
@@ -608,6 +626,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		src/core/Udp/udpcommunication.cpp \
 		src/core/Udp/handlers/UdpMessageDispatcher.cpp \
 		src/core/Udp/handlers/UdpTrackMessageHandler.cpp \
+		src/core/Udp/handlers/UdpSampleEntityMessageHandler.cpp \
+		src/core/Udp/handlers/UdpSensorMessageHandler.cpp \
 		src/ui/udl/CreateUdlLayerDialog.cpp \
 		src/ui/udl/UdlEntityStyleDialog.cpp \
 		src/ui/udl/UdlToolbarWidget.cpp \
@@ -905,8 +925,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents src/core/SystemConfigManager.h src/ui/mainwindow.h src/core/models/GeoCoordinate.h src/core/interfaces/IMapView.h src/map/MapLibreWidget.h src/controllers/MapController.h src/core/interfaces/ITool.h src/tools/MeasureTool.h src/tools/PanTool.h src/controllers/ToolManager.h src/map/OverlayWidget.h src/ui/ThemeManager.h src/ui/LeftSidebar.h src/ui/RightToolPanel.h src/ui/ZoomControlsWidget.h src/ui/TacticalStatusBar.h src/ui/HeaderBar.h src/layers/ILayerAdapter.h src/layers/LayerTreeNode.h src/layers/LayerTreeModel.h src/layers/LayerManager.h src/layers/TacticalLayerProvider.h src/ui/layertree/LayerTreeView.h src/ui/layertree/LayerTreeFloatingWidget.h src/ui/layertree/LayerItemDelegate.h src/publishing/IPublisherStrategy.h src/publishing/PublisherFactory.h src/publishing/RasterLayerPublisher.h src/publishing/VectorLayerPublisher.h src/publishing/LayerPublishingService.h src/ui/publishing/PublishLayerDialog.h src/ui/publishing/GroupManagerDialog.h src/publishing/LocalTileServer.h src/publishing/LayerRegistryManager.h src/core/tasks/IBackgroundTask.h src/core/tasks/FunctionalTask.h src/core/tasks/BackgroundTaskManager.h src/ui/tasks/BackgroundTaskDialog.h src/core/tasks/GoogleSatDownloaderTask.h src/ui/download/DownloadSatImageryDialog.h src/core/notifications/ActionableNotification.h src/core/notifications/NotificationTypes.h src/core/notifications/INotificationStrategy.h src/core/notifications/INotificationObserver.h src/core/notifications/NotificationFactory.h src/core/notifications/NotificationManager.h src/ui/notifications/CriticalNotificationStrategy.h src/ui/notifications/FlashNotificationStrategy.h src/core/models/IGisGeometry.h src/core/models/IGisEntity.h src/core/models/TrackRecord.h src/core/renderers/IMapRendererAdapter.h src/core/database/DatabaseManager.h src/core/repositories/ITrackRepository.h src/core/repositories/TrackRepository.h src/core/services/ITrackIngestor.h src/core/services/XmlTrackIngestor.h src/core/services/MapLibreTrackAdapter.h src/ui/tracks/TrackTableModel.h src/ui/tracks/TracksTableDialog.h src/ui/tracks/TrackDetailDialog.h src/core/models/AreaOfViewRecord.h src/core/repositories/IAreaOfViewRepository.h src/core/repositories/AreaOfViewRepository.h src/core/services/XmlAreaOfViewIngestor.h src/core/services/MapLibreAreaOfViewAdapter.h src/ui/area_of_view/AreaOfViewTableDialog.h src/core/models/BoundaryRecord.h src/core/services/CsvBoundaryIngestor.h src/core/services/MapLibreBoundaryAdapter.h src/ui/boundary/BoundaryTableDialog.h src/core/models/GenericGisEntity.h src/core/models/GisEntityRegistry.h src/core/repositories/IGisEntityRepository.h src/core/repositories/GenericEntityRepository.h src/core/renderers/IEntityPainter.h src/core/services/MapLibreGenericEntityAdapter.h src/ui/entities/UniversalEntityEditorDialog.h src/core/Udp/AESEncryptionFile/encryptwithaes256.h src/core/Udp/datastore.h src/core/Udp/mediatorclass.h src/core/Udp/processudpmessagethread.h src/core/Udp/udpcommunication.h src/core/Udp/handlers/IUdpMessageHandler.h src/core/Udp/handlers/UdpMessageDispatcher.h src/core/Udp/handlers/UdpTrackMessageHandler.h src/core/Udp/UdpMessages/IRS.h src/core/Udp/UdpMessages/MessageId.h src/core/Udp/UdpMessages/Structures.h src/ui/udl/CreateUdlLayerDialog.h src/ui/udl/UdlEntityStyleDialog.h src/ui/udl/UdlToolbarWidget.h src/ui/udl/UdlEntityTableDialog.h src/publishing/UdlRepositoryManager.h src/tools/UdlDrawingTool.h fieldkeyvaluemapper.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/main.cpp src/core/SystemConfigManager.cpp src/ui/mainwindow.cpp src/map/MapLibreWidget.cpp src/controllers/MapController.cpp src/tools/MeasureTool.cpp src/tools/PanTool.cpp src/controllers/ToolManager.cpp src/map/OverlayWidget.cpp src/ui/ThemeManager.cpp src/ui/LeftSidebar.cpp src/ui/RightToolPanel.cpp src/ui/ZoomControlsWidget.cpp src/ui/TacticalStatusBar.cpp src/ui/HeaderBar.cpp src/layers/MapLibreLayerAdapter.cpp src/layers/LayerTreeNode.cpp src/layers/LayerTreeModel.cpp src/layers/LayerManager.cpp src/layers/TacticalLayerProvider.cpp src/ui/layertree/LayerTreeView.cpp src/ui/layertree/LayerTreeFloatingWidget.cpp src/ui/layertree/LayerItemDelegate.cpp src/publishing/RasterLayerPublisher.cpp src/publishing/VectorLayerPublisher.cpp src/publishing/LayerPublishingService.cpp src/ui/publishing/PublishLayerDialog.cpp src/ui/publishing/GroupManagerDialog.cpp src/publishing/LocalTileServer.cpp src/publishing/LayerRegistryManager.cpp src/publishing/PublisherFactory.cpp src/core/tasks/FunctionalTask.cpp src/core/tasks/BackgroundTaskManager.cpp src/ui/tasks/BackgroundTaskDialog.cpp src/core/tasks/GoogleSatDownloaderTask.cpp src/ui/download/DownloadSatImageryDialog.cpp src/core/notifications/NotificationFactory.cpp src/core/notifications/NotificationManager.cpp src/ui/notifications/CriticalNotificationStrategy.cpp src/ui/notifications/FlashNotificationStrategy.cpp src/core/models/TrackRecord.cpp src/core/database/DatabaseManager.cpp src/core/repositories/TrackRepository.cpp src/core/services/XmlTrackIngestor.cpp src/core/services/MapLibreTrackAdapter.cpp src/ui/tracks/TrackTableModel.cpp src/ui/tracks/TracksTableDialog.cpp src/ui/tracks/TrackDetailDialog.cpp src/core/models/AreaOfViewRecord.cpp src/core/repositories/AreaOfViewRepository.cpp src/core/services/XmlAreaOfViewIngestor.cpp src/core/services/MapLibreAreaOfViewAdapter.cpp src/ui/area_of_view/AreaOfViewTableDialog.cpp src/core/models/BoundaryRecord.cpp src/core/services/CsvBoundaryIngestor.cpp src/core/services/MapLibreBoundaryAdapter.cpp src/ui/boundary/BoundaryTableDialog.cpp src/core/models/GenericGisEntity.cpp src/core/models/GisEntityRegistry.cpp src/core/repositories/GenericEntityRepository.cpp src/core/services/MapLibreGenericEntityAdapter.cpp src/ui/entities/UniversalEntityEditorDialog.cpp src/core/Udp/AESEncryptionFile/encryptwithaes256.cpp src/core/Udp/datastore.cpp src/core/Udp/mediatorclass.cpp src/core/Udp/processudpmessagethread.cpp src/core/Udp/udpcommunication.cpp src/core/Udp/handlers/UdpMessageDispatcher.cpp src/core/Udp/handlers/UdpTrackMessageHandler.cpp src/ui/udl/CreateUdlLayerDialog.cpp src/ui/udl/UdlEntityStyleDialog.cpp src/ui/udl/UdlToolbarWidget.cpp src/ui/udl/UdlEntityTableDialog.cpp src/publishing/UdlRepositoryManager.cpp src/tools/UdlDrawingTool.cpp fieldkeyvaluemapper.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents src/core/SystemConfigManager.h src/ui/mainwindow.h src/core/models/GeoCoordinate.h src/core/interfaces/IMapView.h src/map/MapLibreWidget.h src/controllers/MapController.h src/core/interfaces/ITool.h src/tools/MeasureTool.h src/tools/PanTool.h src/controllers/ToolManager.h src/map/OverlayWidget.h src/ui/ThemeManager.h src/ui/LeftSidebar.h src/ui/RightToolPanel.h src/ui/ZoomControlsWidget.h src/ui/TacticalStatusBar.h src/ui/HeaderBar.h src/layers/ILayerAdapter.h src/layers/LayerTreeNode.h src/layers/LayerTreeModel.h src/layers/LayerManager.h src/layers/TacticalLayerProvider.h src/ui/layertree/LayerTreeView.h src/ui/layertree/LayerTreeFloatingWidget.h src/ui/layertree/LayerItemDelegate.h src/publishing/IPublisherStrategy.h src/publishing/PublisherFactory.h src/publishing/RasterLayerPublisher.h src/publishing/VectorLayerPublisher.h src/publishing/LayerPublishingService.h src/ui/publishing/PublishLayerDialog.h src/ui/publishing/GroupManagerDialog.h src/publishing/LocalTileServer.h src/publishing/LayerRegistryManager.h src/core/tasks/IBackgroundTask.h src/core/tasks/FunctionalTask.h src/core/tasks/BackgroundTaskManager.h src/ui/tasks/BackgroundTaskDialog.h src/core/tasks/GoogleSatDownloaderTask.h src/ui/download/DownloadSatImageryDialog.h src/core/notifications/ActionableNotification.h src/core/notifications/NotificationTypes.h src/core/notifications/INotificationStrategy.h src/core/notifications/INotificationObserver.h src/core/notifications/NotificationFactory.h src/core/notifications/NotificationManager.h src/ui/notifications/CriticalNotificationStrategy.h src/ui/notifications/FlashNotificationStrategy.h src/core/models/IGisGeometry.h src/core/models/IGisEntity.h src/core/models/TrackRecord.h src/core/renderers/IMapRendererAdapter.h src/core/database/DatabaseManager.h src/core/repositories/ITrackRepository.h src/core/repositories/TrackRepository.h src/core/services/ITrackIngestor.h src/core/services/XmlTrackIngestor.h src/core/services/MapLibreTrackAdapter.h src/ui/tracks/TrackTableModel.h src/ui/tracks/TracksTableDialog.h src/ui/tracks/TrackDetailDialog.h src/core/models/AreaOfViewRecord.h src/core/repositories/IAreaOfViewRepository.h src/core/repositories/AreaOfViewRepository.h src/core/services/XmlAreaOfViewIngestor.h src/core/services/MapLibreAreaOfViewAdapter.h src/ui/area_of_view/AreaOfViewTableDialog.h src/core/models/BoundaryRecord.h src/core/services/CsvBoundaryIngestor.h src/core/services/MapLibreBoundaryAdapter.h src/ui/boundary/BoundaryTableDialog.h src/core/models/GenericGisEntity.h src/core/models/GisEntityRegistry.h src/core/repositories/IGisEntityRepository.h src/core/repositories/GenericEntityRepository.h src/core/renderers/IEntityPainter.h src/core/services/MapLibreGenericEntityAdapter.h src/ui/entities/UniversalEntityEditorDialog.h src/core/Udp/AESEncryptionFile/encryptwithaes256.h src/core/Udp/datastore.h src/core/Udp/mediatorclass.h src/core/Udp/processudpmessagethread.h src/core/Udp/udpcommunication.h src/core/Udp/handlers/IUdpMessageHandler.h src/core/Udp/handlers/UdpMessageDispatcher.h src/core/Udp/handlers/UdpTrackMessageHandler.h src/core/Udp/handlers/UdpSampleEntityMessageHandler.h src/core/Udp/handlers/UdpSensorMessageHandler.h src/core/Udp/UdpMessages/IRS.h src/core/Udp/UdpMessages/MessageId.h src/core/Udp/UdpMessages/Structures.h src/ui/udl/CreateUdlLayerDialog.h src/ui/udl/UdlEntityStyleDialog.h src/ui/udl/UdlToolbarWidget.h src/ui/udl/UdlEntityTableDialog.h src/publishing/UdlRepositoryManager.h src/tools/UdlDrawingTool.h src/core/interfaces/CUSTOM_ENTITY.h src/core/interfaces/CUSTOM_MESSAGE.h src/core/models/SampleEntity.h src/core/Udp/UdpMessages/SampleEntityMessage.h src/core/models/SensorEntity.h src/core/Udp/UdpMessages/SensorMessage.h fieldkeyvaluemapper.h $(DISTDIR)/
+	$(COPY_FILE) --parents src/main.cpp src/core/SystemConfigManager.cpp src/ui/mainwindow.cpp src/map/MapLibreWidget.cpp src/controllers/MapController.cpp src/tools/MeasureTool.cpp src/tools/PanTool.cpp src/controllers/ToolManager.cpp src/map/OverlayWidget.cpp src/ui/ThemeManager.cpp src/ui/LeftSidebar.cpp src/ui/RightToolPanel.cpp src/ui/ZoomControlsWidget.cpp src/ui/TacticalStatusBar.cpp src/ui/HeaderBar.cpp src/layers/MapLibreLayerAdapter.cpp src/layers/LayerTreeNode.cpp src/layers/LayerTreeModel.cpp src/layers/LayerManager.cpp src/layers/TacticalLayerProvider.cpp src/ui/layertree/LayerTreeView.cpp src/ui/layertree/LayerTreeFloatingWidget.cpp src/ui/layertree/LayerItemDelegate.cpp src/publishing/RasterLayerPublisher.cpp src/publishing/VectorLayerPublisher.cpp src/publishing/LayerPublishingService.cpp src/ui/publishing/PublishLayerDialog.cpp src/ui/publishing/GroupManagerDialog.cpp src/publishing/LocalTileServer.cpp src/publishing/LayerRegistryManager.cpp src/publishing/PublisherFactory.cpp src/core/tasks/FunctionalTask.cpp src/core/tasks/BackgroundTaskManager.cpp src/ui/tasks/BackgroundTaskDialog.cpp src/core/tasks/GoogleSatDownloaderTask.cpp src/ui/download/DownloadSatImageryDialog.cpp src/core/notifications/NotificationFactory.cpp src/core/notifications/NotificationManager.cpp src/ui/notifications/CriticalNotificationStrategy.cpp src/ui/notifications/FlashNotificationStrategy.cpp src/core/models/TrackRecord.cpp src/core/database/DatabaseManager.cpp src/core/repositories/TrackRepository.cpp src/core/services/XmlTrackIngestor.cpp src/core/services/MapLibreTrackAdapter.cpp src/ui/tracks/TrackTableModel.cpp src/ui/tracks/TracksTableDialog.cpp src/ui/tracks/TrackDetailDialog.cpp src/core/models/AreaOfViewRecord.cpp src/core/repositories/AreaOfViewRepository.cpp src/core/services/XmlAreaOfViewIngestor.cpp src/core/services/MapLibreAreaOfViewAdapter.cpp src/ui/area_of_view/AreaOfViewTableDialog.cpp src/core/models/BoundaryRecord.cpp src/core/services/CsvBoundaryIngestor.cpp src/core/services/MapLibreBoundaryAdapter.cpp src/ui/boundary/BoundaryTableDialog.cpp src/core/models/GenericGisEntity.cpp src/core/models/GisEntityRegistry.cpp src/core/repositories/GenericEntityRepository.cpp src/core/services/MapLibreGenericEntityAdapter.cpp src/ui/entities/UniversalEntityEditorDialog.cpp src/core/Udp/AESEncryptionFile/encryptwithaes256.cpp src/core/Udp/datastore.cpp src/core/Udp/mediatorclass.cpp src/core/Udp/processudpmessagethread.cpp src/core/Udp/udpcommunication.cpp src/core/Udp/handlers/UdpMessageDispatcher.cpp src/core/Udp/handlers/UdpTrackMessageHandler.cpp src/core/Udp/handlers/UdpSampleEntityMessageHandler.cpp src/core/Udp/handlers/UdpSensorMessageHandler.cpp src/ui/udl/CreateUdlLayerDialog.cpp src/ui/udl/UdlEntityStyleDialog.cpp src/ui/udl/UdlToolbarWidget.cpp src/ui/udl/UdlEntityTableDialog.cpp src/publishing/UdlRepositoryManager.cpp src/tools/UdlDrawingTool.cpp fieldkeyvaluemapper.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents mainwindow.ui $(DISTDIR)/
 
 
@@ -939,10 +959,10 @@ compiler_moc_predefs_clean:
 build/moc/moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp
 	g++ -pipe -O2 -std=gnu++1z -Wall -Wextra -dM -E -o build/moc/moc_predefs.h /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp build/moc/moc_ITrackRepository.cpp build/moc/moc_TrackRepository.cpp build/moc/moc_XmlTrackIngestor.cpp build/moc/moc_MapLibreTrackAdapter.cpp build/moc/moc_TrackTableModel.cpp build/moc/moc_TracksTableDialog.cpp build/moc/moc_TrackDetailDialog.cpp build/moc/moc_IAreaOfViewRepository.cpp build/moc/moc_AreaOfViewRepository.cpp build/moc/moc_XmlAreaOfViewIngestor.cpp build/moc/moc_MapLibreAreaOfViewAdapter.cpp build/moc/moc_AreaOfViewTableDialog.cpp build/moc/moc_CsvBoundaryIngestor.cpp build/moc/moc_MapLibreBoundaryAdapter.cpp build/moc/moc_BoundaryTableDialog.cpp build/moc/moc_IGisEntityRepository.cpp build/moc/moc_GenericEntityRepository.cpp build/moc/moc_MapLibreGenericEntityAdapter.cpp build/moc/moc_UniversalEntityEditorDialog.cpp build/moc/moc_datastore.cpp build/moc/moc_mediatorclass.cpp build/moc/moc_processudpmessagethread.cpp build/moc/moc_udpcommunication.cpp build/moc/moc_UdpMessageDispatcher.cpp build/moc/moc_CreateUdlLayerDialog.cpp build/moc/moc_UdlEntityStyleDialog.cpp build/moc/moc_UdlToolbarWidget.cpp build/moc/moc_UdlEntityTableDialog.cpp build/moc/moc_UdlRepositoryManager.cpp build/moc/moc_UdlDrawingTool.cpp
+compiler_moc_header_make_all: build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp build/moc/moc_ITrackRepository.cpp build/moc/moc_TrackRepository.cpp build/moc/moc_XmlTrackIngestor.cpp build/moc/moc_MapLibreTrackAdapter.cpp build/moc/moc_TrackTableModel.cpp build/moc/moc_TracksTableDialog.cpp build/moc/moc_TrackDetailDialog.cpp build/moc/moc_IAreaOfViewRepository.cpp build/moc/moc_AreaOfViewRepository.cpp build/moc/moc_XmlAreaOfViewIngestor.cpp build/moc/moc_MapLibreAreaOfViewAdapter.cpp build/moc/moc_AreaOfViewTableDialog.cpp build/moc/moc_CsvBoundaryIngestor.cpp build/moc/moc_MapLibreBoundaryAdapter.cpp build/moc/moc_BoundaryTableDialog.cpp build/moc/moc_IGisEntityRepository.cpp build/moc/moc_GenericEntityRepository.cpp build/moc/moc_MapLibreGenericEntityAdapter.cpp build/moc/moc_UniversalEntityEditorDialog.cpp build/moc/moc_datastore.cpp build/moc/moc_mediatorclass.cpp build/moc/moc_processudpmessagethread.cpp build/moc/moc_udpcommunication.cpp build/moc/moc_UdpMessageDispatcher.cpp build/moc/moc_CreateUdlLayerDialog.cpp build/moc/moc_UdlEntityStyleDialog.cpp build/moc/moc_UdlToolbarWidget.cpp build/moc/moc_UdlEntityTableDialog.cpp build/moc/moc_UdlRepositoryManager.cpp build/moc/moc_UdlDrawingTool.cpp build/moc/moc_CUSTOM_MESSAGE.cpp build/moc/moc_SampleEntityMessage.cpp build/moc/moc_SensorMessage.cpp
 compiler_moc_header_clean:
 	-$(DEL_FILE) build/moc/moc_SystemConfigManager.cpp build/moc/moc_mainwindow.cpp build/moc/moc_MapLibreWidget.cpp build/moc/moc_MapController.cpp build/moc/moc_MeasureTool.cpp build/moc/moc_PanTool.cpp build/moc/moc_ToolManager.cpp build/moc/moc_OverlayWidget.cpp build/moc/moc_ThemeManager.cpp build/moc/moc_LeftSidebar.cpp build/moc/moc_RightToolPanel.cpp build/moc/moc_ZoomControlsWidget.cpp build/moc/moc_TacticalStatusBar.cpp build/moc/moc_HeaderBar.cpp build/moc/moc_LayerTreeModel.cpp build/moc/moc_LayerManager.cpp build/moc/moc_TacticalLayerProvider.cpp build/moc/moc_LayerTreeView.cpp build/moc/moc_LayerTreeFloatingWidget.cpp build/moc/moc_LayerItemDelegate.cpp build/moc/moc_LayerPublishingService.cpp build/moc/moc_PublishLayerDialog.cpp build/moc/moc_GroupManagerDialog.cpp build/moc/moc_LocalTileServer.cpp build/moc/moc_BackgroundTaskManager.cpp build/moc/moc_BackgroundTaskDialog.cpp build/moc/moc_DownloadSatImageryDialog.cpp build/moc/moc_NotificationManager.cpp build/moc/moc_CriticalNotificationStrategy.cpp build/moc/moc_FlashNotificationStrategy.cpp build/moc/moc_ITrackRepository.cpp build/moc/moc_TrackRepository.cpp build/moc/moc_XmlTrackIngestor.cpp build/moc/moc_MapLibreTrackAdapter.cpp build/moc/moc_TrackTableModel.cpp build/moc/moc_TracksTableDialog.cpp build/moc/moc_TrackDetailDialog.cpp build/moc/moc_IAreaOfViewRepository.cpp build/moc/moc_AreaOfViewRepository.cpp build/moc/moc_XmlAreaOfViewIngestor.cpp build/moc/moc_MapLibreAreaOfViewAdapter.cpp build/moc/moc_AreaOfViewTableDialog.cpp build/moc/moc_CsvBoundaryIngestor.cpp build/moc/moc_MapLibreBoundaryAdapter.cpp build/moc/moc_BoundaryTableDialog.cpp build/moc/moc_IGisEntityRepository.cpp build/moc/moc_GenericEntityRepository.cpp build/moc/moc_MapLibreGenericEntityAdapter.cpp build/moc/moc_UniversalEntityEditorDialog.cpp build/moc/moc_datastore.cpp build/moc/moc_mediatorclass.cpp build/moc/moc_processudpmessagethread.cpp build/moc/moc_udpcommunication.cpp build/moc/moc_UdpMessageDispatcher.cpp build/moc/moc_CreateUdlLayerDialog.cpp
-	-$(DEL_FILE) build/moc/moc_UdlEntityStyleDialog.cpp build/moc/moc_UdlToolbarWidget.cpp build/moc/moc_UdlEntityTableDialog.cpp build/moc/moc_UdlRepositoryManager.cpp build/moc/moc_UdlDrawingTool.cpp
+	-$(DEL_FILE) build/moc/moc_UdlEntityStyleDialog.cpp build/moc/moc_UdlToolbarWidget.cpp build/moc/moc_UdlEntityTableDialog.cpp build/moc/moc_UdlRepositoryManager.cpp build/moc/moc_UdlDrawingTool.cpp build/moc/moc_CUSTOM_MESSAGE.cpp build/moc/moc_SampleEntityMessage.cpp build/moc/moc_SensorMessage.cpp
 build/moc/moc_SystemConfigManager.cpp: src/core/SystemConfigManager.h \
 		build/moc/moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
@@ -1574,6 +1594,61 @@ build/moc/moc_UdlDrawingTool.cpp: src/tools/UdlDrawingTool.h \
 		/usr/lib/qt6/libexec/moc
 	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/boundary -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/handlers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/UdpMessages -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/AESEncryptionFile -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/udl -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/tools/UdlDrawingTool.h -o build/moc/moc_UdlDrawingTool.cpp
 
+build/moc/moc_CUSTOM_MESSAGE.cpp: src/core/interfaces/CUSTOM_MESSAGE.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/boundary -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/handlers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/UdpMessages -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/AESEncryptionFile -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/udl -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/interfaces/CUSTOM_MESSAGE.h -o build/moc/moc_CUSTOM_MESSAGE.cpp
+
+build/moc/moc_SampleEntityMessage.cpp: src/core/Udp/UdpMessages/SampleEntityMessage.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SampleEntity.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
+		src/core/database/DatabaseManager.h \
+		src/publishing/LayerRegistryManager.h \
+		src/publishing/IPublisherStrategy.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h \
+		src/core/Udp/UdpMessages/MessageId.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/boundary -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/handlers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/UdpMessages -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/AESEncryptionFile -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/udl -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/Udp/UdpMessages/SampleEntityMessage.h -o build/moc/moc_SampleEntityMessage.cpp
+
+build/moc/moc_SensorMessage.cpp: src/core/Udp/UdpMessages/SensorMessage.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SensorEntity.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
+		src/core/database/DatabaseManager.h \
+		src/publishing/LayerRegistryManager.h \
+		src/publishing/IPublisherStrategy.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h \
+		src/core/Udp/UdpMessages/MessageId.h \
+		build/moc/moc_predefs.h \
+		/usr/lib/qt6/libexec/moc
+	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/aman/aman/FRONTENDAPP/GISAPP/build/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/aman/aman/FRONTENDAPP/GISAPP -I/home/aman/maplibre-install/include -I/home/aman/maplibre-install/include/QMapLibre -I/home/aman/maplibre-install/include/QMapLibreWidgets -I/usr/include/gdal -I/home/aman/aman/FRONTENDAPP/GISAPP/src -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core -I/home/aman/aman/FRONTENDAPP/GISAPP/src/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/publishing -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tasks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/download -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/notifications -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/models -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/database -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/repositories -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/services -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/renderers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/tracks -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/area_of_view -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/boundary -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/entities -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/handlers -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/UdpMessages -I/home/aman/aman/FRONTENDAPP/GISAPP/src/core/Udp/AESEncryptionFile -I/home/aman/aman/FRONTENDAPP/GISAPP/src/ui/udl -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtNetwork -I/usr/include/x86_64-linux-gnu/qt6/QtSql -I/usr/include/x86_64-linux-gnu/qt6/QtConcurrent -I/usr/include/x86_64-linux-gnu/qt6/QtXml -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/core/Udp/UdpMessages/SensorMessage.h -o build/moc/moc_SensorMessage.cpp
+
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
 compiler_moc_source_make_all:
@@ -1698,7 +1773,16 @@ build/obj/mainwindow.o: src/ui/mainwindow.cpp src/ui/mainwindow.h \
 		src/core/notifications/NotificationTypes.h \
 		src/core/notifications/INotificationStrategy.h \
 		src/core/notifications/INotificationObserver.h \
+		src/core/Udp/handlers/UdpSampleEntityMessageHandler.h \
+		src/core/Udp/handlers/IUdpMessageHandler.h \
+		src/core/Udp/UdpMessages/IRS.h \
+		src/core/Udp/UdpMessages/SampleEntityMessage.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SampleEntity.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
 		src/core/database/DatabaseManager.h \
+		src/publishing/LayerRegistryManager.h \
+		src/core/Udp/UdpMessages/MessageId.h \
 		src/core/repositories/TrackRepository.h \
 		src/core/repositories/ITrackRepository.h \
 		src/core/services/MapLibreTrackAdapter.h \
@@ -1715,7 +1799,6 @@ build/obj/mainwindow.o: src/ui/mainwindow.cpp src/ui/mainwindow.h \
 		src/ui/udl/UdlEntityTableDialog.h \
 		src/tools/UdlDrawingTool.h \
 		src/publishing/UdlRepositoryManager.h \
-		src/publishing/LayerRegistryManager.h \
 		src/core/services/XmlAreaOfViewIngestor.h \
 		src/ui/area_of_view/AreaOfViewTableDialog.h \
 		src/core/models/GisEntityRegistry.h \
@@ -1726,14 +1809,15 @@ build/obj/mainwindow.o: src/ui/mainwindow.cpp src/ui/mainwindow.h \
 		src/ui/entities/UniversalEntityEditorDialog.h \
 		src/core/Udp/mediatorclass.h \
 		src/core/Udp/handlers/UdpMessageDispatcher.h \
-		src/core/Udp/handlers/IUdpMessageHandler.h \
-		src/core/Udp/UdpMessages/IRS.h \
 		src/core/Udp/handlers/UdpTrackMessageHandler.h \
 		src/core/services/XmlTrackIngestor.h \
 		src/core/services/ITrackIngestor.h \
 		src/core/services/CsvBoundaryIngestor.h \
 		src/core/services/MapLibreBoundaryAdapter.h \
-		src/ui/boundary/BoundaryTableDialog.h
+		src/ui/boundary/BoundaryTableDialog.h \
+		src/core/Udp/handlers/UdpSensorMessageHandler.h \
+		src/core/Udp/UdpMessages/SensorMessage.h \
+		src/core/models/SensorEntity.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/mainwindow.o src/ui/mainwindow.cpp
 
 build/obj/MapLibreWidget.o: src/map/MapLibreWidget.cpp src/map/MapLibreWidget.h \
@@ -2394,7 +2478,28 @@ build/obj/mediatorclass.o: src/core/Udp/mediatorclass.cpp src/core/Udp/mediatorc
 		src/core/Udp/processudpmessagethread.h \
 		src/core/Udp/datastore.h \
 		src/core/Udp/AESEncryptionFile/encryptwithaes256.h \
-		src/core/Udp/UdpMessages/MessageId.h
+		src/core/Udp/UdpMessages/MessageId.h \
+		src/core/Udp/handlers/UdpSampleEntityMessageHandler.h \
+		src/core/Udp/UdpMessages/SampleEntityMessage.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SampleEntity.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
+		src/core/database/DatabaseManager.h \
+		src/publishing/LayerRegistryManager.h \
+		src/publishing/IPublisherStrategy.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/mediatorclass.o src/core/Udp/mediatorclass.cpp
 
 build/obj/processudpmessagethread.o: src/core/Udp/processudpmessagethread.cpp src/core/Udp/processudpmessagethread.h \
@@ -2415,7 +2520,8 @@ build/obj/udpcommunication.o: src/core/Udp/udpcommunication.cpp src/core/Udp/udp
 build/obj/UdpMessageDispatcher.o: src/core/Udp/handlers/UdpMessageDispatcher.cpp src/core/Udp/handlers/UdpMessageDispatcher.h \
 		src/core/Udp/handlers/IUdpMessageHandler.h \
 		src/core/Udp/UdpMessages/IRS.h \
-		src/core/Udp/UdpMessages/Structures.h
+		src/core/Udp/UdpMessages/Structures.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/UdpMessageDispatcher.o src/core/Udp/handlers/UdpMessageDispatcher.cpp
 
 build/obj/UdpTrackMessageHandler.o: src/core/Udp/handlers/UdpTrackMessageHandler.cpp src/core/Udp/handlers/UdpTrackMessageHandler.h \
@@ -2428,6 +2534,60 @@ build/obj/UdpTrackMessageHandler.o: src/core/Udp/handlers/UdpTrackMessageHandler
 		src/core/Udp/UdpMessages/MessageId.h \
 		src/core/Udp/UdpMessages/Structures.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/UdpTrackMessageHandler.o src/core/Udp/handlers/UdpTrackMessageHandler.cpp
+
+build/obj/UdpSampleEntityMessageHandler.o: src/core/Udp/handlers/UdpSampleEntityMessageHandler.cpp src/core/Udp/handlers/UdpSampleEntityMessageHandler.h \
+		src/core/Udp/handlers/IUdpMessageHandler.h \
+		src/core/Udp/UdpMessages/IRS.h \
+		src/core/Udp/UdpMessages/SampleEntityMessage.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SampleEntity.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
+		src/core/database/DatabaseManager.h \
+		src/publishing/LayerRegistryManager.h \
+		src/publishing/IPublisherStrategy.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h \
+		src/core/Udp/UdpMessages/MessageId.h \
+		src/core/Udp/UdpMessages/Structures.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/UdpSampleEntityMessageHandler.o src/core/Udp/handlers/UdpSampleEntityMessageHandler.cpp
+
+build/obj/UdpSensorMessageHandler.o: src/core/Udp/handlers/UdpSensorMessageHandler.cpp src/core/Udp/handlers/UdpSensorMessageHandler.h \
+		src/core/Udp/handlers/IUdpMessageHandler.h \
+		src/core/Udp/UdpMessages/IRS.h \
+		src/core/Udp/UdpMessages/SensorMessage.h \
+		src/core/interfaces/CUSTOM_MESSAGE.h \
+		src/core/models/SensorEntity.h \
+		src/core/interfaces/CUSTOM_ENTITY.h \
+		src/core/database/DatabaseManager.h \
+		src/publishing/LayerRegistryManager.h \
+		src/publishing/IPublisherStrategy.h \
+		../../../maplibre-install/include/QMapLibre/Map \
+		../../../maplibre-install/include/QMapLibre/map.hpp \
+		../../../maplibre-install/include/QMapLibre/Export \
+		../../../maplibre-install/include/QMapLibre/export_core.hpp \
+		../../../maplibre-install/include/QMapLibre/Settings \
+		../../../maplibre-install/include/QMapLibre/settings.hpp \
+		../../../maplibre-install/include/QMapLibre/Types \
+		../../../maplibre-install/include/QMapLibre/types.hpp \
+		src/layers/LayerManager.h \
+		src/layers/LayerTreeModel.h \
+		src/layers/LayerTreeNode.h \
+		src/layers/ILayerAdapter.h \
+		src/core/models/GeoCoordinate.h \
+		src/core/Udp/UdpMessages/MessageId.h \
+		src/core/Udp/UdpMessages/Structures.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/UdpSensorMessageHandler.o src/core/Udp/handlers/UdpSensorMessageHandler.cpp
 
 build/obj/CreateUdlLayerDialog.o: src/ui/udl/CreateUdlLayerDialog.cpp src/ui/udl/CreateUdlLayerDialog.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/CreateUdlLayerDialog.o src/ui/udl/CreateUdlLayerDialog.cpp
@@ -2676,6 +2836,15 @@ build/obj/moc_UdlRepositoryManager.o: build/moc/moc_UdlRepositoryManager.cpp
 
 build/obj/moc_UdlDrawingTool.o: build/moc/moc_UdlDrawingTool.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_UdlDrawingTool.o build/moc/moc_UdlDrawingTool.cpp
+
+build/obj/moc_CUSTOM_MESSAGE.o: build/moc/moc_CUSTOM_MESSAGE.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_CUSTOM_MESSAGE.o build/moc/moc_CUSTOM_MESSAGE.cpp
+
+build/obj/moc_SampleEntityMessage.o: build/moc/moc_SampleEntityMessage.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_SampleEntityMessage.o build/moc/moc_SampleEntityMessage.cpp
+
+build/obj/moc_SensorMessage.o: build/moc/moc_SensorMessage.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/moc_SensorMessage.o build/moc/moc_SensorMessage.cpp
 
 ####### Install
 

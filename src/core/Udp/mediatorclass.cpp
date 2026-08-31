@@ -8,6 +8,7 @@
 #include "datastore.h"
 #include "UdpMessages/MessageId.h"
 #include "UdpMessages/Structures.h"
+#include "handlers/UdpSampleEntityMessageHandler.h"
 #include <QDateTime>
 #include <QDebug>
 
@@ -19,6 +20,7 @@ MediatorClass::MediatorClass(QObject *parent)
 
     // Create central UdpMessageDispatcher
     m_dispatcher = new GISApp::Core::Udp::Handlers::UdpMessageDispatcher(this);
+    m_dispatcher->registerHandler(std::make_shared<GISApp::Core::Udp::Handlers::UdpSampleEntityMessageHandler>());
 
     // Start UDP socket thread listening on Port 8540
     quint16 udp_port = DataStore::getInstance().client_side_udp_recv_port;

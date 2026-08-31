@@ -39,7 +39,19 @@ UdlEntityTableDialog::UdlEntityTableDialog(QWidget *parent)
                   "QHeaderView::section { background-color: #11111b; color: #89b4fa; padding: 8px 10px; font-weight: bold; font-size: 12px; border: none; border-right: 1px solid #313244; border-bottom: 2px solid #89b4fa; }"
                   "QHeaderView::section:hover { background-color: #181825; color: #ffffff; }"
                   "QPushButton { background-color: #313244; color: #cdd6f4; border: 1px solid #45475a; border-radius: 6px; padding: 6px 12px; font-weight: bold; }"
-                  "QPushButton:hover { background-color: #45475a; color: #ffffff; border-color: #89b4fa; }");
+                  "QPushButton:hover { background-color: #45475a; color: #ffffff; border-color: #89b4fa; }"
+                  "QScrollBar:vertical { background: #11111b; width: 10px; margin: 0px; border-radius: 5px; }"
+                  "QScrollBar::handle:vertical { background: #45475a; min-height: 25px; border-radius: 4px; margin: 2px; }"
+                  "QScrollBar::handle:vertical:hover { background: #89b4fa; }"
+                  "QScrollBar::handle:vertical:pressed { background: #89b4fa; }"
+                  "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; background: none; border: none; }"
+                  "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }"
+                  "QScrollBar:horizontal { background: #11111b; height: 10px; margin: 0px; border-radius: 5px; }"
+                  "QScrollBar::handle:horizontal { background: #45475a; min-width: 25px; border-radius: 4px; margin: 2px; }"
+                  "QScrollBar::handle:horizontal:hover { background: #89b4fa; }"
+                  "QScrollBar::handle:horizontal:pressed { background: #89b4fa; }"
+                  "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; background: none; border: none; }"
+                  "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: none; }");
 
     setupUi();
     refreshData();
